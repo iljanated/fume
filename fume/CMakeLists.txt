@@ -1,0 +1,104 @@
+cmake_minimum_required(VERSION 3.22)
+project(Fume VERSION 1.0.0 LANGUAGES C CXX)
+
+# Forceer C++20 (Cruciaal voor moderne Tracktion Engine versies)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# ------------------------------------------------------------------
+# 1. Laad JUCE in vanuit de tracktion_engine submodule
+# ------------------------------------------------------------------
+# JUCE bevindt zich in modules/tracktion_engine/modules/juce
+add_subdirectory(modules/tracktion_engine/modules/juce)
+
+# ------------------------------------------------------------------
+# 2. Definieer de GUI App via JUCE
+# ------------------------------------------------------------------
+juce_add_gui_app(Fume
+    PRODUCT_NAME "Fume"
+    VERSION "1.0.0"
+    BUNDLE_ID "com.ig91.fume"
+    IS_BACKGROUND_APP FALSE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT TRUE
+    NEEDS_AUDIO_INPUT TRUE
+    NEEDS_AUDIO_OUTPUT TRUE
+)
+
+target_include_directories(Fume PRIVATE
+    src
+    src/common
+    src/selectables
+    src/tracklist
+    src/tracklist/toolstates
+)
+
+# Bronbestanden koppelen
+target_sources(Fume PRIVATE
+    src/Main.cpp
+    src/MainComponent.h
+    src/MainComponent.cpp
+    src/common/InputManager.cpp
+    src/common/InputManager.h
+    src/common/ToolState.h
+    src/common/Utilities.h
+    src/selectables/SelectableClipClass.h
+    src/selectables/SelectableClipClass.cpp 
+    src/tracklist/AudioClipComponent.cpp
+    src/tracklist/AudioClipComponent.h
+    src/tracklist/ClipComponent.cpp
+    src/tracklist/ClipComponent.h
+    src/tracklist/MidiClipComponent.cpp
+    src/tracklist/MidiClipComponent.h
+    src/tracklist/toolstates/TrackListDeleteToolState.cpp
+    src/tracklist/toolstates/TrackListDeleteToolState.h
+    src/tracklist/toolstates/TrackListSelectToolState.cpp
+    src/tracklist/toolstates/TrackListSelectToolState.h
+    src/tracklist/toolstates/TrackListWriteToolState.cpp
+    src/tracklist/toolstates/TrackListWriteToolState.h
+    src/tracklist/TrackListComponent.h
+    src/tracklist/TrackListComponent.cpp
+    src/tracklist/TrackComponent.h
+    src/tracklist/TrackComponent.cpp
+    src/TransportComponent.h
+    src/TransportComponent.cpp
+    
+)
+
+# Koppel de standaard JUCE modules
+target_link_libraries(Fume PRIVATE
+    juce::juce_audio_utils
+    juce::juce_audio_devices
+    juce::juce_gui_extra
+)
+
+juce_generate_juce_header(Fume)
+
+# ------------------------------------------------------------------
+# 3. Voeg de Tracktion Engine modules toe
+# ------------------------------------------------------------------
+# Nu JUCE geladen is, kunnen we de extra Tracktion modules registreren
+juce_add_modules(
+    modules/tracktion_engine/modules/tracktion_engine
+    modules/tracktion_engine/modules/tracktion_core
+    modules/tracktion_engine/modules/tracktion_graph
+    ALIAS_NAMESPACE tracktion
+)
+
+# Koppel tracktion_engine aan je applicatie
+target_link_libraries(Fume PRIVATE
+    tracktion::tracktion_engine
+)
+
+# OPLOSSING: Schakel VST2 hosting uit om audioeffectx.h fout te omzeilen
+target_compile_definitions(Fume PRIVATE
+    JUCE_PLUGINHOST_VST=0
+    JUCE_PLUGINHOST_VST3=1  # Zorgt dat VST3-hosting wel aan blijft staan
+)
+
+
+# Extra compiler instellingen voor Visual Studio (MSVC)
+if(MSVC)
+    target_compile_options(Fume PRIVATE /W4 /WX-)
+endif()
