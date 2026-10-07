@@ -6,6 +6,26 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# SDL
+include(FetchContent)
+
+# 1. Turn off SDL3 modules you don't need to keep the build lightweight
+set(SDL_SHARED OFF CACHE BOOL "Build SDL shared library" FORCE)
+set(SDL_STATIC ON CACHE BOOL "Build SDL static library" FORCE)
+set(SDL_AUDIO OFF CACHE BOOL "Disable SDL Audio" FORCE)
+set(SDL_VIDEO OFF CACHE BOOL "Disable SDL Video Engine" FORCE)
+set(SDL_RENDER OFF CACHE BOOL "Disable SDL Render Engine" FORCE)
+set(SDL_CAMERA OFF CACHE BOOL "Disable SDL Camera Subsystem" FORCE)
+
+# 2. Fetch SDL3 stable source code
+FetchContent_Declare(
+    SDL3
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+    GIT_TAG        main
+)
+FetchContent_MakeAvailable(SDL3)
+
+
 # ------------------------------------------------------------------
 # 1. Laad JUCE in vanuit de tracktion_engine submodule
 # ------------------------------------------------------------------
@@ -89,6 +109,7 @@ juce_add_modules(
 # Koppel tracktion_engine aan je applicatie
 target_link_libraries(Fume PRIVATE
     tracktion::tracktion_engine
+    SDL3::SDL3
 )
 
 # OPLOSSING: Schakel VST2 hosting uit om audioeffectx.h fout te omzeilen
