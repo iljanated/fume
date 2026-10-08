@@ -1,8 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "InputManager.h"
-#include "TrackListComponent.h"
-#include "TransportComponent.h"
+#include "EditContainerComponent.h"
 
 namespace te = tracktion;
 
@@ -23,19 +22,15 @@ public:
 
     void modifierKeysChanged(const ModifierKeys& modifiers) override;
 
+    void loadFile();
+
 private:
     //==============================================================================
     // JUCE en Tracktion objecten (volgorde van declaratie bepaalt de destructie-volgorde)
     te::Engine engine;
-    te::Edit edit{ engine, te::Edit::EditRole::forEditing };
-    te::TransportControl& transport{ edit.getTransport() };
-
+    std::unique_ptr<te::Edit> edit;
     InputManager inputManager;
-
-    // Component voor het beheren van audio-inputs en outputs
-	Viewport trackListViewport;
-    TrackListComponent trackListComponent{ edit, inputManager, trackListViewport };
-	TransportComponent transportComponent{ transport, inputManager };
+    std::unique_ptr<EditContainerComponent> editContainerComponent;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

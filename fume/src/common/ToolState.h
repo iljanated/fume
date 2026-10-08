@@ -16,7 +16,7 @@ public:
 	virtual ~ToolState() = default;
 	virtual void onEnterState() = 0;
 	virtual void onExitState() = 0;
-	virtual void onInputAction(InputManagerAction action, int modifiersMask, bool isActive) = 0;
+	virtual void onInputAction(InputManagerActionId actionId, int inputMask, bool isActive) = 0;
 protected:
 	T& component;
 	InputManager& inputManager;

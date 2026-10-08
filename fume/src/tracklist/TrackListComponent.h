@@ -26,7 +26,7 @@ public:
 
     void resized() override;
 
-    void onInputAction(InputManagerAction action, int inputMask, bool isActive) override;
+    void onInputAction(InputManagerActionId actionId, int inputMask, bool isActive) override;
 
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 

@@ -17,9 +17,9 @@ TrackListComponent::TrackListComponent(te::Edit& e, InputManager& i, juce::Viewp
 	writeToolState = std::make_unique<TrackListWriteToolState>(*this, inputManager, *this);
 	deleteToolState = std::make_unique<TrackListDeleteToolState>(*this, inputManager, *this);
 
-	edit.state.setProperty(FumeIDs::timelineHorizontalZoom, 1.0f, nullptr);
-	edit.state.setProperty(FumeIDs::timelineVerticalZoom, 1.0f, nullptr);
-	edit.state.setProperty(FumeIDs::timelineQuantisation, 1.0f, nullptr);
+	edit.state.setProperty(FumeIDs::timelineHorizontalZoom, 1.0f, &edit.getUndoManager());
+	edit.state.setProperty(FumeIDs::timelineVerticalZoom, 1.0f, &edit.getUndoManager());
+	edit.state.setProperty(FumeIDs::timelineQuantisation, 1.0f, &edit.getUndoManager());
 
 	inputManager.add(this);
 	currentPositionMarker.setFill(Colours::white.withAlpha(0.85f));
@@ -74,24 +74,24 @@ void TrackListComponent::onToolStateFinished()
 	activateToolState(selectToolState.get());
 }
 
-void TrackListComponent::onInputAction(InputManagerAction action, int inputMask, bool isActive)
+void TrackListComponent::onInputAction(InputManagerActionId actionId, int inputMask, bool isActive)
 {
-	if (action == InputManagerAction::A && isActive && currentToolState != selectToolState.get())
+	if (actionId == InputManagerActionId::SELECT && isActive && currentToolState != selectToolState.get())
 	{
 		activateToolState(selectToolState.get());
 	}
-	else if (action == InputManagerAction::B && isActive && currentToolState != writeToolState.get())
+	else if (actionId == InputManagerActionId::WRITE && isActive && currentToolState != writeToolState.get())
 	{
 		activateToolState(writeToolState.get());
 	}
-	else if (action == InputManagerAction::Y && isActive && currentToolState != deleteToolState.get())
+	else if (actionId == InputManagerActionId::DELETE && isActive && currentToolState != deleteToolState.get())
 	{
 		activateToolState(deleteToolState.get());
 	}
 
 	if (currentToolState)
 	{
-		currentToolState->onInputAction(action, inputMask, isActive);
+		currentToolState->onInputAction(actionId, inputMask, isActive);
 	}
 }
 

@@ -56,6 +56,8 @@ target_include_directories(Fume PRIVATE
 
 # Bronbestanden koppelen
 target_sources(Fume PRIVATE
+    src/EditContainerComponent.cpp
+    src/EditContainerComponent.h
     src/Main.cpp
     src/MainComponent.h
     src/MainComponent.cpp

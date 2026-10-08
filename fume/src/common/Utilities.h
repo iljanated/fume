@@ -14,6 +14,10 @@ using namespace std::literals;
 #define FUME_BEAT_WIDTH 20
 #define FUME_TRACK_HEIGHT 30
 #define FUME_SCROLL_PADDING 100
+#define FUME_INPUT_REFRESH_HZ 60
+#define FUME_INPUT_REPEAT_DELAY_FRAMES 30
+#define FUME_INPUT_REPEAT_FRAMES 2
+
 
 namespace FumeIDs
 {

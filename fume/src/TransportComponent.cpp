@@ -3,8 +3,8 @@
 
 namespace te = tracktion;
 
-TransportComponent::TransportComponent(te::TransportControl& t, InputManager& i)
-    : transport(t),
+TransportComponent::TransportComponent(te::Edit& e, InputManager& i)
+    : edit(e),
       inputManager(i)
 {
     addAndMakeVisible(playButton);
@@ -28,12 +28,19 @@ void TransportComponent::paint(juce::Graphics& g)
 {
 }
 
-void TransportComponent::onInputAction(InputManagerAction action, int inputMask, bool isActive)
+void TransportComponent::onInputAction(InputManagerActionId actionId, int inputMask, bool isActive)
 {
-	if (action == InputManagerAction::Start && isActive)
+	if (actionId == InputManagerActionId::PLAY && isActive)
 	{
-		bool fromStart = inputMask & static_cast<int>(InputManagerAction::LT);
-		togglePlay(fromStart);
+		bool fromStart = (inputMask & static_cast<int>(InputManagerActionId::MOD1));
+		if (fromStart)
+		{
+			startPlay(fromStart);
+		}
+		else
+		{
+			togglePlay();
+		}
 	}
 }
 
@@ -46,25 +53,35 @@ void TransportComponent::buttonClicked(juce::Button* button)
 {
 	if (button == &playButton)
 	{
-		togglePlay(false);
+		togglePlay();
 	}
 }
 
-void TransportComponent::togglePlay(bool fromStart)
+
+void TransportComponent::startPlay(bool fromStart)
 {
+	auto& transport = edit.getTransport();
+
+	if (fromStart)
+	{
+		transport.playFromStart(false);
+	}
+	else
+	{
+		transport.play(false);
+	}
+}
+
+void TransportComponent::togglePlay()
+{
+	auto& transport = edit.getTransport();
+
 	if (transport.isPlaying())
 	{
 		transport.stop(false, false);
 	}
 	else
 	{
-		if (fromStart)
-		{
-			transport.playFromStart(false);
-		}
-		else
-		{
-			transport.play(false);
-		}
+		transport.play(false);
 	}
 }

@@ -29,9 +29,9 @@ void TrackListWriteToolState::onExitState()
 {
 }
 
-void TrackListWriteToolState::onInputAction(InputManagerAction action, int inputMask, bool isActive)
+void TrackListWriteToolState::onInputAction(InputManagerActionId actionId, int inputMask, bool isActive)
 {
-	if (action == InputManagerAction::DPAD_LEFT && isActive)
+	if (actionId == InputManagerActionId::LEFT && isActive)
 	{
 		if (isDragging)
 		{
@@ -45,7 +45,7 @@ void TrackListWriteToolState::onInputAction(InputManagerAction action, int input
 			updateDrawableCursor();
 		}
 	}
-	else if (action == InputManagerAction::DPAD_RIGHT && isActive)
+	else if (actionId == InputManagerActionId::RIGHT && isActive)
 	{
 		if (isDragging)
 		{
@@ -59,27 +59,30 @@ void TrackListWriteToolState::onInputAction(InputManagerAction action, int input
 			updateDrawableCursor();
 		}
 	}
-	else if (action == InputManagerAction::DPAD_UP && isActive)
+	else if (actionId == InputManagerActionId::UP && isActive)
 	{
 		cursor.setY(std::max(cursor.getY() - 1.0, 0.0));
 		cursorAnchor.setY(cursor.getY());
 		updateDrawableCursor();
 	}
-	else if (action == InputManagerAction::DPAD_DOWN && isActive)
+	else if (actionId == InputManagerActionId::DOWN && isActive)
 	{
 		double trackCount = (double)component.getTrackCount();
 		cursor.setY(std::min(cursor.getY() + 1.0, trackCount - 1.0));
 		cursorAnchor.setY(cursor.getY());
 		updateDrawableCursor();
 	}
-	else if (action == InputManagerAction::B)
+	else if (actionId == InputManagerActionId::WRITE)
 	{
 		if (isActive)
 		{
-			selectionManager.deselectAll();
-			cursorAnchor.setXY(cursor.getX(), cursor.getY());
-			updateDrawableCursor();
-			isDragging = true;
+			if (!isDragging)
+			{
+				selectionManager.deselectAll();
+				cursorAnchor.setXY(cursor.getX(), cursor.getY());
+				updateDrawableCursor();
+				isDragging = true;
+			}
 		}
 		else
 		{

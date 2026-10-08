@@ -1,25 +1,26 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <SDL3/SDL.h>
 
-enum class InputManagerAction : int
+enum class InputManagerActionId : int
 {
-    DPAD_UP = 1 << 0,
-	DPAD_DOWN = 1 << 1,
-	DPAD_LEFT = 1 << 2,
-	DPAD_RIGHT = 1 << 3,
-    A = 1 << 4,
-    B = 1 << 5,
-	X = 1 << 6,
-	Y = 1 << 7,
-    LB = 1 << 8,
-	RB = 1 << 9,
+    UP = 1 << 0,
+	DOWN = 1 << 1,
+	LEFT = 1 << 2,
+	RIGHT = 1 << 3,
+    SELECT = 1 << 4,
+    WRITE = 1 << 5,
+	EDIT = 1 << 6,
+	DELETE = 1 << 7,
+    MOD1 = 1 << 8,
+	UNDO = 1 << 9,
 	LT = 1 << 10,
 	RT = 1 << 11,
 	LSB = 1 << 12,
 	RSB = 1 << 13,
-	Start = 1 << 14,
-	Select = 1 << 15
+	PLAY = 1 << 14,
+	OPTION = 1 << 15
 };
 
 enum InputManagerInputType : int
@@ -31,17 +32,25 @@ enum InputManagerInputType : int
 
 struct InputManagerActionBinding
 {
-    InputManagerInputType type;
+	InputManagerInputType type;
 	int value;
+};
+
+struct InputManagerAction
+{
+	InputManagerActionId id;
+	juce::Array<InputManagerActionBinding> bindings;
+	bool isRepeating;
 };
 
 class InputManagerListener {
 public:
-	virtual void onInputAction(InputManagerAction action, int inputMask, bool isActive) = 0;
+	virtual void onInputAction(InputManagerActionId actionId, int inputMask, bool isActive) = 0;
 };
 
 class InputManager : public juce::LightweightListenerList<InputManagerListener>,
-    public juce::KeyListener
+    public juce::KeyListener,
+	private juce::Timer
 {
 public:
     //==============================================================================
@@ -57,12 +66,22 @@ public:
 
 private:
     //==============================================================================
-	juce::HashMap<int, juce::Array<InputManagerActionBinding>> actionBindings;
-	juce::HashMap<int, InputManagerAction> keyCodeToActionMap;
-    
+	juce::HashMap<int, InputManagerAction> actions;
+	juce::HashMap<int, InputManagerActionId> keyCodeToActionMap;
+	juce::HashMap<int, InputManagerActionId> buttonToActionMap;
+	juce::HashMap<int, int> pressedButtons;
+	
     int inputMask;
-
+	
+	bool buttonPressed(SDL_GamepadButton button);
+	bool buttonReleased(SDL_GamepadButton button);
 	void updateKeyCodeToActionMap();
+	void updateButtonToActionMap();
+	bool evaluateInputsStillActive();
+	void initSDL();
+	void quitSDL();
+	void pollSDL();
+	void timerCallback() override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(InputManager)
 };

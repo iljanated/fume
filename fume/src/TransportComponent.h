@@ -10,7 +10,7 @@ class TransportComponent : public juce::Component,
 {
 public:
     //==============================================================================
-    TransportComponent(te::TransportControl& t, InputManager& i);
+    TransportComponent(te::Edit& e, InputManager& i);
 
     ~TransportComponent() override;
 
@@ -19,18 +19,19 @@ public:
 
     void resized() override;
 
-	void onInputAction(InputManagerAction action, int inputMask, bool isActive) override;
+	void onInputAction(InputManagerActionId actionId, int inputMask, bool isActive) override;
 
 private:
     //==============================================================================
-    te::TransportControl& transport;
+    te::Edit& edit;
     InputManager& inputManager;
 
 	juce::TextButton playButton{ "Play" };
 
     void buttonClicked(juce::Button* button) override;
 
-    void togglePlay(bool fromStart);
+	void startPlay(bool fromStart);
+    void togglePlay();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportComponent)
 };

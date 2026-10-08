@@ -29,9 +29,9 @@ void TrackListSelectToolState::onExitState()
 {
 }
 
-void TrackListSelectToolState::onInputAction(InputManagerAction action, int inputMask, bool isActive)
+void TrackListSelectToolState::onInputAction(InputManagerActionId actionId, int inputMask, bool isActive)
 {
-	if (action == InputManagerAction::DPAD_LEFT && isActive)
+	if (actionId == InputManagerActionId::LEFT && isActive)
 	{
 		if (isDragging)
 		{
@@ -46,7 +46,7 @@ void TrackListSelectToolState::onInputAction(InputManagerAction action, int inpu
 			updateDrawableCursor();
 		}
 	}
-	else if (action == InputManagerAction::DPAD_RIGHT && isActive)
+	else if (actionId == InputManagerActionId::RIGHT && isActive)
 	{
 		if (isDragging)
 		{
@@ -61,7 +61,7 @@ void TrackListSelectToolState::onInputAction(InputManagerAction action, int inpu
 			updateDrawableCursor();
 		}
 	}
-	else if (action == InputManagerAction::DPAD_UP && isActive)
+	else if (actionId == InputManagerActionId::UP && isActive)
 	{
 		if (isDragging)
 		{
@@ -76,7 +76,7 @@ void TrackListSelectToolState::onInputAction(InputManagerAction action, int inpu
 			updateDrawableCursor();
 		}
 	}
-	else if (action == InputManagerAction::DPAD_DOWN && isActive)
+	else if (actionId == InputManagerActionId::DOWN && isActive)
 	{
 		if (isDragging)
 		{
@@ -91,14 +91,17 @@ void TrackListSelectToolState::onInputAction(InputManagerAction action, int inpu
 			updateDrawableCursor();
 		}
 	}
-	else if (action == InputManagerAction::A)
+	else if (actionId == InputManagerActionId::SELECT)
 	{
 		if (isActive)
 		{
-			cursorAnchor.setXY(cursor.getX(), cursor.getY());
-			updateSelection();
-			updateDrawableCursor();
-			isDragging = true;
+			if (!isDragging)
+			{
+				cursorAnchor.setXY(cursor.getX(), cursor.getY());
+				updateSelection();
+				updateDrawableCursor();
+				isDragging = true;
+			}
 		}
 		else
 		{

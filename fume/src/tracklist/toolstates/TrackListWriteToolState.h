@@ -18,7 +18,7 @@ public:
 
 	void onExitState() override;
 
-	void onInputAction(InputManagerAction action, int inputMask, bool isActive) override;
+	void onInputAction(InputManagerActionId actionId, int inputMask, bool isActive) override;
 private:
 	juce::DrawableRectangle& drawableCursor;
 	juce::Point<double>& cursor;
