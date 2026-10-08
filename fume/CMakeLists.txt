@@ -49,6 +49,7 @@ juce_add_gui_app(Fume
 target_include_directories(Fume PRIVATE
     src
     src/common
+    src/midiclip
     src/selectables
     src/tracklist
     src/tracklist/toolstates
@@ -65,6 +66,8 @@ target_sources(Fume PRIVATE
     src/common/InputManager.h
     src/common/ToolState.h
     src/common/Utilities.h
+    src/midiclip/MidiClipComponent.cpp
+    src/midiclip/MidiClipComponent.h
     src/selectables/SelectableClipClass.h
     src/selectables/SelectableClipClass.cpp 
     src/tracklist/AudioClipComponent.cpp
