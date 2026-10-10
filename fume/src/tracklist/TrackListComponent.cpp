@@ -5,23 +5,22 @@
 
 namespace te = tracktion;
 
-TrackListComponent::TrackListComponent(te::Edit& e, InputManager& i, juce::Viewport& v)
-	: te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<TrackComponent>>(e.state),
-	edit(e),
-	inputManager(i),
+TrackListComponent::TrackListComponent(fumeUI::UIContext& context, juce::Viewport& v)
+	: te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<TrackComponent>>(context.edit.state),
+	uiContext(context),
 	viewport(v)
 {
-	selectionManager.addChangeListener(this);
+	uiContext.selectionManager.addChangeListener(this);
 	
-	selectToolState = std::make_unique<TrackListSelectToolState>(*this, inputManager, *this);
-	writeToolState = std::make_unique<TrackListWriteToolState>(*this, inputManager, *this);
-	deleteToolState = std::make_unique<TrackListDeleteToolState>(*this, inputManager, *this);
+	selectToolState = std::make_unique<TrackListSelectToolState>(*this, uiContext, *this);
+	writeToolState = std::make_unique<TrackListWriteToolState>(*this, uiContext, *this);
+	deleteToolState = std::make_unique<TrackListDeleteToolState>(*this, uiContext, *this);
 
-	edit.state.setProperty(FumeIDs::timelineHorizontalZoom, 1.0f, &edit.getUndoManager());
-	edit.state.setProperty(FumeIDs::timelineVerticalZoom, 1.0f, &edit.getUndoManager());
-	edit.state.setProperty(FumeIDs::timelineQuantisation, 1.0f, &edit.getUndoManager());
+	uiContext.edit.state.setProperty(FumeIDs::timelineHorizontalZoom, 1.0f, &uiContext.edit.getUndoManager());
+	uiContext.edit.state.setProperty(FumeIDs::timelineVerticalZoom, 1.0f, &uiContext.edit.getUndoManager());
+	uiContext.edit.state.setProperty(FumeIDs::timelineQuantisation, 1.0f, &uiContext.edit.getUndoManager());
 
-	inputManager.add(this);
+	uiContext.inputManager.add(this);
 	currentPositionMarker.setFill(Colours::white.withAlpha(0.85f));
 	addAndMakeVisible(currentPositionMarker);
 
@@ -38,7 +37,7 @@ TrackListComponent::TrackListComponent(te::Edit& e, InputManager& i, juce::Viewp
 
 TrackListComponent::~TrackListComponent()
 {
-	inputManager.remove(this);
+	uiContext.inputManager.remove(this);
 	freeObjects();
 }
 
@@ -134,9 +133,9 @@ Helpers::AsyncValueTreeItem<TrackComponent>* TrackListComponent::createNewObject
 	return new Helpers::AsyncValueTreeItem<TrackComponent>(v,
 		[this](auto state)
 		{
-			auto t = Helpers::findObjectForState(te::getAudioTracks(edit), state);
+			auto t = Helpers::findObjectForState(te::getAudioTracks(uiContext.edit), state);
 			assert(t);
-			auto tc = std::make_unique<TrackComponent>(*t);
+			auto tc = std::make_unique<TrackComponent>(*t, uiContext);
 			addAndMakeVisible(*tc);
 			drawableCursor.toFront(false);
 			currentPositionMarker.toFront(false);
@@ -174,9 +173,9 @@ void TrackListComponent::timerCallback()
 
 void TrackListComponent::updateCurrentPositionMarker()
 {
-	float zoom = edit.state.getProperty(FumeIDs::timelineHorizontalZoom, 1.0f);
-	auto position = transport.getPosition();
-	te::TempoSequence& tempoSequence = edit.tempoSequence;
+	float zoom = uiContext.edit.state.getProperty(FumeIDs::timelineHorizontalZoom, 1.0f);
+	auto position = uiContext.edit.getTransport().getPosition();
+	te::TempoSequence& tempoSequence = uiContext.edit.tempoSequence;
 	auto beats = tempoSequence.toBeats(position);
 	auto offset = (float)beats.inBeats() * FUME_BEAT_WIDTH * zoom;
 	currentPositionMarker.setRectangle(Rectangle<float>(offset, 0, 1.5f, (float)(getHeight())));
@@ -186,7 +185,7 @@ void TrackListComponent::updatePaths()
 {
 	gridBackgroundsLight.clear();
 	gridBackgroundsDark.clear();
-	float zoom = edit.state.getProperty(FumeIDs::timelineHorizontalZoom, 1.0f);
+	float zoom = uiContext.edit.state.getProperty(FumeIDs::timelineHorizontalZoom, 1.0f);
 
 	auto height = (float)getHeight();
 	auto beatWidth = FUME_BEAT_WIDTH * zoom;
@@ -222,7 +221,7 @@ void TrackListComponent::updatePaths()
 
 void TrackListComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
-	if (source == &selectionManager)
+	if (source == &uiContext.selectionManager)
 	{
 		repaint();
 	}
@@ -277,6 +276,7 @@ void TrackListComponent::componentMovedOrResized(Component& component, bool wasM
 
 void TrackListComponent::resizeViewport()
 {
+	auto& edit = uiContext.edit;
 	te::TimePosition timePosition = te::TimePosition::fromSeconds(edit.getMaximumLength().inSeconds());
 	auto width = (int)(edit.tempoSequence.timeToBeats(timePosition).inBeats() * FUME_BEAT_WIDTH);
 	auto height = getTrackCount() * FUME_TRACK_HEIGHT + FUME_SCROLL_PADDING;

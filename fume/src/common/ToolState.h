@@ -1,6 +1,6 @@
 #pragma once
 
-#include "InputManager.h"
+#include "Utilities.h"
 
 class ToolStateListener
 {
@@ -12,13 +12,13 @@ template <typename T>
 class ToolState
 {
 public:
-	ToolState(T& c, InputManager& i, ToolStateListener& l) : component(c), inputManager(i), listener(l) {}
+	ToolState(T& c, fumeUI::UIContext& context, ToolStateListener& l) : component(c), uiContext(context), listener(l) {}
 	virtual ~ToolState() = default;
 	virtual void onEnterState() = 0;
 	virtual void onExitState() = 0;
 	virtual void onInputAction(InputManagerActionId actionId, int inputMask, bool isActive) = 0;
 protected:
 	T& component;
-	InputManager& inputManager;
+	fumeUI::UIContext& uiContext;
 	ToolStateListener& listener;
 };

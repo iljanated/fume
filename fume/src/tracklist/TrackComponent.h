@@ -10,7 +10,7 @@ class TrackComponent : public juce::Component,
 {
 public:
     //==============================================================================
-    TrackComponent(te::AudioTrack& t);
+    TrackComponent(te::AudioTrack& t, fumeUI::UIContext& context);
 
     ~TrackComponent() override;
 
@@ -23,6 +23,7 @@ public:
 
 private:
     //==============================================================================
+	fumeUI::UIContext& uiContext;
     te::AudioTrack& track;
 
     Helpers::AsyncResizer asyncResizer{ *this };

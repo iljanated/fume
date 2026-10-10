@@ -6,9 +6,10 @@
 
 namespace te = tracktion;
 
-TrackComponent::TrackComponent(te::AudioTrack& t)
+TrackComponent::TrackComponent(te::AudioTrack& t, fumeUI::UIContext& context)
     : te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<ClipComponent>>(t.state),
-    track(t)
+    track(t),
+    uiContext(context)
 {
     DBG("TrackComponent::TrackComponent: " + t.getName());
 
@@ -67,7 +68,7 @@ Helpers::AsyncValueTreeItem<ClipComponent>* TrackComponent::createNewObject(cons
             {
                 auto t = static_cast<te::MidiClip*>(Helpers::findObjectForState(track.getClips(), state));
                 assert(t);
-                auto tc = std::make_unique<MidiClipComponent>(*t);
+                auto tc = std::make_unique<MidiClipComponent>(*t, uiContext);
                 addAndMakeVisible(*tc);
                 asyncResizer.resizeAsync();
                 return tc;

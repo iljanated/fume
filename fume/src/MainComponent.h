@@ -28,6 +28,7 @@ private:
     //==============================================================================
     // JUCE en Tracktion objecten (volgorde van declaratie bepaalt de destructie-volgorde)
     te::Engine engine;
+	te::SelectionManager selectionManager{ engine };
     std::unique_ptr<te::Edit> edit;
     InputManager inputManager;
     std::unique_ptr<EditContainerComponent> editContainerComponent;

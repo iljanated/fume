@@ -4,8 +4,8 @@
 
 namespace te = tracktion;
 
-MidiClipComponent::MidiClipComponent(te::MidiClip& c)
-    : clip(c)
+MidiClipComponent::MidiClipComponent(te::MidiClip& c, fumeUI::UIContext& context)
+    : clip(c), uiContext(context)
 {
 }
 
@@ -22,7 +22,7 @@ void MidiClipComponent::paint(juce::Graphics& g)
     bool isSelected = false;
     if (auto* parent = findParentComponentOfClass<TrackListComponent>())
     {
-        isSelected = parent->getSelectionManager().isSelected(clip);
+        isSelected = uiContext.selectionManager.isSelected(clip);
     }
 
     auto localBounds = getLocalBounds();

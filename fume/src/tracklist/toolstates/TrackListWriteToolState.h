@@ -11,7 +11,7 @@ namespace te = tracktion;
 class TrackListWriteToolState : public ToolState<TrackListComponent>
 {
 public:
-	TrackListWriteToolState(TrackListComponent& c, InputManager& i, ToolStateListener& l);
+	TrackListWriteToolState(TrackListComponent& c, fumeUI::UIContext& context, ToolStateListener& l);
 	~TrackListWriteToolState() override;
 
 	void onEnterState() override;
@@ -23,7 +23,6 @@ private:
 	juce::DrawableRectangle& drawableCursor;
 	juce::Point<double>& cursor;
 	juce::Point<double>& cursorAnchor;
-	te::SelectionManager& selectionManager;
 	bool isDragging = false;
 
 	void updateDrawableCursor();

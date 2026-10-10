@@ -1,10 +1,6 @@
-/*
-    ,--.                     ,--.     ,--.  ,--.
-  ,-'  '-.,--.--.,--,--.,---.|  |,-.,-'  '-.`--' ,---. ,--,--,      Copyright 2018
-  '-.  .-'|  .--' ,-.  | .--'|     /'-.  .-',--.| .-. ||      \   Tracktion Software
-    |  |  |  |  \ '-'  \ `--.|  \  \  |  |  |  |' '-' '|  ||  |       Corporation
-    `---' `--'   `--`--'`---'`--'`--' `---' `--' `---' `--''--'    www.tracktion.com
-*/
+#pragma once
+
+#include "InputManager.h"
 
 #pragma once
 
@@ -27,6 +23,35 @@ namespace FumeIDs
     static const juce::Identifier timelineScrollY("fume_timelineScrollY");
     static const juce::Identifier timelineQuantisation("fume_timelineQuantisation");
     static const juce::Identifier songLength("fume_songLength");
+}
+
+namespace fumeUI
+{
+    struct UIContext
+    {
+        tracktion_engine::Engine& engine;
+        tracktion_engine::Edit& edit;
+        tracktion_engine::SelectionManager& selectionManager;
+        InputManager& inputManager;
+    };
+}
+
+namespace fumeHelpers
+{
+    static inline int getTrackIndex(te::Edit& edit, te::Track* track)
+    {
+        int audioTrackIndex = 0;
+
+        for (auto* at : te::getAudioTracks(edit))
+        {
+            if (at == track)
+            {
+                return audioTrackIndex;
+            }
+            audioTrackIndex++;
+        }
+        return -1;
+    }
 }
 
 //==============================================================================

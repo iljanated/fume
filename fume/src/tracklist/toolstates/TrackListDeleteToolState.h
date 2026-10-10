@@ -11,7 +11,7 @@ namespace te = tracktion;
 class TrackListDeleteToolState : public ToolState<TrackListComponent>
 {
 public:
-	TrackListDeleteToolState(TrackListComponent& c, InputManager& i, ToolStateListener& l);
+	TrackListDeleteToolState(TrackListComponent& c, fumeUI::UIContext& context, ToolStateListener& l);
 	~TrackListDeleteToolState() override;
 
 	void onEnterState() override;
@@ -23,7 +23,6 @@ private:
 	juce::DrawableRectangle& drawableCursor;
 	juce::Point<double>& cursor;
 	juce::Point<double>& cursorAnchor;
-	te::SelectionManager& selectionManager;
 	bool isDragging = false;
 
 	void updateSelection();

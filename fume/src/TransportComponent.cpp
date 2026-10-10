@@ -3,13 +3,12 @@
 
 namespace te = tracktion;
 
-TransportComponent::TransportComponent(te::Edit& e, InputManager& i)
-    : edit(e),
-      inputManager(i)
+TransportComponent::TransportComponent(fumeUI::UIContext& c)
+    : uiContext(c)
 {
     addAndMakeVisible(playButton);
 	playButton.addListener(this);
-	inputManager.add(this);
+	uiContext.inputManager.add(this);
 
 	auto focusTraverser = Component::createKeyboardFocusTraverser();
 	auto comps = focusTraverser->getAllComponents(this);
@@ -21,7 +20,7 @@ TransportComponent::TransportComponent(te::Edit& e, InputManager& i)
 
 TransportComponent::~TransportComponent()
 {
-	inputManager.remove(this);
+	uiContext.inputManager.remove(this);
 }
 
 void TransportComponent::paint(juce::Graphics& g)
@@ -60,7 +59,7 @@ void TransportComponent::buttonClicked(juce::Button* button)
 
 void TransportComponent::startPlay(bool fromStart)
 {
-	auto& transport = edit.getTransport();
+	auto& transport = uiContext.edit.getTransport();
 
 	if (fromStart)
 	{
@@ -74,7 +73,7 @@ void TransportComponent::startPlay(bool fromStart)
 
 void TransportComponent::togglePlay()
 {
-	auto& transport = edit.getTransport();
+	auto& transport = uiContext.edit.getTransport();
 
 	if (transport.isPlaying())
 	{

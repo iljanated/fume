@@ -1,6 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
-#include "InputManager.h"
+#include "ClipEditorComponent.h"
+#include "Utilities.h"
 #include "TrackListComponent.h"
 #include "TransportComponent.h"
 
@@ -10,7 +11,7 @@ class EditContainerComponent : public juce::Component, public InputManagerListen
 {
 public:
     //==============================================================================
-    EditContainerComponent(te::Edit& edit, InputManager& inputManager);
+    EditContainerComponent(te::Engine& engine, te::Edit& edit, te::SelectionManager& selectionManager, InputManager& inputManager);
 
     ~EditContainerComponent() override;
 
@@ -22,12 +23,12 @@ public:
 private:
     //==============================================================================
     // JUCE en Tracktion objecten (volgorde van declaratie bepaalt de destructie-volgorde)
-    te::Edit& edit;
-    InputManager& inputManager;
+	fumeUI::UIContext uiContext;
 
     Viewport trackListViewport;
-    TrackListComponent trackListComponent{ edit, inputManager, trackListViewport };
-    TransportComponent transportComponent{ edit, inputManager };
+	ClipEditorComponent clipEditorComponent{ uiContext };
+    TrackListComponent trackListComponent{ uiContext, trackListViewport };
+    TransportComponent transportComponent{ uiContext };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EditContainerComponent)
 };

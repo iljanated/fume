@@ -4,11 +4,10 @@
 #include "TrackListComponent.h"
 
 
-TrackListSelectToolState::TrackListSelectToolState(TrackListComponent& c, InputManager& i, ToolStateListener& l) : ToolState<TrackListComponent>(c, i, l),
+TrackListSelectToolState::TrackListSelectToolState(TrackListComponent& c, fumeUI::UIContext& context, ToolStateListener& l) : ToolState<TrackListComponent>(c, context, l),
 drawableCursor(component.getDrawableCursor()),
 cursor(component.getCursor()),
-cursorAnchor(component.getCursorAnchor()),
-selectionManager(component.getSelectionManager())
+cursorAnchor(component.getCursorAnchor())
 {
 }
 
@@ -114,6 +113,8 @@ void TrackListSelectToolState::onInputAction(InputManagerActionId actionId, int 
 
 void TrackListSelectToolState::updateSelection()
 {
+	auto& selectionManager = uiContext.selectionManager;
+
 	auto xMin = std::min(cursor.getX(), cursorAnchor.getX());
 	auto xMax = std::max(cursor.getX(), cursorAnchor.getX());
 	auto yMin = (int)std::min(cursor.getY(), cursorAnchor.getY());
@@ -125,14 +126,17 @@ void TrackListSelectToolState::updateSelection()
 		{
 			if (auto* track = clip->getTrack())
 			{
-				int trackIndex = track->getIndexInEditTrackList();
+				int trackIndex = fumeHelpers::getTrackIndex(uiContext.edit, track);
 				if (trackIndex < yMin || trackIndex > yMax || clip->getEndBeat().inBeats() < xMin || clip->getStartBeat().inBeats() > xMax)
 				{
+					DBG("Deselecting clip: " << clip->getName() << " at track index: " << trackIndex);
+					DBG("minX: " << xMin << ", maxX: " << xMax << ", minY: " << yMin << ", maxY: " << yMax);
 					selectionManager.deselect(clip);
 				}
 			}
 			else
 			{
+				DBG("Deselecting clip: " << clip->getName() << " because it has no track");
 				selectionManager.deselect(clip);
 			}
 		}
@@ -146,7 +150,10 @@ void TrackListSelectToolState::updateSelection()
 			{
 				if (clip->getStartBeat().inBeats() <= xMax && clip->getEndBeat().inBeats() >= xMin)
 				{
-					selectionManager.addToSelection(*clip);
+					if(!selectionManager.isSelected(*clip))
+					{
+						selectionManager.addToSelection(*clip);
+					}
 				}
 			}
 		}

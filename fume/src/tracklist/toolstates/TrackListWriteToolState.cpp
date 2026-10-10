@@ -3,12 +3,11 @@
 
 namespace te = tracktion;
 
-TrackListWriteToolState::TrackListWriteToolState(TrackListComponent& c, InputManager& i, ToolStateListener& l)
-	: ToolState<TrackListComponent>(c, i, l),
+TrackListWriteToolState::TrackListWriteToolState(TrackListComponent& c, fumeUI::UIContext& context, ToolStateListener& l)
+	: ToolState<TrackListComponent>(c, context, l),
 	drawableCursor(component.getDrawableCursor()),
 	cursor(component.getCursor()),
-	cursorAnchor(component.getCursorAnchor()),
-	selectionManager(component.getSelectionManager())
+	cursorAnchor(component.getCursorAnchor())
 {
 }
 
@@ -78,7 +77,7 @@ void TrackListWriteToolState::onInputAction(InputManagerActionId actionId, int i
 		{
 			if (!isDragging)
 			{
-				selectionManager.deselectAll();
+				uiContext.selectionManager.deselectAll();
 				cursorAnchor.setXY(cursor.getX(), cursor.getY());
 				updateDrawableCursor();
 				isDragging = true;
@@ -97,7 +96,7 @@ void TrackListWriteToolState::onInputAction(InputManagerActionId actionId, int i
 				te::TempoSequence& tempoSequence = track->edit.tempoSequence;
 				auto midiClip = track->insertMIDIClip(tempoSequence.toTime({ startBeat, endBeat }), nullptr);
 
-				selectionManager.addToSelection(midiClip);
+				uiContext.selectionManager.addToSelection(midiClip);
 
 				cursor.setX(std::max(cursor.getX(), cursorAnchor.getX()));
 				cursorAnchor.setXY(cursor.getX(), cursor.getY());

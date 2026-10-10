@@ -1,6 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
-#include "InputManager.h"
+#include "Utilities.h"
 
 namespace te = tracktion;
 
@@ -10,7 +10,7 @@ class TransportComponent : public juce::Component,
 {
 public:
     //==============================================================================
-    TransportComponent(te::Edit& e, InputManager& i);
+    TransportComponent(fumeUI::UIContext& c);
 
     ~TransportComponent() override;
 
@@ -23,9 +23,7 @@ public:
 
 private:
     //==============================================================================
-    te::Edit& edit;
-    InputManager& inputManager;
-
+    fumeUI::UIContext& uiContext;
 	juce::TextButton playButton{ "Play" };
 
     void buttonClicked(juce::Button* button) override;

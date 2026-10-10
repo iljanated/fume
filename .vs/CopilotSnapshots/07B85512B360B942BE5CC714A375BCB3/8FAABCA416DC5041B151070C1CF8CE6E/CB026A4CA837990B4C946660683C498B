@@ -1,10 +1,32 @@
-cmake_minimum_required(VERSION 3.22)
+﻿cmake_minimum_required(VERSION 3.22)
 project(Fume VERSION 1.0.0 LANGUAGES C CXX)
 
 # Forceer C++20 (Cruciaal voor moderne Tracktion Engine versies)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# SDL
+include(FetchContent)
+
+# 1. Turn off SDL3 modules you don't need to keep the build lightweight
+set(SDL_SHARED OFF CACHE BOOL "Build SDL shared library" FORCE)
+set(SDL_STATIC ON CACHE BOOL "Build SDL static library" FORCE)
+set(SDL_AUDIO OFF CACHE BOOL "Disable SDL Audio" FORCE)
+set(SDL_VIDEO OFF CACHE BOOL "Disable SDL Video Engine" FORCE)
+set(SDL_RENDER OFF CACHE BOOL "Disable SDL Render Engine" FORCE)
+set(SDL_CAMERA OFF CACHE BOOL "Disable SDL Camera Subsystem" FORCE)
+set(SDL_SUBSYSTEM_VIDEO OFF CACHE BOOL "Disable SDL Video subsystem" FORCE)
+set(SDL_SUBSYSTEM_RENDER OFF CACHE BOOL "Disable SDL Render subsystem" FORCE)
+
+# 2. Fetch SDL3 stable source code
+FetchContent_Declare(
+    SDL3
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+    GIT_TAG        main
+)
+FetchContent_MakeAvailable(SDL3)
+
 
 # ------------------------------------------------------------------
 # 1. Laad JUCE in vanuit de tracktion_engine submodule
@@ -41,7 +63,6 @@ target_sources(Fume PRIVATE
     src/clipeditor/ClipEditorComponent.h
     src/clipeditor/MidiClipEditorComponent.cpp
     src/clipeditor/MidiClipEditorComponent.h
-    src/clipeditor/ClipEditorImplementationComponent.h
     src/common/InputManager.cpp
     src/common/InputManager.h
     src/common/ToolState.h
@@ -94,11 +115,6 @@ juce_add_modules(
     ALIAS_NAMESPACE tracktion
 )
 
-# ------------------------------------------------------------------
-# SDL3 integratie
-set(SDL3_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/SDL3/cmake")
-find_package(SDL3 REQUIRED CONFIG)
-
 # Koppel tracktion_engine aan je applicatie
 target_link_libraries(Fume PRIVATE
     tracktion::tracktion_engine
@@ -115,12 +131,4 @@ target_compile_definitions(Fume PRIVATE
 # Extra compiler instellingen voor Visual Studio (MSVC)
 if(MSVC)
     target_compile_options(Fume PRIVATE /W4 /WX-)
-endif()
-
-if(WIN32)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "$<TARGET_FILE:SDL3::SDL3>"
-        "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-    )
 endif()

@@ -8,7 +8,7 @@ using namespace tracktion::literals;
 MainComponent::MainComponent()
 	: engine("Fume")
 {
-	setSize(500, 450);
+	setSize(500, 700);
 
 	// 1. Haal de JUCE AudioDeviceManager op uit de Tracktion Engine
 	auto& deviceManager = engine.getDeviceManager().deviceManager;
@@ -54,6 +54,8 @@ void MainComponent::resized()
 
 void MainComponent::loadFile()
 {
+	selectionManager.deselectAll();
+
 	editContainerComponent = nullptr;
 	edit = nullptr;
 
@@ -69,7 +71,7 @@ void MainComponent::loadFile()
 		edit = te::createEmptyEdit(engine, editFile);
 	}
 
-	editContainerComponent = std::make_unique<EditContainerComponent>(*edit, inputManager);
+	editContainerComponent = std::make_unique<EditContainerComponent>(engine, *edit, selectionManager, inputManager);
 	addAndMakeVisible(editContainerComponent.get());
 	resized();
 }	

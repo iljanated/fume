@@ -4,11 +4,10 @@
 #include "TrackListComponent.h"
 
 
-TrackListDeleteToolState::TrackListDeleteToolState(TrackListComponent& c, InputManager& i, ToolStateListener& l) : ToolState<TrackListComponent>(c, i, l),
+TrackListDeleteToolState::TrackListDeleteToolState(TrackListComponent& c, fumeUI::UIContext& context, ToolStateListener& l) : ToolState<TrackListComponent>(c, context, l),
 drawableCursor(component.getDrawableCursor()),
 cursor(component.getCursor()),
-cursorAnchor(component.getCursorAnchor()),
-selectionManager(component.getSelectionManager())
+cursorAnchor(component.getCursorAnchor())
 {
 }
 
@@ -24,7 +23,7 @@ void TrackListDeleteToolState::onEnterState()
 	drawableCursor.setStrokeFill(juce::Colours::yellowgreen);
 	drawableCursor.setStrokeThickness(2.0f);
 
-	selectionManager.deleteSelected();
+	uiContext.selectionManager.deleteSelected();
 }
 
 void TrackListDeleteToolState::onExitState()
@@ -109,7 +108,7 @@ void TrackListDeleteToolState::onInputAction(InputManagerActionId actionId, int 
 		{
 			if (isDragging)
 			{
-				selectionManager.deleteSelected();
+				uiContext.selectionManager.deleteSelected();
 			}
 			cursorAnchor.setXY(cursor.getX(), cursor.getY());
 			updateDrawableCursor();
@@ -120,12 +119,14 @@ void TrackListDeleteToolState::onInputAction(InputManagerActionId actionId, int 
 
 void TrackListDeleteToolState::updateSelection()
 {
+	auto& selectionManager = uiContext.selectionManager;
+
 	auto xMin = std::min(cursor.getX(), cursorAnchor.getX());
 	auto xMax = std::max(cursor.getX(), cursorAnchor.getX());
 	auto yMin = (int)std::min(cursor.getY(), cursorAnchor.getY());
 	auto yMax = (int)std::max(cursor.getY(), cursorAnchor.getY());
 
-	for (auto* selectable : selectionManager.getSelectedObjects())
+	for (auto* selectable : uiContext.selectionManager.getSelectedObjects())
 	{
 		if (te::Clip* clip = dynamic_cast<te::Clip*> (selectable))
 		{
