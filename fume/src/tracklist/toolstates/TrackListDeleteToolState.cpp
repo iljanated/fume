@@ -1,171 +1,71 @@
-#pragma once
-
 #include "TrackListDeleteToolState.h"
+#include "TrackListDeleteToolState.h"
+#include "TrackListDeleteToolState.h"
+
 #include "TrackListComponent.h"
 
-
-TrackListDeleteToolState::TrackListDeleteToolState(TrackListComponent& c, fumeUI::UIContext& context, ToolStateListener& l) : ToolState<TrackListComponent>(c, context, l),
-drawableCursor(component.getDrawableCursor()),
-cursor(component.getCursor()),
-cursorAnchor(component.getCursorAnchor())
+TrackListDeleteToolState::TrackListDeleteToolState(TrackListComponent* component)
+	: ToolState<TrackListComponent>(component, "Delete", InputAction::Delete)
 {
 }
-
-
-TrackListDeleteToolState::~TrackListDeleteToolState()
-{
-}
-
 
 void TrackListDeleteToolState::onEnterState()
 {
-	drawableCursor.setFill(juce::FillType(juce::Colours::yellow.withAlpha(0.5f)));
-	drawableCursor.setStrokeFill(juce::Colours::yellowgreen);
-	drawableCursor.setStrokeThickness(2.0f);
-
-	uiContext.selectionManager.deleteSelected();
+	if (component)
+	{
+		auto& selectionBoxComponent = component->getSelectionBoxComponent();
+		selectionBoxComponent.setColour(juce::Colours::yellow);
+	}
 }
 
 void TrackListDeleteToolState::onExitState()
 {
 }
 
-void TrackListDeleteToolState::onInputAction(InputManagerActionId actionId, int inputMask, bool isActive)
+bool TrackListDeleteToolState::keyPressed(const juce::KeyPress& key)
 {
-	if (actionId == InputManagerActionId::LEFT && isActive)
+	if (!component)
 	{
-		if (isDragging)
-		{
-			cursor.setX(std::max(cursor.getX() - 1.0, 0.0));
-			updateSelection();
-			updateDrawableCursor();
-		}
-		else
-		{
-			cursor.setX(std::max(cursor.getX() - 1.0, 0.0));
-			cursorAnchor.setX(cursor.getX());
-			updateDrawableCursor();
-		}
+		return false;
 	}
-	else if (actionId == InputManagerActionId::RIGHT && isActive)
+	auto& uiContext = component->getUIContext();
+	auto& inputManager = uiContext.inputManager;
+
+	auto modifiers = key.getModifiers();
+	auto keyCode = key.getKeyCode();
+	auto& selectionBoxComponent = component->getSelectionBoxComponent();
+
+	if (inputManager.validate(keyCode, modifiers, inputAction) && !selectionBoxComponent.getIsSelecting())
 	{
-		if (isDragging)
-		{
-			cursor.setX(cursor.getX() + 1.0);
-			updateSelection();
-			updateDrawableCursor();
-		}
-		else
-		{
-			cursor.setX(cursor.getX() + 1.0);
-			cursorAnchor.setX(cursor.getX());
-			updateDrawableCursor();
-		}
+		auto& cursorComponent = component->getCursorComponent();
+		cursorComponent.setVisible(false);
+
+		selectionBoxComponent.startSelection(cursorComponent.getCursorPosition());
+		return true;
 	}
-	else if (actionId == InputManagerActionId::UP && isActive)
-	{
-		if (isDragging)
-		{
-			cursor.setY(std::max(cursor.getY() - 1.0, 0.0));
-			updateSelection();
-			updateDrawableCursor();
-		}
-		else
-		{
-			cursor.setY(std::max(cursor.getY() - 1.0, 0.0));
-			cursorAnchor.setY(cursor.getY());
-			updateDrawableCursor();
-		}
-	}
-	else if (actionId == InputManagerActionId::DOWN && isActive)
-	{
-		if (isDragging)
-		{
-			cursor.setY(std::min(cursor.getY() + 1.0, (double)component.getTrackCount() - 1.0));
-			updateSelection();
-			updateDrawableCursor();
-		}
-		else
-		{
-			cursor.setY(std::min(cursor.getY() + 1.0, (double)component.getTrackCount() - 1.0));
-			cursorAnchor.setY(cursor.getY());
-			updateDrawableCursor();
-		}
-	}
-	else if (actionId == InputManagerActionId::DELETE)
-	{
-		if (isActive)
-		{
-			if (!isDragging)
-			{
-				cursorAnchor.setXY(cursor.getX(), cursor.getY());
-				updateSelection();
-				updateDrawableCursor();
-				isDragging = true;
-			}
-		}
-		else
-		{
-			if (isDragging)
-			{
-				uiContext.selectionManager.deleteSelected();
-			}
-			cursorAnchor.setXY(cursor.getX(), cursor.getY());
-			updateDrawableCursor();
-			isDragging = false;
-		}
-	}
+	return false;
 }
 
-void TrackListDeleteToolState::updateSelection()
+bool TrackListDeleteToolState::keyStateChanged(bool isKeyDown)
 {
-	auto& selectionManager = uiContext.selectionManager;
-
-	auto xMin = std::min(cursor.getX(), cursorAnchor.getX());
-	auto xMax = std::max(cursor.getX(), cursorAnchor.getX());
-	auto yMin = (int)std::min(cursor.getY(), cursorAnchor.getY());
-	auto yMax = (int)std::max(cursor.getY(), cursorAnchor.getY());
-
-	for (auto* selectable : uiContext.selectionManager.getSelectedObjects())
+	if (!component)
 	{
-		if (te::Clip* clip = dynamic_cast<te::Clip*> (selectable))
-		{
-			if (auto* track = clip->getTrack())
-			{
-				int trackIndex = track->getIndexInEditTrackList();
-				if (trackIndex < yMin || trackIndex > yMax || clip->getEndBeat().inBeats() < xMin || clip->getStartBeat().inBeats() > xMax)
-				{
-					selectionManager.deselect(clip);
-				}
-			}
-			else
-			{
-				selectionManager.deselect(clip);
-			}
-		}
+		return false;
 	}
+	auto& selectionBoxComponent = component->getSelectionBoxComponent();
+	auto& inputManager = component->getUIContext().inputManager;
 
-	for (int i = yMin; i <= yMax; ++i)
+	if (!isKeyDown && selectionBoxComponent.getIsSelecting() && !inputManager.isCurrentlyPressed(inputAction))
 	{
-		if (auto track = component.getTrackAt(i))
-		{
-			for (auto clip : track->getClips())
-			{
-				if (clip->getStartBeat().inBeats() <= xMax && clip->getEndBeat().inBeats() >= xMin)
-				{
-					selectionManager.addToSelection(*clip);
-				}
-			}
-		}
+		auto& uiContext = component->getUIContext();
+		auto& selectionManager = uiContext.selectionManager;
+		selectionManager.deleteSelected();
+
+		auto& cursorComponent = component->getCursorComponent();
+		cursorComponent.setCursorPosition(selectionBoxComponent.getSelectionEnd());
+		selectionBoxComponent.endSelection();
+		cursorComponent.setVisible(true);
+		return true;
 	}
-}
-
-void TrackListDeleteToolState::updateDrawableCursor()
-{
-	auto gridWidth = std::max(std::abs(cursor.getX() - cursorAnchor.getX()) * FUME_BEAT_WIDTH, 0.01);
-	auto gridHeight = (std::abs(cursor.getY() - cursorAnchor.getY()) + 1.0) * FUME_TRACK_HEIGHT;
-	auto x = std::min(cursor.getX(), cursorAnchor.getX()) * FUME_BEAT_WIDTH;
-	auto y = std::min(cursor.getY(), cursorAnchor.getY()) * FUME_TRACK_HEIGHT;
-
-	drawableCursor.setRectangle(Rectangle<float>(x, y, gridWidth, gridHeight));
+	return false;
 }

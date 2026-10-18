@@ -16,13 +16,9 @@ public:
     //==============================================================================
     void paint(juce::Graphics& g) override;
 
-    void resized() override;
+	void resized() override;
 
-	void parentHierarchyChanged() override;
-
-    void modifierKeysChanged(const ModifierKeys& modifiers) override;
-
-    void loadFile();
+	void loadFile();
 
 private:
     //==============================================================================

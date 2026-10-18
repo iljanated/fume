@@ -5,8 +5,7 @@
 namespace te = tracktion;
 
 class TransportComponent : public juce::Component,
-	public juce::Button::Listener,
-    public InputManagerListener
+	public juce::Button::Listener
 {
 public:
     //==============================================================================
@@ -19,8 +18,6 @@ public:
 
     void resized() override;
 
-	void onInputAction(InputManagerActionId actionId, int inputMask, bool isActive) override;
-
 private:
     //==============================================================================
     fumeUI::UIContext& uiContext;
@@ -28,7 +25,6 @@ private:
 
     void buttonClicked(juce::Button* button) override;
 
-	void startPlay(bool fromStart);
     void togglePlay();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportComponent)

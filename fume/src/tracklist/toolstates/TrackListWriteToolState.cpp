@@ -1,119 +1,135 @@
 #include "TrackListWriteToolState.h"
+
 #include "TrackListComponent.h"
 
-namespace te = tracktion;
-
-TrackListWriteToolState::TrackListWriteToolState(TrackListComponent& c, fumeUI::UIContext& context, ToolStateListener& l)
-	: ToolState<TrackListComponent>(c, context, l),
-	drawableCursor(component.getDrawableCursor()),
-	cursor(component.getCursor()),
-	cursorAnchor(component.getCursorAnchor())
+TrackListWriteToolState::TrackListWriteToolState(TrackListComponent* component)
+	: ToolState<TrackListComponent>(component, "Write", InputAction::Write)
 {
 }
-
-
-TrackListWriteToolState::~TrackListWriteToolState()
-{
-}
-
 
 void TrackListWriteToolState::onEnterState()
 {
-	drawableCursor.setFill(juce::FillType(juce::Colours::indianred.withAlpha(0.5f)));
-	drawableCursor.setStrokeFill(juce::Colours::orangered);
-	drawableCursor.setStrokeThickness(2.0f);
 }
 
 void TrackListWriteToolState::onExitState()
 {
 }
 
-void TrackListWriteToolState::onInputAction(InputManagerActionId actionId, int inputMask, bool isActive)
+bool TrackListWriteToolState::keyPressed(const juce::KeyPress& key)
 {
-	if (actionId == InputManagerActionId::LEFT && isActive)
+	if (!component)
 	{
-		if (isDragging)
-		{
-			cursor.setX(std::max(cursor.getX() - 1.0, 0.0));
-			updateDrawableCursor();
-		}
-		else
-		{
-			cursor.setX(std::max(cursor.getX() - 1.0, 0.0));
-			cursorAnchor.setX(cursor.getX());
-			updateDrawableCursor();
-		}
+		return false;
 	}
-	else if (actionId == InputManagerActionId::RIGHT && isActive)
+	auto& uiContext = component->getUIContext();
+	auto& inputManager = uiContext.inputManager;
+
+	auto modifiers = key.getModifiers();
+	auto keyCode = key.getKeyCode();
+
+	auto& selectionBoxComponent = component->getSelectionBoxComponent();
+
+	if (inputManager.validate(keyCode, modifiers, inputAction) && !isWriting)
 	{
-		if (isDragging)
-		{
-			cursor.setX(cursor.getX() + 1.0);
-			updateDrawableCursor();
-		}
-		else
-		{
-			cursor.setX(cursor.getX() + 1.0);
-			cursorAnchor.setX(cursor.getX());
-			updateDrawableCursor();
-		}
+		isWriting = true;
+		auto& cursorComponent = component->getCursorComponent();
+		cursorComponent.setVisible(false);
+		auto cursorPosition = cursorComponent.getCursorPosition();
+
+		auto& edit = component->getUIContext().edit;
+
+		auto startBeat = te::BeatPosition::fromBeats(cursorPosition.x);
+		auto endBeat = te::BeatPosition::fromBeats(cursorPosition.x + 4.0);
+
+		auto trackIndex = (int)cursorPosition.y;
+		auto track = component->getTrackAt(trackIndex);
+		te::TempoSequence& tempoSequence = edit.tempoSequence;
+		auto midiClip = track->insertMIDIClip(tempoSequence.toTime({ startBeat, endBeat }), nullptr);
+
+		auto& selectionManager = component->getUIContext().selectionManager;
+		selectionManager.deselectAll();
+		selectionManager.addToSelection(midiClip);
+		
+		return true;
 	}
-	else if (actionId == InputManagerActionId::UP && isActive)
+	else if (isWriting && inputManager.validate(keyCode, modifiers, InputAction::Left))
 	{
-		cursor.setY(std::max(cursor.getY() - 1.0, 0.0));
-		cursorAnchor.setY(cursor.getY());
-		updateDrawableCursor();
-	}
-	else if (actionId == InputManagerActionId::DOWN && isActive)
-	{
-		double trackCount = (double)component.getTrackCount();
-		cursor.setY(std::min(cursor.getY() + 1.0, trackCount - 1.0));
-		cursorAnchor.setY(cursor.getY());
-		updateDrawableCursor();
-	}
-	else if (actionId == InputManagerActionId::WRITE)
-	{
-		if (isActive)
+		auto& edit = component->getUIContext().edit;
+
+		auto snappingInterval = component->getSnappingInterval();
+		auto& selectionManager = component->getUIContext().selectionManager;
+
+		for (auto* selectable : selectionManager.getSelectedObjects())
 		{
-			if (!isDragging)
+			if (auto* midiClip = dynamic_cast<tracktion_engine::MidiClip*> (selectable))
 			{
-				uiContext.selectionManager.deselectAll();
-				cursorAnchor.setXY(cursor.getX(), cursor.getY());
-				updateDrawableCursor();
-				isDragging = true;
+				if (midiClip->getLengthInBeats().inBeats() <= snappingInterval)
+				{
+					DBG("Cannot shrink clip below snapping interval");
+					continue;
+				}
+				auto endBeat = midiClip->getEndBeat();
+				auto newEndBeat = te::BeatPosition::fromBeats(endBeat.inBeats() - snappingInterval);
+				auto newEndTime = edit.tempoSequence.toTime(newEndBeat);
+				midiClip->setEnd(newEndTime,false);
 			}
 		}
-		else
+	}
+	else if (isWriting && inputManager.validate(keyCode, modifiers, InputAction::Right))
+	{
+		auto& edit = component->getUIContext().edit;
+
+		auto snappingInterval = component->getSnappingInterval();
+		auto& selectionManager = component->getUIContext().selectionManager;
+
+		for (auto* selectable : selectionManager.getSelectedObjects())
 		{
-			auto trackIndex = (int)cursor.getY();
-			auto track = component.getTrackAt(trackIndex);
-
-			if (std::abs(cursor.getX() - cursorAnchor.getX()) > 0.01)
+			if (auto* midiClip = dynamic_cast<tracktion_engine::MidiClip*> (selectable))
 			{
-				auto startBeat = te::BeatPosition::fromBeats(std::min(cursor.getX(), cursorAnchor.getX()));
-				auto endBeat = te::BeatPosition::fromBeats(std::max(cursor.getX(), cursorAnchor.getX()));
-
-				te::TempoSequence& tempoSequence = track->edit.tempoSequence;
-				auto midiClip = track->insertMIDIClip(tempoSequence.toTime({ startBeat, endBeat }), nullptr);
-
-				uiContext.selectionManager.addToSelection(midiClip);
-
-				cursor.setX(std::max(cursor.getX(), cursorAnchor.getX()));
-				cursorAnchor.setXY(cursor.getX(), cursor.getY());
-				updateDrawableCursor();
-
+				auto endBeat = midiClip->getEndBeat();
+				auto newEndBeat = te::BeatPosition::fromBeats(endBeat.inBeats() + snappingInterval);
+				auto newEndTime = edit.tempoSequence.toTime(newEndBeat);
+				midiClip->setEnd(newEndTime, false);
+				DBG("Extended clip to " << newEndBeat.inBeats() << " beats");
 			}
-			isDragging = false;
 		}
 	}
+	return false;
 }
 
-void TrackListWriteToolState::updateDrawableCursor()
+bool TrackListWriteToolState::keyStateChanged(bool isKeyDown)
 {
-	auto gridWidth = std::max(std::abs(cursor.getX() - cursorAnchor.getX()) * FUME_BEAT_WIDTH, 0.01);
-	auto gridHeight = FUME_TRACK_HEIGHT;
-	auto x = std::min(cursor.getX(), cursorAnchor.getX()) * FUME_BEAT_WIDTH;
-	auto y = std::min(cursor.getY(), cursorAnchor.getY()) * FUME_TRACK_HEIGHT;
+	if (!component)
+	{
+		return false;
+	}
+	auto& selectionBoxComponent = component->getSelectionBoxComponent();
+	auto& inputManager = component->getUIContext().inputManager;
 
-	drawableCursor.setRectangle(Rectangle<float>(x, y, gridWidth, gridHeight));
+	if (!isKeyDown && isWriting && !inputManager.isCurrentlyPressed(inputAction))
+	{
+		isWriting = false;
+
+		double endBeat = -1.0;
+
+		auto& selectionManager = component->getUIContext().selectionManager;
+		for (auto* selectable : selectionManager.getSelectedObjects())
+		{
+			if (auto* midiClip = dynamic_cast<tracktion_engine::MidiClip*> (selectable))
+			{
+				endBeat = midiClip->getEndBeat().inBeats();
+				break;
+			}
+		}
+
+		auto& cursorComponent = component->getCursorComponent();
+
+		if (endBeat >= 0.0)
+		{
+			cursorComponent.setCursorPosition({ endBeat, cursorComponent.getCursorPosition().y });
+		}
+		cursorComponent.setVisible(true);
+		return true;
+	}
+	return false;	
 }

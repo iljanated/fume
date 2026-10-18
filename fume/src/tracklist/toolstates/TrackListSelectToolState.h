@@ -11,20 +11,18 @@ namespace te = tracktion;
 class TrackListSelectToolState : public ToolState<TrackListComponent>
 {
 public:
-	TrackListSelectToolState(TrackListComponent& c, fumeUI::UIContext& context, ToolStateListener& l);
-	~TrackListSelectToolState() override;
+	TrackListSelectToolState(TrackListComponent* component);
+
+	~TrackListSelectToolState() override = default;
 
 	void onEnterState() override;
 
 	void onExitState() override;
 
-	void onInputAction(InputManagerActionId actionId, int inputMask, bool isActive) override;
-private:
-	juce::DrawableRectangle& drawableCursor;
-	juce::Point<double>& cursor;
-	juce::Point<double>& cursorAnchor;
-	bool isDragging = false;
+	bool keyPressed(const juce::KeyPress& key) override;
 
-	void updateSelection();
-	void updateDrawableCursor();
+	bool keyStateChanged(bool isKeyDown) override;
+
+private:
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackListSelectToolState)
 };

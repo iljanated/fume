@@ -10,23 +10,29 @@ TrackListComponent::TrackListComponent(fumeUI::UIContext& context, juce::Viewpor
 	uiContext(context),
 	viewport(v)
 {
+	addAndMakeVisible(currentPositionMarker);
+	currentPositionMarker.setFill(Colours::white.withAlpha(0.85f));
+	currentPositionMarker.setAlwaysOnTop(true);
+
+	addChildComponent(selectionBoxComponent);
+	selectionBoxComponent.setAlwaysOnTop(true);
+	selectionBoxComponent.addComponentListener(this);
+
+	addAndMakeVisible(cursorComponent);
+	cursorComponent.setAlwaysOnTop(true);
+	cursorComponent.addComponentListener(this);
+
+	setWantsKeyboardFocus(true);
+
 	uiContext.selectionManager.addChangeListener(this);
 	
-	selectToolState = std::make_unique<TrackListSelectToolState>(*this, uiContext, *this);
-	writeToolState = std::make_unique<TrackListWriteToolState>(*this, uiContext, *this);
-	deleteToolState = std::make_unique<TrackListDeleteToolState>(*this, uiContext, *this);
+	selectToolState = std::make_unique<TrackListSelectToolState>(this);
+	writeToolState = std::make_unique<TrackListWriteToolState>(this);
+	deleteToolState = std::make_unique<TrackListDeleteToolState>(this);
 
-	uiContext.edit.state.setProperty(FumeIDs::timelineHorizontalZoom, 1.0f, &uiContext.edit.getUndoManager());
-	uiContext.edit.state.setProperty(FumeIDs::timelineVerticalZoom, 1.0f, &uiContext.edit.getUndoManager());
-	uiContext.edit.state.setProperty(FumeIDs::timelineQuantisation, 1.0f, &uiContext.edit.getUndoManager());
-
-	uiContext.inputManager.add(this);
-	currentPositionMarker.setFill(Colours::white.withAlpha(0.85f));
-	addAndMakeVisible(currentPositionMarker);
-
-	drawableCursor.setFill(Colours::white.withAlpha(0.85f));
-	drawableCursor.addComponentListener(this);
-	addAndMakeVisible(drawableCursor);
+	uiContext.edit.state.setProperty(FumeIDs::ZoomX, 1.0f, &uiContext.edit.getUndoManager());
+	uiContext.edit.state.setProperty(FumeIDs::ZoomY, 1.0f, &uiContext.edit.getUndoManager());
+	uiContext.edit.state.setProperty(FumeIDs::Quantisation, 1.0f, &uiContext.edit.getUndoManager());
 
 	rebuildObjects();
 
@@ -37,7 +43,6 @@ TrackListComponent::TrackListComponent(fumeUI::UIContext& context, juce::Viewpor
 
 TrackListComponent::~TrackListComponent()
 {
-	uiContext.inputManager.remove(this);
 	freeObjects();
 }
 
@@ -57,6 +62,10 @@ te::AudioTrack* TrackListComponent::getTrackAt(int index) const
 
 void TrackListComponent::activateToolState(ToolState<TrackListComponent>* newState)
 {
+	if (currentToolState == newState)
+	{
+		return;
+	}
 	if (currentToolState)
 	{
 		currentToolState->onExitState();
@@ -64,50 +73,34 @@ void TrackListComponent::activateToolState(ToolState<TrackListComponent>* newSta
 	currentToolState = newState;
 	if (currentToolState)
 	{
+		DBG("Activating tool state: " << typeid(*currentToolState).name());
 		currentToolState->onEnterState();
-	}
-}
-
-void TrackListComponent::onToolStateFinished()
-{
-	activateToolState(selectToolState.get());
-}
-
-void TrackListComponent::onInputAction(InputManagerActionId actionId, int inputMask, bool isActive)
-{
-	if (actionId == InputManagerActionId::SELECT && isActive && currentToolState != selectToolState.get())
-	{
-		activateToolState(selectToolState.get());
-	}
-	else if (actionId == InputManagerActionId::WRITE && isActive && currentToolState != writeToolState.get())
-	{
-		activateToolState(writeToolState.get());
-	}
-	else if (actionId == InputManagerActionId::DELETE && isActive && currentToolState != deleteToolState.get())
-	{
-		activateToolState(deleteToolState.get());
-	}
-
-	if (currentToolState)
-	{
-		currentToolState->onInputAction(actionId, inputMask, isActive);
 	}
 }
 
 void TrackListComponent::paint(juce::Graphics& g)
 {
-	auto localBounds = getLocalBounds();
+	auto clipBounds = g.getClipBounds();
 
-	g.setColour(juce::Colours::white.withAlpha(0.2f));
-	g.drawRect(localBounds);
+	float zoomX = uiContext.edit.state.getProperty(FumeIDs::ZoomX, 1.0f);
+	float zoomY = uiContext.edit.state.getProperty(FumeIDs::ZoomY, 1.0f);
+	auto beatWidth = FUME_TIMELINE_BEAT_WIDTH * zoomX;
+	auto trackHeight = FUME_TIMELINE_TRACK_HEIGHT * zoomY;
 
-	g.setColour(Colours::white.withMultipliedAlpha(0.5f));
-	g.fillRectList(gridBackgroundsLight);
-	g.setColour(Colours::white.withMultipliedAlpha(0.2f));
-	g.fillRectList(gridBackgroundsDark);
+	g.fillAll(juce::Colours::lightgrey);
 
-	g.setColour(Colours::white.withMultipliedAlpha(0.7f));
-	g.strokePath(gridLines, juce::PathStrokeType(1.0f));
+	fumeUI::drawGrid(g, clipBounds, *this, juce::Colours::lightgrey.darker(0.8f), juce::Colours::lightgrey.darker(0.2f));
+	
+	if (hasKeyboardFocus(true))
+	{
+		g.setColour(juce::Colours::red);
+	}
+	else
+	{
+		g.setColour(juce::Colours::white);
+	}
+	g.drawRect(viewport.getViewArea());
+
 }
 
 void TrackListComponent::resized()
@@ -117,10 +110,66 @@ void TrackListComponent::resized()
 	{
 		if (auto object = objectWrapper->getObject())
 		{
-			object->setBounds(localBounds.removeFromTop(FUME_TRACK_HEIGHT));
+			object->setBounds(localBounds.removeFromTop(FUME_TIMELINE_TRACK_HEIGHT));
 		}
 	}
-	updatePaths();
+}
+
+void TrackListComponent::focusGained(FocusChangeType cause)
+{
+	repaint();
+}
+
+void TrackListComponent::focusLost(FocusChangeType cause)
+{
+	repaint();
+}
+
+bool TrackListComponent::keyPressed(const juce::KeyPress& key)
+{
+	auto modifiers = key.getModifiers();
+	auto keyCode = key.getKeyCode();
+	auto& inputManager = uiContext.inputManager;
+
+	if (currentToolState != selectToolState.get() && inputManager.validate(keyCode, modifiers, InputAction::Select))
+	{
+		activateToolState(selectToolState.get());
+	}
+	else if (currentToolState != writeToolState.get() && inputManager.validate(keyCode, modifiers, InputAction::Write))
+	{
+		activateToolState(writeToolState.get());
+	}
+	else if (currentToolState != deleteToolState.get() && inputManager.validate(keyCode, modifiers, InputAction::Delete))
+	{
+		activateToolState(deleteToolState.get());
+	}
+
+	if (currentToolState && currentToolState->keyPressed(key))
+	{
+		DBG("ToolState handled it");
+		return true;
+	}
+	if (selectionBoxComponent.getIsSelecting() && selectionBoxComponent.keyPressed(key))
+	{
+		DBG("SelectionBoxComponent handled it");
+		return true;
+	}
+	
+	if (cursorComponent.keyPressed(key))
+	{
+		DBG("CursorComponent handled it");
+		return true;
+	}
+	return false;
+}
+
+bool TrackListComponent::keyStateChanged(bool isKeyDown)
+{
+	if (currentToolState)
+	{
+		return currentToolState->keyStateChanged(isKeyDown);
+	}
+	return false;
 }
 
 bool TrackListComponent::isSuitableType(const juce::ValueTree& v) const
@@ -137,8 +186,6 @@ Helpers::AsyncValueTreeItem<TrackComponent>* TrackListComponent::createNewObject
 			assert(t);
 			auto tc = std::make_unique<TrackComponent>(*t, uiContext);
 			addAndMakeVisible(*tc);
-			drawableCursor.toFront(false);
-			currentPositionMarker.toFront(false);
 			asyncResizer.resizeAsync();
 			return tc;
 		});
@@ -173,50 +220,12 @@ void TrackListComponent::timerCallback()
 
 void TrackListComponent::updateCurrentPositionMarker()
 {
-	float zoom = uiContext.edit.state.getProperty(FumeIDs::timelineHorizontalZoom, 1.0f);
+	float zoom = uiContext.edit.state.getProperty(FumeIDs::ZoomX, 1.0f);
 	auto position = uiContext.edit.getTransport().getPosition();
 	te::TempoSequence& tempoSequence = uiContext.edit.tempoSequence;
 	auto beats = tempoSequence.toBeats(position);
-	auto offset = (float)beats.inBeats() * FUME_BEAT_WIDTH * zoom;
+	auto offset = (float)beats.inBeats() * FUME_TIMELINE_BEAT_WIDTH * zoom;
 	currentPositionMarker.setRectangle(Rectangle<float>(offset, 0, 1.5f, (float)(getHeight())));
-}
-
-void TrackListComponent::updatePaths()
-{
-	gridBackgroundsLight.clear();
-	gridBackgroundsDark.clear();
-	float zoom = uiContext.edit.state.getProperty(FumeIDs::timelineHorizontalZoom, 1.0f);
-
-	auto height = (float)getHeight();
-	auto beatWidth = FUME_BEAT_WIDTH * zoom;
-
-	auto beatsPerRectangle = 16;
-
-	for (int i = 0; i < 30; i = i + beatsPerRectangle)
-	{
-		auto offset = (float)i * beatWidth;
-
-		if (i % (beatsPerRectangle * 2) == 0)
-		{
-			gridBackgroundsDark.add(Rectangle<float>(offset, 0, beatWidth * beatsPerRectangle, height));
-		}
-		else
-		{
-			gridBackgroundsLight.add(Rectangle<float>(offset, 0, beatWidth * beatsPerRectangle, height));
-		}
-	}
-
-	auto beatsPerGridLine = 4;
-
-	gridLines.clear();
-
-	for (int i = 0; i < 30; i = i + beatsPerGridLine)
-	{
-		auto offset = (float)i * beatWidth;
-
-		gridLines.startNewSubPath(offset, 0);
-		gridLines.lineTo(offset, height);
-	}
 }
 
 void TrackListComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
@@ -229,12 +238,10 @@ void TrackListComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 
 void TrackListComponent::componentMovedOrResized(Component& component, bool wasMoved, bool wasResized)
 {
-	if (&component == &drawableCursor)
+	if (&component == &cursorComponent)
 	{
-		auto x = cursor.getX() * FUME_BEAT_WIDTH;
-		auto y = cursor.getY() * FUME_TRACK_HEIGHT;
-
-
+		auto x = cursorComponent.getX();
+		auto y = cursorComponent.getY();
 
 		juce::Rectangle<int> viewArea = viewport.getViewArea();
 		int currentScrollX = viewArea.getX();
@@ -262,9 +269,9 @@ void TrackListComponent::componentMovedOrResized(Component& component, bool wasM
 		{
 			targetScrollY = y - FUME_SCROLL_PADDING;
 		}
-		else if(y + FUME_TRACK_HEIGHT > maxY - FUME_SCROLL_PADDING)
+		else if(y + FUME_TIMELINE_TRACK_HEIGHT > maxY - FUME_SCROLL_PADDING)
 		{
-			targetScrollY = y + FUME_TRACK_HEIGHT - viewHeight + FUME_SCROLL_PADDING;
+			targetScrollY = y + FUME_TIMELINE_TRACK_HEIGHT - viewHeight + FUME_SCROLL_PADDING;
 		}
 
 		if (targetScrollX != currentScrollX || targetScrollY != currentScrollY)
@@ -274,12 +281,66 @@ void TrackListComponent::componentMovedOrResized(Component& component, bool wasM
 	}
 }
 
+void TrackListComponent::selectItemsInBox(const juce::Rectangle<double>& selectionBox)
+{
+	auto& selectionManager = uiContext.selectionManager;
+
+	auto xMin = selectionBox.getX();
+	auto xMax = selectionBox.getRight();
+	auto yMin = selectionBox.getY();
+	auto yMax = selectionBox.getBottom();
+
+	DBG(selectionBox.toString());
+
+	for (auto* selectable : uiContext.selectionManager.getSelectedObjects())
+	{
+		if (te::Clip* clip = dynamic_cast<te::Clip*> (selectable))
+		{
+			if (auto* track = clip->getTrack())
+			{
+				int trackIndex = track->getIndexInEditTrackList();
+				if (trackIndex < yMin || trackIndex > yMax || clip->getEndBeat().inBeats() < xMin || clip->getStartBeat().inBeats() > xMax)
+				{
+					selectionManager.deselect(clip);
+				}
+			}
+			else
+			{
+				selectionManager.deselect(clip);
+			}
+		}
+	}
+
+	for (int i = yMin; i <= yMax; ++i)
+	{
+		if (auto track = getTrackAt(i))
+		{
+			for (auto clip : track->getClips())
+			{
+				if (clip->getStartBeat().inBeats() <= xMax && clip->getEndBeat().inBeats() >= xMin)
+				{
+					selectionManager.addToSelection(*clip);
+				}
+			}
+		}
+	}
+}
+
 void TrackListComponent::resizeViewport()
+{
+	auto gridSize = getGridSize();
+	auto width = gridSize.getX() * FUME_TIMELINE_BEAT_WIDTH;
+	auto height = gridSize.getY() * FUME_TIMELINE_TRACK_HEIGHT + FUME_SCROLL_PADDING;
+	setBounds(0, 0, width, height);
+
+}
+
+juce::Point<double> TrackListComponent::getGridSize() const
 {
 	auto& edit = uiContext.edit;
 	te::TimePosition timePosition = te::TimePosition::fromSeconds(edit.getMaximumLength().inSeconds());
-	auto width = (int)(edit.tempoSequence.timeToBeats(timePosition).inBeats() * FUME_BEAT_WIDTH);
-	auto height = getTrackCount() * FUME_TRACK_HEIGHT + FUME_SCROLL_PADDING;
-	setBounds(0, 0, width, height);
+	auto width = edit.tempoSequence.timeToBeats(timePosition).inBeats();
+	auto height = static_cast<double>(getTrackCount());
 
+	return { width, height };
 }

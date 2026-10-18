@@ -1,0 +1,122 @@
+﻿#pragma once
+
+#include <JuceHeader.h>
+#include <SDL3/SDL.h>
+
+enum class InputManagerActionId : uint32_t
+{
+    NONE = 0,
+    UP = 1 << 0,
+	DOWN = 1 << 1,
+	LEFT = 1 << 2,
+	RIGHT = 1 << 3,
+    SELECT = 1 << 4,
+    WRITE = 1 << 5,
+	EDIT = 1 << 6,
+	DELETE = 1 << 7,
+    MOD1 = 1 << 8,
+	UNDO = 1 << 9,
+	LT = 1 << 10,
+	RT = 1 << 11,
+	LSB = 1 << 12,
+	RSB = 1 << 13,
+	PLAY = 1 << 14,
+	OPTION = 1 << 15
+};
+
+inline InputManagerActionId operator|(InputManagerActionId lhs, InputManagerActionId rhs) {
+	return static_cast<InputManagerActionId>(
+		static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs)
+		);
+}
+
+// Enable bitwise AND
+inline InputManagerActionId operator&(InputManagerActionId lhs, InputManagerActionId rhs) {
+	return static_cast<InputManagerActionId>(
+		static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs)
+		);
+}
+
+// Enable bitwise NOT (useful for clearing flags)
+inline InputManagerActionId operator~(InputManagerActionId rhs) {
+	return static_cast<InputManagerActionId>(~static_cast<uint32_t>(rhs));
+}
+
+// Enable bitwise OR-assignment (my_flags |= FileAccess::Read)
+inline InputManagerActionId& operator|=(InputManagerActionId& lhs, InputManagerActionId rhs) {
+	lhs = static_cast<InputManagerActionId>(
+		static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs)
+		);
+	return lhs;
+}
+
+// Enable bitwise AND-assignment (my_flags &= FileAccess::Write)
+inline InputManagerActionId& operator&=(InputManagerActionId& lhs, InputManagerActionId rhs) {
+	lhs = static_cast<InputManagerActionId>(
+		static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs)
+		);
+	return lhs;
+}
+
+enum InputManagerInputType : int
+{
+	KeyCode,
+	Modifier,
+    Button
+};
+
+struct InputManagerActionBinding
+{
+	InputManagerInputType type;
+	int value;
+};
+
+struct InputManagerAction
+{
+	InputManagerActionId id;
+	juce::Array<InputManagerActionBinding> bindings;
+	bool isRepeating;
+};
+
+class InputManagerListener {
+public:
+	virtual void onInputAction(InputManagerActionId actionId, InputManagerActionId inputMask, bool isActive) = 0;
+};
+
+class InputManager : public juce::LightweightListenerList<InputManagerListener>,
+    public juce::KeyListener,
+	private juce::Timer
+{
+public:
+    //==============================================================================
+    InputManager();
+
+    ~InputManager();
+
+    //==============================================================================
+
+    bool keyPressed(const KeyPress& key, Component* originatingComponent) override;
+    bool keyStateChanged(bool isKeyDown, Component* originatingComponent) override;
+
+private:
+    //==============================================================================
+	juce::HashMap<int, InputManagerAction> actions;
+	juce::HashMap<int, InputManagerActionId> keyCodeToActionMap;
+	juce::HashMap<int, InputManagerActionId> buttonToActionMap;
+	juce::HashMap<int, int> pressedButtons;
+	
+    InputManagerActionId inputMask;
+	
+	bool buttonPressed(SDL_GamepadButton button);
+	bool buttonReleased(SDL_GamepadButton button);
+	void updateKeyCodeToActionMap();
+	void updateButtonToActionMap();
+	bool modifierKeysChanged(int modifiers);
+	bool evaluateInputsStillActive();
+	void initSDL();
+	void quitSDL();
+	void pollSDL();
+	void timerCallback() override;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(InputManager)
+};

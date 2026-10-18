@@ -15,6 +15,7 @@ public:
 
 private:
     fumeUI::UIContext& uiContext;
+	juce::Viewport viewport;
 	std::unique_ptr<ClipEditorImplementationComponent> implementationComponent;
 
 	void changeListenerCallback(juce::ChangeBroadcaster* source) override;

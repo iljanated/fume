@@ -1,0 +1,25 @@
+﻿#pragma once
+
+#include <JuceHeader.h>
+
+template <typename T>
+class ToolState
+{
+public:
+	ToolState(T* component, const juce::String& name) : component(component), name(name) {}
+	~ToolState() = default;
+	
+	virtual void onEnterState() = 0;
+	virtual void onExitState() = 0;
+
+	virtual bool keyPressed(const juce::KeyPress& key) = 0;
+	virtual bool keyStateChanged(bool isKeyDown) = 0;
+
+	juce::String getName() const { return name; }
+
+protected:
+	T* component = nullptr;
+	juce::String name;
+
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ToolState)
+};

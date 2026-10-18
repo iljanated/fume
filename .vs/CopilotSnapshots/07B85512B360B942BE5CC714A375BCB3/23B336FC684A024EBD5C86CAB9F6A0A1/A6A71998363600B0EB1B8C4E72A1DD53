@@ -1,0 +1,391 @@
+﻿#pragma once
+#include "InputManager.h"
+#include "Utilities.h"
+
+InputManager::InputManager()
+{
+	actions.set(static_cast<int>(InputManagerActionId::LEFT),
+		{
+			InputManagerActionId::LEFT,
+			{
+				InputManagerActionBinding{ InputManagerInputType::KeyCode, SDL_SCANCODE_LEFT },
+				InputManagerActionBinding{ InputManagerInputType::Button, SDL_GamepadButton::SDL_GAMEPAD_BUTTON_DPAD_LEFT }
+			},
+			true
+		});
+	actions.set(static_cast<int>(InputManagerActionId::RIGHT),
+		{
+			InputManagerActionId::RIGHT,
+			{
+				InputManagerActionBinding{ InputManagerInputType::KeyCode, SDL_SCANCODE_RIGHT },
+				InputManagerActionBinding{ InputManagerInputType::Button, SDL_GamepadButton::SDL_GAMEPAD_BUTTON_DPAD_RIGHT }
+			},
+			true
+		});
+	actions.set(static_cast<int>(InputManagerActionId::UP),
+		{
+			InputManagerActionId::UP,
+			{
+				InputManagerActionBinding{ InputManagerInputType::KeyCode, SDL_SCANCODE_UP },
+				InputManagerActionBinding{ InputManagerInputType::Button, SDL_GamepadButton::SDL_GAMEPAD_BUTTON_DPAD_UP }
+			},
+			true
+		});
+	actions.set(static_cast<int>(InputManagerActionId::DOWN),
+		{
+			InputManagerActionId::DOWN,
+			{
+				InputManagerActionBinding{ InputManagerInputType::KeyCode, SDL_SCANCODE_DOWN },
+				InputManagerActionBinding{ InputManagerInputType::Button, SDL_GamepadButton::SDL_GAMEPAD_BUTTON_DPAD_DOWN }
+			},
+			true
+		});
+	actions.set(static_cast<int>(InputManagerActionId::PLAY),
+		{
+			InputManagerActionId::PLAY,
+			{
+				InputManagerActionBinding{ InputManagerInputType::KeyCode, SDL_SCANCODE_SPACE },
+				InputManagerActionBinding{ InputManagerInputType::Button, SDL_GamepadButton::SDL_GAMEPAD_BUTTON_START }
+			},
+			false
+		});
+	actions.set(static_cast<int>(InputManagerActionId::SELECT),
+		{
+			InputManagerActionId::SELECT,
+			{
+				InputManagerActionBinding{ InputManagerInputType::KeyCode, SDL_SCANCODE_S },
+				InputManagerActionBinding{ InputManagerInputType::Button, SDL_GamepadButton::SDL_GAMEPAD_BUTTON_SOUTH }
+			},
+			false
+		});
+	actions.set(static_cast<int>(InputManagerActionId::WRITE),
+		{
+			InputManagerActionId::WRITE,
+			{
+				InputManagerActionBinding{ InputManagerInputType::KeyCode, SDL_SCANCODE_D },
+				InputManagerActionBinding{ InputManagerInputType::Button, SDL_GamepadButton::SDL_GAMEPAD_BUTTON_EAST }
+			},
+			false
+		});
+	actions.set(static_cast<int>(InputManagerActionId::EDIT),
+		{
+			InputManagerActionId::EDIT,
+			{
+				InputManagerActionBinding{ InputManagerInputType::KeyCode, SDL_SCANCODE_Q },
+				InputManagerActionBinding{ InputManagerInputType::KeyCode, SDL_SCANCODE_A },
+				InputManagerActionBinding{ InputManagerInputType::Button, SDL_GamepadButton::SDL_GAMEPAD_BUTTON_WEST }
+			},
+			false
+		});
+	actions.set(static_cast<int>(InputManagerActionId::DELETE),
+		{
+			InputManagerActionId::DELETE,
+			{
+				InputManagerActionBinding{ InputManagerInputType::KeyCode, SDL_SCANCODE_Z },
+				InputManagerActionBinding{ InputManagerInputType::KeyCode, SDL_SCANCODE_W },
+				InputManagerActionBinding{ InputManagerInputType::Button, SDL_GamepadButton::SDL_GAMEPAD_BUTTON_NORTH }
+			},
+			false
+		});
+	actions.set(static_cast<int>(InputManagerActionId::MOD1),
+		{
+			InputManagerActionId::MOD1,
+			{
+				InputManagerActionBinding{ InputManagerInputType::Modifier, SDL_KMOD_SHIFT },
+				InputManagerActionBinding{ InputManagerInputType::Button, SDL_GamepadButton::SDL_GAMEPAD_BUTTON_LEFT_SHOULDER }
+			},
+			false
+		});
+	actions.set(static_cast<int>(InputManagerActionId::UNDO),
+		{
+			InputManagerActionId::UNDO,
+			{
+				InputManagerActionBinding{ InputManagerInputType::KeyCode, SDL_SCANCODE_E },
+				InputManagerActionBinding{ InputManagerInputType::Button, SDL_GamepadButton::SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER }
+			},
+			false
+		});
+
+	updateKeyCodeToActionMap();
+	updateButtonToActionMap();
+
+	initSDL();
+	startTimerHz(60);
+
+}
+
+InputManager::~InputManager()
+{
+	quitSDL();
+}
+
+bool InputManager::buttonPressed(SDL_GamepadButton button)
+{
+	if (buttonToActionMap.contains(button))
+	{
+		auto actionId = buttonToActionMap[button];
+		
+		auto action = actions[static_cast<int>(actionId)];
+		if ((inputMask & actionId) == InputManagerActionId::NONE || action.isRepeating)
+		{
+			inputMask |= actionId;
+			call(&InputManagerListener::onInputAction, action.id, inputMask, true);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool InputManager::keyPressed(SDL_Scancode keyCode)
+{
+	if (keyCodeToActionMap.contains(static_cast<int>(keyCode)))
+	{
+		auto actionId = keyCodeToActionMap[static_cast<int>(keyCode)];
+		auto action = actions[static_cast<int>(actionId)];
+		if ((inputMask & actionId) == InputManagerActionId::NONE || action.isRepeating)
+		{
+			inputMask |= actionId;
+			call(&InputManagerListener::onInputAction, actionId, inputMask, true);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool InputManager::keyReleased(SDL_Scancode keyCode)
+{
+	if (pressedKeys.contains(static_cast<int>(keyCode)))
+	{
+		pressedKeys.remove(static_cast<int>(keyCode));
+		return evaluateInputsStillActive();
+	}
+	return false;
+}
+
+bool InputManager::evaluateInputsStillActive()
+{
+	bool result = false;
+	juce::HashMap<int, InputManagerAction>::Iterator i(actions);
+	while (i.next())
+	{
+		auto action = i.getValue();
+		if ((inputMask & action.id) != InputManagerActionId::NONE)
+		{
+			auto bindings = action.bindings;
+			bool allKeysReleased = true;
+
+			for (InputManagerActionBinding& binding : bindings)
+			{
+				if (binding.type == InputManagerInputType::KeyCode)
+				{
+					if (pressedKeys.contains(binding.value))
+					{
+						allKeysReleased = false;
+						break;
+					}
+				}
+				else if (binding.type == InputManagerInputType::Modifier)
+				{
+					if ((modifiers & binding.value) != 0)
+					{
+						allKeysReleased = false;
+						break;
+					}
+				}
+				else if (binding.type == InputManagerInputType::Button)
+				{
+					if (pressedButtons.contains(binding.value))
+					{
+						allKeysReleased = false;
+						break;
+					}
+				}
+			}
+
+			if (allKeysReleased)
+			{
+				inputMask &= ~action.id;
+				call(&InputManagerListener::onInputAction, action.id, inputMask, false);
+				result = true;
+			}
+		}
+	}
+	return result;
+}
+
+bool InputManager::modifierKeysChanged(int modifiers)
+{
+	juce::HashMap<int, InputManagerAction>::Iterator i(actions);
+	while (i.next())
+	{
+		auto action = i.getValue();
+		auto bindings = action.bindings;
+
+		for (InputManagerActionBinding& binding : bindings)
+		{
+			if (binding.type == InputManagerInputType::Modifier)
+			{
+				bool isModifierActive = (modifiers & binding.value) != 0;
+				bool wasModifierActive = (inputMask & action.id) != InputManagerActionId::NONE;
+
+				if (isModifierActive && !wasModifierActive)
+				{
+					inputMask |= action.id;
+					call(&InputManagerListener::onInputAction, action.id, inputMask, true);
+					return true;
+				}
+				else if (!isModifierActive && wasModifierActive)
+				{
+					inputMask &= ~action.id;
+					call(&InputManagerListener::onInputAction, action.id, inputMask, false);
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+void InputManager::updateKeyCodeToActionMap()
+{
+	keyCodeToActionMap.clear();
+	juce::HashMap<int, InputManagerAction>::Iterator i(actions);
+	while (i.next())
+	{
+		InputManagerAction action = i.getValue();
+		auto bindings = action.bindings;
+
+		for (InputManagerActionBinding& binding : bindings)
+		{
+			if (binding.type == InputManagerInputType::KeyCode)
+			{
+				keyCodeToActionMap.set(binding.value, action.id);
+			}
+		}
+	}
+}
+
+void InputManager::updateButtonToActionMap()
+{
+	buttonToActionMap.clear();
+	juce::HashMap<int, InputManagerAction>::Iterator i(actions);
+	while (i.next())
+	{
+		auto action = i.getValue();
+		auto bindings = action.bindings;
+
+		for (InputManagerActionBinding& binding : bindings)
+		{
+			if (binding.type == InputManagerInputType::Button)
+			{
+				buttonToActionMap.set(binding.value, action.id);
+			}
+		}
+	}
+}
+
+void InputManager::timerCallback()
+{
+	pollSDL();
+}
+
+void InputManager::initSDL()
+{
+	SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+
+	if (!SDL_InitSubSystem(SDL_INIT_EVENTS | SDL_INIT_GAMEPAD)) {
+		DBG("Failed to init SDL input: " << SDL_GetError());
+		return;
+	}
+}
+
+void InputManager::quitSDL()
+{
+	SDL_QuitSubSystem(SDL_INIT_EVENTS | SDL_INIT_GAMEPAD);
+}
+
+void InputManager::pollSDL()
+{
+	SDL_Event event;
+	// 3. Pump and poll OS events safely
+	while (SDL_PollEvent(&event)) {
+		switch (event.type) {
+		case SDL_EVENT_KEY_DOWN: {
+			modifiers = SDL_GetModState();
+			modifierKeysChanged(modifiers);
+			if (!event.key.repeat && !pressedKeys.contains(static_cast<int>(event.key.scancode)))
+			{
+				pressedKeys.set(static_cast<int>(event.key.scancode), 0);
+				keyPressed(event.key.scancode);
+			}
+			break;
+		}
+		case SDL_EVENT_KEY_UP: {
+			keyReleased(event.key.scancode);
+			modifiers = SDL_GetModState();
+			modifierKeysChanged(modifiers);
+			break;
+		}
+		case SDL_EVENT_GAMEPAD_ADDED: {
+			// Open the device by its instance identifier
+			SDL_Gamepad* gamepad = SDL_OpenGamepad(event.gdevice.which);
+			if (gamepad) {
+				DBG("Controller Connected: " << SDL_GetGamepadName(gamepad));
+			}
+			break;
+		}
+		case SDL_EVENT_GAMEPAD_REMOVED: {
+			DBG("Controller Disconnected: " << event.gdevice.which);
+			break;
+		}
+		case SDL_EVENT_GAMEPAD_BUTTON_DOWN: {
+			if (!pressedButtons.contains(event.gbutton.button))
+			{
+				pressedButtons.set(event.gbutton.button, 0);
+				buttonPressed(static_cast<SDL_GamepadButton>(event.gbutton.button));
+			}
+			break;
+		}
+		case SDL_EVENT_GAMEPAD_BUTTON_UP: {
+			if (pressedButtons.contains(event.gbutton.button))
+			{
+				pressedButtons.remove(event.gbutton.button);
+				evaluateInputsStillActive();
+			}
+			break;
+		}
+		case SDL_EVENT_GAMEPAD_AXIS_MOTION: {
+			// Thumbstick axis values range from -32768 to 32767
+			// You can use these to control tracks fader volumes or pan parameters
+			int16_t axisValue = event.gaxis.value;
+			if (event.gaxis.axis == SDL_GAMEPAD_AXIS_LEFTX && abs(axisValue) > 8000) { // Deadzone filter
+				DBG("Left Stick Motion: " << axisValue);
+			}
+			break;
+		}
+		}
+	}
+
+	juce::HashMap<int, int>::Iterator keyIterator(pressedKeys);
+	while (keyIterator.next())
+	{
+		auto time = keyIterator.getValue();
+		if (time > 0 && time >= FUME_INPUT_REPEAT_DELAY_FRAMES && (time - FUME_INPUT_REPEAT_DELAY_FRAMES) % FUME_INPUT_REPEAT_FRAMES == 0)
+		{
+			keyPressed(static_cast<SDL_Scancode>(keyIterator.getKey()));
+		}
+		pressedKeys.set(keyIterator.getKey(), time + 1);
+	}
+
+	juce::HashMap<int, int>::Iterator buttonIterator(pressedButtons);
+	while (buttonIterator.next())
+	{
+		auto time = buttonIterator.getValue();
+		if (time > 0 && time >= FUME_INPUT_REPEAT_DELAY_FRAMES && (time - FUME_INPUT_REPEAT_DELAY_FRAMES) % FUME_INPUT_REPEAT_FRAMES == 0)
+		{
+			buttonPressed(static_cast<SDL_GamepadButton>(buttonIterator.getKey()));
+		}
+		pressedButtons.set(buttonIterator.getKey(), time + 1);
+	}
+}
+

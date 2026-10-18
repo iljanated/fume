@@ -3,16 +3,18 @@
 #include "TrackComponent.h"
 #include "Utilities.h"
 #include "ToolState.h"
+#include "CursorComponent.h"
+#include "SelectionBoxComponent.h"
 
 namespace te = tracktion;
 
 class TrackListComponent : public juce::Component,
-    public InputManagerListener,
     private te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<TrackComponent>>,
-    private juce::Timer,
+	private juce::Timer,
     public juce::ChangeListener,
-	public juce::ComponentListener,
-    public ToolStateListener
+    public juce::ComponentListener,
+	public SelectionBoxSource,
+	public fumeUI::Grid
 {
 public:
     //==============================================================================
@@ -23,33 +25,45 @@ public:
     //==============================================================================
     void paint(juce::Graphics& g) override;
 
+    // callbacks
+
     void resized() override;
-
-    void onInputAction(InputManagerActionId actionId, int inputMask, bool isActive) override;
-
+    void focusGained(FocusChangeType cause) override;
+	void focusLost(FocusChangeType cause) override;
+	bool keyPressed(const juce::KeyPress& key) override;
+	bool keyStateChanged(bool isKeyDown) override;
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+    void componentMovedOrResized(Component& component, bool wasMoved, bool wasResized) override;
+	void selectItemsInBox(const juce::Rectangle<double>& selectionBox) override;
 
-	juce::DrawableRectangle& getDrawableCursor() { return drawableCursor; }
-	juce::Point<double>& getCursor() { return cursor; }
-	juce::Point<double>& getCursorAnchor() { return cursorAnchor; }
+    // tracks
 	int getTrackCount() const { return objects.size(); }
 	te::AudioTrack* getTrackAt(int index) const;
 
-    void componentMovedOrResized(Component& component, bool wasMoved, bool wasResized) override;
+	CursorComponent& getCursorComponent() { return cursorComponent; }
+	SelectionBoxComponent& getSelectionBoxComponent() { return selectionBoxComponent; }
 
-	void onToolStateFinished() override;
+	fumeUI::UIContext& getUIContext() { return uiContext; }
+    
+    /**
+	 * @name Overrides from fumeUI::Grid
+     */
+    //@{
+    juce::Point<double> getGridSize() const override;
+	juce::Point<double> getUnitSize() const override { return { FUME_TIMELINE_BEAT_WIDTH, FUME_TIMELINE_TRACK_HEIGHT }; }
+	juce::Point<int> getCellSize() const override { return { 4, 1 }; }
+	int getCellGroupSize() const override { return 4; }
+    double getSnappingInterval() const override { return 1.0; }
+    //@}
+
 private:
     //==============================================================================
 	fumeUI::UIContext& uiContext;
     Viewport& viewport;
     DrawableRectangle currentPositionMarker;
-    DrawableRectangle drawableCursor;
-    juce::Point<double> cursor;
-    juce::Point<double> cursorAnchor;
-    RectangleList<float> gridBackgroundsLight;
-    RectangleList<float> gridBackgroundsDark;
-	Path gridLines;
-	std::unique_ptr<ToolState<TrackListComponent>> selectToolState;
+	CursorComponent cursorComponent{ *this, 2, uiContext.inputManager };
+	SelectionBoxComponent selectionBoxComponent{ *this, 1, this, uiContext.inputManager };
+    std::unique_ptr<ToolState<TrackListComponent>> selectToolState;
     std::unique_ptr<ToolState<TrackListComponent>> writeToolState;
     std::unique_ptr<ToolState<TrackListComponent>> deleteToolState;
     ToolState<TrackListComponent>* currentToolState{ nullptr };
@@ -59,11 +73,8 @@ private:
 	void activateToolState(ToolState<TrackListComponent>* newState);
 
     bool isSuitableType(const juce::ValueTree& v) const override;
-
     Helpers::AsyncValueTreeItem<TrackComponent>* createNewObject(const juce::ValueTree& v) override;
-    
     void deleteObject(Helpers::AsyncValueTreeItem<TrackComponent>* obj) override;
-
     void newObjectAdded(Helpers::AsyncValueTreeItem<TrackComponent>*) override;
     void objectRemoved(Helpers::AsyncValueTreeItem<TrackComponent>*) override;
     void objectOrderChanged() override;
@@ -71,8 +82,6 @@ private:
     void timerCallback() override;
 
 	void updateCurrentPositionMarker();
-
-	void updatePaths();
 
     void resizeViewport();
 

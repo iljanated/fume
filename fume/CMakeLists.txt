@@ -39,20 +39,25 @@ target_include_directories(Fume PRIVATE
 target_sources(Fume PRIVATE
     src/clipeditor/ClipEditorComponent.cpp
     src/clipeditor/ClipEditorComponent.h
+    src/clipeditor/ClipEditorImplementationComponent.h
     src/clipeditor/MidiClipEditorComponent.cpp
     src/clipeditor/MidiClipEditorComponent.h
-    src/clipeditor/ClipEditorImplementationComponent.h
     src/common/InputManager.cpp
     src/common/InputManager.h
     src/common/ToolState.h
     src/common/Utilities.h
+    src/CursorComponent.cpp
+    src/CursorComponent.h
     src/EditContainerComponent.cpp
     src/EditContainerComponent.h
     src/Main.cpp
-    src/MainComponent.h
     src/MainComponent.cpp
+    src/MainComponent.h
+    src/ManualViewport.h
+    src/selectables/SelectableClipClass.cpp
     src/selectables/SelectableClipClass.h
-    src/selectables/SelectableClipClass.cpp 
+    src/SelectionBoxComponent.cpp
+    src/SelectionBoxComponent.h
     src/tracklist/AudioClipComponent.cpp
     src/tracklist/AudioClipComponent.h
     src/tracklist/ClipComponent.cpp
@@ -65,12 +70,16 @@ target_sources(Fume PRIVATE
     src/tracklist/toolstates/TrackListSelectToolState.h
     src/tracklist/toolstates/TrackListWriteToolState.cpp
     src/tracklist/toolstates/TrackListWriteToolState.h
-    src/tracklist/TrackListComponent.h
-    src/tracklist/TrackListComponent.cpp
-    src/tracklist/TrackComponent.h
     src/tracklist/TrackComponent.cpp
-    src/TransportComponent.h
+    src/tracklist/TrackComponent.h
+    src/tracklist/TrackHeadersComponent.cpp
+    src/tracklist/TrackHeadersComponent.h
+    src/tracklist/TrackListComponent.cpp
+    src/tracklist/TrackListComponent.h
+    src/tracklist/TrackListContainerComponent.cpp
+    src/tracklist/TrackListContainerComponent.h
     src/TransportComponent.cpp
+    src/TransportComponent.h
     
 )
 

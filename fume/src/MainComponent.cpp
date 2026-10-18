@@ -21,21 +21,6 @@ MainComponent::MainComponent()
 
 MainComponent::~MainComponent()
 {
-	removeKeyListener(&inputManager);
-}
-
-void MainComponent::parentHierarchyChanged()
-{
-	if (auto* peer = getPeer())
-	{
-		peer->getComponent().removeKeyListener(&inputManager);
-		peer->getComponent().addKeyListener(&inputManager);
-	}
-}
-
-void MainComponent::modifierKeysChanged(const ModifierKeys& modifiers)
-{
-	inputManager.modifierKeysChanged(modifiers.getRawFlags());
 }
 
 void MainComponent::paint(juce::Graphics& g)

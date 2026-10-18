@@ -8,12 +8,11 @@ namespace te = tracktion;
 
 TrackComponent::TrackComponent(te::AudioTrack& t, fumeUI::UIContext& context)
     : te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<ClipComponent>>(t.state),
+    state(t.state),
     track(t),
     uiContext(context)
 {
-    DBG("TrackComponent::TrackComponent: " + t.getName());
-
-	rebuildObjects();
+    rebuildObjects();
 }
 
 TrackComponent::~TrackComponent()
@@ -28,27 +27,20 @@ te::AudioTrack& TrackComponent::getTrack()
 
 void TrackComponent::paint(juce::Graphics& g)
 {
-    auto localBounds = getLocalBounds();
-    
-    g.setColour(juce::Colours::white.withAlpha(0.2f));
-	g.fillRect(localBounds);
-    g.drawRect(localBounds);
 }
 
 void TrackComponent::resized()
 {
     auto localBounds = getLocalBounds();
 
-    float zoom = track.edit.state.getProperty(FumeIDs::timelineHorizontalZoom, 1.0f);
-    auto beatWidth = FUME_BEAT_WIDTH * zoom;
+    auto beatWidth = FUME_TIMELINE_BEAT_WIDTH;
 
     for (auto objectWrapper : objects)
     {
         if (auto object = objectWrapper->getObject())
         {
-			te::Clip& clip = object->getClip();
-			auto beatRange = clip.getEditBeatRange();
-
+            te::Clip& clip = object->getClip();
+            auto beatRange = clip.getEditBeatRange();
             object->setBounds((int)(beatRange.getStart().inBeats() * beatWidth), 0, (int)(beatRange.getLength().inBeats() * beatWidth), localBounds.getHeight());
         }
     }
@@ -56,7 +48,8 @@ void TrackComponent::resized()
 
 bool TrackComponent::isSuitableType(const juce::ValueTree& v) const
 {
-    return v.hasType(te::IDs::MIDICLIP) || v.hasType(te::IDs::AUDIOCLIP);
+    return v.hasType(te::IDs::MIDICLIP)
+        || v.hasType(te::IDs::AUDIOCLIP);
 }
 
 Helpers::AsyncValueTreeItem<ClipComponent>* TrackComponent::createNewObject(const juce::ValueTree& v)
@@ -74,7 +67,7 @@ Helpers::AsyncValueTreeItem<ClipComponent>* TrackComponent::createNewObject(cons
                 return tc;
             });
     }
-    else 
+    else
     {
         return new Helpers::AsyncValueTreeItem<ClipComponent>(v,
             [this](auto state)
@@ -91,21 +84,32 @@ Helpers::AsyncValueTreeItem<ClipComponent>* TrackComponent::createNewObject(cons
 
 void TrackComponent::deleteObject(Helpers::AsyncValueTreeItem<ClipComponent>* obj)
 {
-    delete obj;
+	delete obj;
 }
 
 void TrackComponent::newObjectAdded(Helpers::AsyncValueTreeItem<ClipComponent>*)
 {
-    asyncResizer.resizeAsync();
+	asyncResizer.resizeAsync();
 }
 
 void TrackComponent::objectRemoved(Helpers::AsyncValueTreeItem<ClipComponent>*)
 
 {
-    asyncResizer.resizeAsync();
+	asyncResizer.resizeAsync();
 }
 
 void TrackComponent::objectOrderChanged()
 {
-    asyncResizer.resizeAsync();
+	asyncResizer.resizeAsync();
+}
+
+void TrackComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
+{
+	// call super class implementation to handle property changes
+    te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<ClipComponent>>::valueTreePropertyChanged(treeWhosePropertyHasChanged, property);
+
+	if(property == te::IDs::length)
+    {
+		asyncResizer.resizeAsync();
+    }
 }

@@ -8,22 +8,13 @@ using namespace tracktion::literals;
 EditContainerComponent::EditContainerComponent(te::Engine& engine, te::Edit& edit, te::SelectionManager& selectionManager, InputManager& inputManager)
 	: uiContext{ engine, edit, selectionManager, inputManager }
 {
-	uiContext.inputManager.add(this);
-
-	addAndMakeVisible(trackListViewport);
-	trackListViewport.setViewedComponent(&trackListComponent, false);
-	trackListViewport.setScrollBarsShown(true, true, true, true);
-	trackListComponent.setSize(2024, 1600);
-
-	trackListViewport.setWantsKeyboardFocus(false);
-	trackListViewport.getHorizontalScrollBar().setMouseClickGrabsKeyboardFocus(false);
-	trackListViewport.getVerticalScrollBar().setMouseClickGrabsKeyboardFocus(false);
+	addAndMakeVisible(trackListContainerComponent);
 
 	addAndMakeVisible(transportComponent);
 
 	addAndMakeVisible(clipEditorComponent);
 	
-	uiContext.edit.state.setProperty(FumeIDs::songLength, 1024, &uiContext.edit.getUndoManager());
+	uiContext.edit.state.setProperty(FumeIDs::SongLength, 1024, &uiContext.edit.getUndoManager());
 
 	EngineHelpers::getOrInsertAudioTrackAt(uiContext.edit, 16);
 
@@ -62,29 +53,66 @@ EditContainerComponent::EditContainerComponent(te::Engine& engine, te::Edit& edi
 
 EditContainerComponent::~EditContainerComponent()
 {
-	uiContext.inputManager.remove(this);
 }
+
+void EditContainerComponent::visibilityChanged()
+{
+	if (isShowing())
+	{
+		trackListContainerComponent.grabKeyboardFocus();
+	}
+}	
 
 void EditContainerComponent::resized()
 {
 	auto localBounds = getLocalBounds();
 	transportComponent.setBounds(localBounds.removeFromTop(30));
-	trackListViewport.setBounds(localBounds.removeFromTop(400));
+	trackListContainerComponent.setBounds(localBounds.removeFromTop(400));
 	clipEditorComponent.setBounds(localBounds);
 }
 
-void EditContainerComponent::onInputAction(InputManagerActionId actionId, int inputMask, bool isActive)
+bool EditContainerComponent::keyPressed(const juce::KeyPress& key)
 {
-	if (actionId == InputManagerActionId::UNDO && isActive)
+	auto keyCode = key.getKeyCode();
+	auto modifiers = key.getModifiers();
+	auto& inputManager = uiContext.inputManager;
+	if (inputManager.validate(keyCode, modifiers, InputAction::Undo))
 	{
-		if (inputMask & static_cast<int>(InputManagerActionId::MOD1))
+		uiContext.edit.getUndoManager().undo();
+		return true;
+	}
+	else if (inputManager.validate(keyCode, modifiers, InputAction::Redo))
+	{
+		uiContext.edit.getUndoManager().redo();
+		return true;
+	}
+	else if (inputManager.validate(keyCode, modifiers, InputAction::Play))
+	{
+		if (uiContext.edit.getTransport().isPlaying())
 		{
-			uiContext.edit.getUndoManager().redo();
+			uiContext.edit.getTransport().stop(false, false);
 		}
 		else
 		{
-			uiContext.edit.getUndoManager().undo();
+			uiContext.edit.getTransport().play(false);
 		}
+		return true;
 	}
+	else if (inputManager.validate(keyCode, modifiers, InputAction::PlayFromStart))
+	{
+		uiContext.edit.getTransport().playFromStart(false);
+		return true;
+	}
+	else if (inputManager.validate(keyCode, modifiers, InputAction::NextLeft))
+	{
+		clipEditorComponent.grabKeyboardFocus();
+		return true;
+	}
+	else if (inputManager.validate(keyCode, modifiers, InputAction::NextRight))
+	{
+		trackListContainerComponent.grabKeyboardFocus();
+		return true;
+	}
+	DBG("HOME");
+	return false;
 }
-

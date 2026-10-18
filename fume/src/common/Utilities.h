@@ -1,5 +1,6 @@
 #pragma once
 
+#include <JuceHeader.h>
 #include "InputManager.h"
 
 #pragma once
@@ -7,8 +8,10 @@
 namespace te = tracktion;
 using namespace std::literals;
 
-#define FUME_BEAT_WIDTH 20
-#define FUME_TRACK_HEIGHT 30
+#define FUME_TIMELINE_BEAT_WIDTH 20
+#define FUME_TIMELINE_TRACK_HEIGHT 30
+#define FUME_MIDI_EDITOR_BEAT_WIDTH 80
+#define FUME_MIDI_EDITOR_NOTE_HEIGHT 10
 #define FUME_SCROLL_PADDING 100
 #define FUME_INPUT_REFRESH_HZ 60
 #define FUME_INPUT_REPEAT_DELAY_FRAMES 30
@@ -17,23 +20,86 @@ using namespace std::literals;
 
 namespace FumeIDs
 {
-    static const juce::Identifier timelineHorizontalZoom("fume_timelineHorizontalZoom");
-    static const juce::Identifier timelineVerticalZoom("fume_timelineVerticalZoom");
-	static const juce::Identifier timelineScrollX("fume_timelineScrollX");
-    static const juce::Identifier timelineScrollY("fume_timelineScrollY");
-    static const juce::Identifier timelineQuantisation("fume_timelineQuantisation");
-    static const juce::Identifier songLength("fume_songLength");
+    static const juce::Identifier ZoomX("fume_zoomX");
+    static const juce::Identifier ZoomY("fume_zoomY");
+	static const juce::Identifier ScrollX("fume_scrollX");
+    static const juce::Identifier ScrollY("fume_scrollY");
+    static const juce::Identifier Quantisation("fume_quantisation");
+    static const juce::Identifier SongLength("fume_songLength");
 }
 
 namespace fumeUI
 {
     struct UIContext
     {
-        tracktion_engine::Engine& engine;
-        tracktion_engine::Edit& edit;
-        tracktion_engine::SelectionManager& selectionManager;
-        InputManager& inputManager;
+        te::Engine& engine;
+        te::Edit& edit;
+        te::SelectionManager& selectionManager;
+		InputManager& inputManager;
     };
+
+    class Grid
+    {
+    public:
+        /** Get the gridsize in beats. */
+        virtual juce::Point<double> getGridSize() const = 0;
+        /** Get the pixels per beat. */
+		virtual juce::Point<double> getUnitSize() const = 0;
+        /** Get the beats per cell. */
+        virtual juce::Point<int> getCellSize() const = 0;
+		/** Get the number of cells per group. */
+        virtual int getCellGroupSize() const = 0;
+		/** Get the snapping interval in beats. */
+		virtual double getSnappingInterval() const { return 1.0; }
+    };
+
+    /** Draw the grid. */
+    static inline void drawGrid(juce::Graphics& g, juce::Rectangle<int> bounds, fumeUI::Grid& grid, juce::Colour lineColour, juce::Colour rectColour)
+    {
+		auto gridSize = grid.getGridSize();
+		auto unitSize = grid.getUnitSize();
+		auto cellSize = grid.getCellSize() * unitSize;
+		auto rectWidth = grid.getCellGroupSize() * cellSize.x;
+
+		auto maxX = std::max(0, std::min(bounds.getX() + bounds.getWidth(), static_cast<int>(gridSize.x * unitSize.x)));
+        auto maxHeight = std::max(0, std::min(bounds.getHeight(), static_cast<int>(gridSize.y * unitSize.y) - bounds.getY()));
+
+		auto rectWidth2 = rectWidth * 2.0f;
+
+        float startX = bounds.getX()  - std::fmod(bounds.getX(), rectWidth2);
+        
+        // rects
+        
+        g.setColour(rectColour);
+        for (float x = startX; x < maxX; x += rectWidth2)
+        {
+            g.fillRect((int)x, bounds.getY(), (int)rectWidth, maxHeight);
+        }
+
+        // vert lines
+
+		g.setColour(lineColour);
+        juce::Path gridPath;
+        
+		startX = bounds.getX() + (cellSize.getX() - std::fmod(bounds.getX(), cellSize.getX()));
+
+        for (float x = startX; x < maxX; x += cellSize.getX())
+        {
+            gridPath.startNewSubPath(x, bounds.getY());
+            gridPath.lineTo(x, bounds.getY() + maxHeight);
+        }
+
+        // horizontal lines
+
+        float startY = bounds.getY() + (cellSize.y - std::fmod(bounds.getY(), cellSize.y));
+
+        for (float y = startY; y < bounds.getY() + maxHeight + cellSize.y; y += cellSize.y)
+        {
+            gridPath.startNewSubPath(bounds.getX(), y);
+            gridPath.lineTo(maxX, y);
+        }
+        g.strokePath(gridPath, juce::PathStrokeType(1.0f));
+    }
 }
 
 namespace fumeHelpers

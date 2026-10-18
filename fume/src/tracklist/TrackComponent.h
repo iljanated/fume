@@ -21,6 +21,8 @@ public:
 
     te::AudioTrack& getTrack();
 
+    juce::ValueTree state;
+
 private:
     //==============================================================================
 	fumeUI::UIContext& uiContext;
@@ -38,5 +40,7 @@ private:
     void objectRemoved(Helpers::AsyncValueTreeItem<ClipComponent>*) override;
     void objectOrderChanged() override;
 
+    void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackComponent)
 };
