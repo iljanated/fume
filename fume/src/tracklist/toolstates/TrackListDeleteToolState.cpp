@@ -5,7 +5,7 @@
 #include "TrackListComponent.h"
 
 TrackListDeleteToolState::TrackListDeleteToolState(TrackListComponent* component)
-	: ToolState<TrackListComponent>(component, "Delete", InputAction::Delete)
+	: ToolState<TrackListComponent>(component, FumeIDs::TrackListDeleteToolState, InputAction::Delete)
 {
 }
 

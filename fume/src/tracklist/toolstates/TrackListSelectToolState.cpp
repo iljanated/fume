@@ -3,7 +3,7 @@
 #include "TrackListComponent.h"
 
 TrackListSelectToolState::TrackListSelectToolState(TrackListComponent* component)
-	: ToolState<TrackListComponent>(component, "Select", InputAction::Select)
+	: ToolState<TrackListComponent>(component, FumeIDs::TrackListSelectToolState, InputAction::Select)
 {
 }
 

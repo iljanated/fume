@@ -26,9 +26,9 @@ TrackListComponent::TrackListComponent(fumeUI::UIContext& context, juce::Viewpor
 
 	uiContext.selectionManager.addChangeListener(this);
 	
-	selectToolState = std::make_unique<TrackListSelectToolState>(this);
-	writeToolState = std::make_unique<TrackListWriteToolState>(this);
-	deleteToolState = std::make_unique<TrackListDeleteToolState>(this);
+	toolStateManager.addToolState(std::make_unique<TrackListSelectToolState>(this));
+	toolStateManager.addToolState(std::make_unique<TrackListWriteToolState>(this));
+	toolStateManager.addToolState(std::make_unique<TrackListDeleteToolState>(this));
 
 	uiContext.edit.state.setProperty(FumeIDs::ZoomX, 1.0f, &uiContext.edit.getUndoManager());
 	uiContext.edit.state.setProperty(FumeIDs::ZoomY, 1.0f, &uiContext.edit.getUndoManager());
@@ -36,7 +36,7 @@ TrackListComponent::TrackListComponent(fumeUI::UIContext& context, juce::Viewpor
 
 	rebuildObjects();
 
-	activateToolState(selectToolState.get());
+	toolStateManager.activateToolStateByIdentifier(FumeIDs::TrackListSelectToolState);
 
 	startTimerHz(30);
 }
@@ -58,24 +58,6 @@ te::AudioTrack* TrackListComponent::getTrackAt(int index) const
 		}
 	}
 	return nullptr;
-}
-
-void TrackListComponent::activateToolState(ToolState<TrackListComponent>* newState)
-{
-	if (currentToolState == newState)
-	{
-		return;
-	}
-	if (currentToolState)
-	{
-		currentToolState->onExitState();
-	}
-	currentToolState = newState;
-	if (currentToolState)
-	{
-		DBG("Activating tool state: " << typeid(*currentToolState).name());
-		currentToolState->onEnterState();
-	}
 }
 
 void TrackListComponent::paint(juce::Graphics& g)
@@ -127,28 +109,12 @@ void TrackListComponent::focusLost(FocusChangeType cause)
 
 bool TrackListComponent::keyPressed(const juce::KeyPress& key)
 {
-	auto modifiers = key.getModifiers();
-	auto keyCode = key.getKeyCode();
-	auto& inputManager = uiContext.inputManager;
-
-	if (currentToolState != selectToolState.get() && inputManager.validate(keyCode, modifiers, InputAction::Select))
-	{
-		activateToolState(selectToolState.get());
-	}
-	else if (currentToolState != writeToolState.get() && inputManager.validate(keyCode, modifiers, InputAction::Write))
-	{
-		activateToolState(writeToolState.get());
-	}
-	else if (currentToolState != deleteToolState.get() && inputManager.validate(keyCode, modifiers, InputAction::Delete))
-	{
-		activateToolState(deleteToolState.get());
-	}
-
-	if (currentToolState && currentToolState->keyPressed(key))
+	if (toolStateManager.keyPressed(key))
 	{
 		DBG("ToolState handled it");
 		return true;
 	}
+
 	if (selectionBoxComponent.getIsSelecting() && selectionBoxComponent.keyPressed(key))
 	{
 		DBG("SelectionBoxComponent handled it");
@@ -165,9 +131,9 @@ bool TrackListComponent::keyPressed(const juce::KeyPress& key)
 
 bool TrackListComponent::keyStateChanged(bool isKeyDown)
 {
-	if (currentToolState)
+	if (toolStateManager.keyStateChanged(isKeyDown))
 	{
-		return currentToolState->keyStateChanged(isKeyDown);
+		return true;
 	}
 	return false;
 }

@@ -3,7 +3,7 @@
 #include "TrackListComponent.h"
 
 TrackListWriteToolState::TrackListWriteToolState(TrackListComponent* component)
-	: ToolState<TrackListComponent>(component, "Write", InputAction::Write)
+	: ToolState<TrackListComponent>(component, FumeIDs::TrackListWriteToolState, InputAction::Write)
 {
 }
 

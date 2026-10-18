@@ -63,11 +63,7 @@ private:
     DrawableRectangle currentPositionMarker;
 	CursorComponent cursorComponent{ *this, 2, uiContext.inputManager };
 	SelectionBoxComponent selectionBoxComponent{ *this, 1, this, uiContext.inputManager };
-    std::unique_ptr<ToolState<TrackListComponent>> selectToolState;
-    std::unique_ptr<ToolState<TrackListComponent>> writeToolState;
-    std::unique_ptr<ToolState<TrackListComponent>> deleteToolState;
-    ToolState<TrackListComponent>* currentToolState{ nullptr };
-
+	ToolStateManager<TrackListComponent> toolStateManager{ uiContext.inputManager };
     Helpers::AsyncResizer asyncResizer{ *this };
 
 	void activateToolState(ToolState<TrackListComponent>* newState);

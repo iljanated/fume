@@ -26,6 +26,9 @@ namespace FumeIDs
     static const juce::Identifier ScrollY("fume_scrollY");
     static const juce::Identifier Quantisation("fume_quantisation");
     static const juce::Identifier SongLength("fume_songLength");
+    static const juce::Identifier TrackListDeleteToolState("fume_tracklist_delete_toolstate");
+	static const juce::Identifier TrackListWriteToolState("fume_tracklist_write_toolstate");
+	static const juce::Identifier TrackListSelectToolState("fume_tracklist_select_toolstate");
 }
 
 namespace fumeUI
