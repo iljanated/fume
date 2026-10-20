@@ -30,6 +30,8 @@ target_include_directories(Fume PRIVATE
     src
     src/common
     src/clipeditor
+    src/clipeditor/midiclip
+    src/clipeditor/midiclip/toolstates
     src/selectables
     src/tracklist
     src/tracklist/toolstates
@@ -40,8 +42,13 @@ target_sources(Fume PRIVATE
     src/clipeditor/ClipEditorComponent.cpp
     src/clipeditor/ClipEditorComponent.h
     src/clipeditor/ClipEditorImplementationComponent.h
-    src/clipeditor/MidiClipEditorComponent.cpp
-    src/clipeditor/MidiClipEditorComponent.h
+    src/clipeditor/midiclip/MidiEventsEditorComponent.cpp
+    src/clipeditor/midiclip/MidiEventsEditorComponent.h
+    src/clipeditor/midiclip/MidiClipEditorComponent.cpp
+    src/clipeditor/midiclip/MidiClipEditorComponent.h
+    src/clipeditor/midiclip/PianoRollComponent.h
+    src/clipeditor/midiclip/toolstates/MidiClipSelectToolState.cpp
+    src/clipeditor/midiclip/toolstates/MidiClipSelectToolState.h
     src/common/InputManager.cpp
     src/common/InputManager.h
     src/common/ToolState.h
@@ -50,6 +57,7 @@ target_sources(Fume PRIVATE
     src/CursorComponent.h
     src/EditContainerComponent.cpp
     src/EditContainerComponent.h
+    src/GridEditor.h
     src/Main.cpp
     src/MainComponent.cpp
     src/MainComponent.h

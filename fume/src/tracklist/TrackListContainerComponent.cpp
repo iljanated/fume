@@ -10,10 +10,6 @@ TrackListContainerComponent::TrackListContainerComponent(fumeUI::UIContext& cont
 	trackListComponent.addComponentListener(this);
 
 	trackListViewport.setViewedComponent(&trackListComponent, false);
-	trackListViewport.setScrollBarsShown(true, true, true, true);
-	trackListViewport.setWantsKeyboardFocus(false);
-	trackListViewport.getHorizontalScrollBar().setMouseClickGrabsKeyboardFocus(false);
-	trackListViewport.getVerticalScrollBar().setMouseClickGrabsKeyboardFocus(false);
 	addAndMakeVisible(trackListViewport);
 }
 
@@ -36,6 +32,6 @@ void TrackListContainerComponent::componentMovedOrResized(juce::Component& compo
 {
 	if (&component == &trackListComponent)
 	{
-		trackHeadersComponent.setTrackOffset(trackListComponent.getBounds().getY());
+		trackHeadersComponent.setTrackOffset(trackListComponent.getY());
 	}
 }

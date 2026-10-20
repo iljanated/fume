@@ -29,6 +29,9 @@ namespace FumeIDs
     static const juce::Identifier TrackListDeleteToolState("fume_tracklist_delete_toolstate");
 	static const juce::Identifier TrackListWriteToolState("fume_tracklist_write_toolstate");
 	static const juce::Identifier TrackListSelectToolState("fume_tracklist_select_toolstate");
+    static const juce::Identifier MidiClipDeleteToolState("fume_midiclip_delete_toolstate");
+    static const juce::Identifier MidiClipWriteToolState("fume_midiclip_write_toolstate");
+    static const juce::Identifier MidiClipSelectToolState("fume_midiclip_select_toolstate");
 }
 
 namespace fumeUI
@@ -49,7 +52,7 @@ namespace fumeUI
         /** Get the pixels per beat. */
 		virtual juce::Point<double> getUnitSize() const = 0;
         /** Get the beats per cell. */
-        virtual juce::Point<int> getCellSize() const = 0;
+        virtual juce::Point<double> getCellSize() const = 0;
 		/** Get the number of cells per group. */
         virtual int getCellGroupSize() const = 0;
 		/** Get the snapping interval in beats. */

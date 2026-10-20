@@ -3,7 +3,6 @@
 CursorComponent::CursorComponent(fumeUI::Grid& grid, int margin, InputManager& i)
 	: grid(grid), margin(margin), inputManager(i)
 {
-	updateBounds();
 }
 
 void CursorComponent::paint(juce::Graphics& g)

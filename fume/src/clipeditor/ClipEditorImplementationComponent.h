@@ -1,11 +1,8 @@
 #pragma once
-
-#include <JuceHeader.h>
-
-namespace te = tracktion;
+#include <JuceHeader.h>  
 
 class ClipEditorImplementationComponent : public juce::Component
 {
 public:
-	virtual te::Clip* getClip() = 0;
+    virtual te::Clip* getClip() = 0;
 };

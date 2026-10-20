@@ -5,7 +5,13 @@
 class ManualViewport : public juce::Viewport
 {
 public:
-    ManualViewport() = default;
+    ManualViewport()
+    {
+        setScrollBarsShown(true, true, true, true);
+        setWantsKeyboardFocus(false);
+        getHorizontalScrollBar().setMouseClickGrabsKeyboardFocus(false);
+        getVerticalScrollBar().setMouseClickGrabsKeyboardFocus(false);
+    }
 
     bool keyPressed(const juce::KeyPress& key) override
     {
