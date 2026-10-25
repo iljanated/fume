@@ -82,6 +82,7 @@ void SelectionBoxComponent::updateSelection(const juce::Point<double>& currentPo
 void SelectionBoxComponent::endSelection()
 {
 	isSelecting = false;
+
 	setVisible(false);
 }
 

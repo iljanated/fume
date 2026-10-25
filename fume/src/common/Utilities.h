@@ -8,16 +8,6 @@
 namespace te = tracktion;
 using namespace std::literals;
 
-#define FUME_TIMELINE_BEAT_WIDTH 20
-#define FUME_TIMELINE_TRACK_HEIGHT 30
-#define FUME_MIDI_EDITOR_BEAT_WIDTH 80
-#define FUME_MIDI_EDITOR_NOTE_HEIGHT 10
-#define FUME_SCROLL_PADDING 100
-#define FUME_INPUT_REFRESH_HZ 60
-#define FUME_INPUT_REPEAT_DELAY_FRAMES 30
-#define FUME_INPUT_REPEAT_FRAMES 2
-
-
 namespace FumeIDs
 {
     static const juce::Identifier ZoomX("fume_zoomX");
@@ -29,13 +19,30 @@ namespace FumeIDs
     static const juce::Identifier TrackListDeleteToolState("fume_tracklist_delete_toolstate");
 	static const juce::Identifier TrackListWriteToolState("fume_tracklist_write_toolstate");
 	static const juce::Identifier TrackListSelectToolState("fume_tracklist_select_toolstate");
+    static const juce::Identifier TrackListZoomToolState("fume_tracklist_zoom_toolstate");
     static const juce::Identifier MidiClipDeleteToolState("fume_midiclip_delete_toolstate");
-    static const juce::Identifier MidiClipWriteToolState("fume_midiclip_write_toolstate");
+    static const juce::Identifier MidiClipMoveToolState("fume_midiclip_move_toolstate");
     static const juce::Identifier MidiClipSelectToolState("fume_midiclip_select_toolstate");
+    static const juce::Identifier MidiClipWriteToolState("fume_midiclip_write_toolstate");
+    static const juce::Identifier MidiClipDeselectToolState("fume_midiclip_deselect_toolstate");
 }
 
 namespace fumeUI
 {
+    extern const double timelineBeatWidth;
+    extern const int timelineTrackHeight;
+    extern const int timelineTrackHeadWidth;
+    extern const int timelineTimelineHeight;
+    extern const double midiEditorBeatWidth;
+    extern const int midiEditorNoteHeight;
+    extern const int midiEditorTimelineHeight;
+    extern const int midiEditorPianoRollWidth;
+    extern const int scrollPadding;
+    extern const int inputRefreshHz;
+    extern const int inputRepeatDelayFrames;
+    extern const int inputRepeatFrames;
+    extern const float zoomStepSize;
+
     struct UIContext
     {
         te::Engine& engine;
@@ -57,55 +64,12 @@ namespace fumeUI
         virtual int getCellGroupSize() const = 0;
 		/** Get the snapping interval in beats. */
 		virtual double getSnappingInterval() const { return 1.0; }
+        /** Get the horizontal margin of the grid: how many units before and after gridSize should be drawn. */
+		virtual juce::Point<double> getGridHorizontalMargin() const { return { 0.0, 0.0 }; }
     };
 
     /** Draw the grid. */
-    static inline void drawGrid(juce::Graphics& g, juce::Rectangle<int> bounds, fumeUI::Grid& grid, juce::Colour lineColour, juce::Colour rectColour)
-    {
-		auto gridSize = grid.getGridSize();
-		auto unitSize = grid.getUnitSize();
-		auto cellSize = grid.getCellSize() * unitSize;
-		auto rectWidth = grid.getCellGroupSize() * cellSize.x;
-
-		auto maxX = std::max(0, std::min(bounds.getX() + bounds.getWidth(), static_cast<int>(gridSize.x * unitSize.x)));
-        auto maxHeight = std::max(0, std::min(bounds.getHeight(), static_cast<int>(gridSize.y * unitSize.y) - bounds.getY()));
-
-		auto rectWidth2 = rectWidth * 2.0f;
-
-        float startX = bounds.getX()  - std::fmod(bounds.getX(), rectWidth2);
-        
-        // rects
-        
-        g.setColour(rectColour);
-        for (float x = startX; x < maxX; x += rectWidth2)
-        {
-            g.fillRect((int)x, bounds.getY(), (int)rectWidth, maxHeight);
-        }
-
-        // vert lines
-
-		g.setColour(lineColour);
-        juce::Path gridPath;
-        
-		startX = bounds.getX() + (cellSize.getX() - std::fmod(bounds.getX(), cellSize.getX()));
-
-        for (float x = startX; x < maxX; x += cellSize.getX())
-        {
-            gridPath.startNewSubPath(x, bounds.getY());
-            gridPath.lineTo(x, bounds.getY() + maxHeight);
-        }
-
-        // horizontal lines
-
-        float startY = bounds.getY() + (cellSize.y - std::fmod(bounds.getY(), cellSize.y));
-
-        for (float y = startY; y < bounds.getY() + maxHeight + cellSize.y; y += cellSize.y)
-        {
-            gridPath.startNewSubPath(bounds.getX(), y);
-            gridPath.lineTo(maxX, y);
-        }
-        g.strokePath(gridPath, juce::PathStrokeType(1.0f));
-    }
+    void drawGrid(juce::Graphics& g, juce::Rectangle<int> bounds, fumeUI::Grid& grid, juce::Colour lineColour, juce::Colour rectColour, bool blackKeys);
 }
 
 namespace fumeHelpers

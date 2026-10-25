@@ -20,12 +20,12 @@ void TrackHeadersComponent::paint(juce::Graphics& g)
 void TrackHeadersComponent::resized()
 {
 	auto localBounds = getLocalBounds();
-	auto rect = juce::Rectangle{0, trackOffset, localBounds.getWidth(), objects.size() * FUME_TIMELINE_TRACK_HEIGHT};
+	auto rect = juce::Rectangle{0, trackOffset, localBounds.getWidth(), objects.size() * fumeUI::timelineTrackHeight};
 	for (auto objectWrapper : objects)
 	{
 		if (auto object = objectWrapper->getObject())
 		{
-			object->setBounds(rect.removeFromTop(FUME_TIMELINE_TRACK_HEIGHT));
+			object->setBounds(rect.removeFromTop(fumeUI::timelineTrackHeight));
 		}
 	}
 }

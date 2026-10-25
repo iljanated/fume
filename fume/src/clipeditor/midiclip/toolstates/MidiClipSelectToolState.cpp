@@ -60,6 +60,7 @@ bool MidiClipSelectToolState::keyStateChanged(bool isKeyDown)
 		cursorComponent.setCursorPosition(selectionBoxComponent.getSelectionEnd());
 		selectionBoxComponent.endSelection();
 		cursorComponent.setVisible(true);
+		notifyToolFinished();
 		return true;
 	}
 	return false;

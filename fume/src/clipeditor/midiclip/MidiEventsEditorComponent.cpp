@@ -1,21 +1,31 @@
 #pragma once
 
 #include "MidiEventsEditorComponent.h"
+#include "MidiClipMoveToolState.h"
 #include "MidiClipSelectToolState.h"
+#include "MidiClipDeselectToolState.h"
+#include "MidiClipDeleteToolState.h"
+#include "MidiClipWriteToolState.h"
 
 MidiEventsEditorComponent::MidiEventsEditorComponent(te::MidiClip* clip, fumeUI::UIContext& context, juce::Viewport& v)
-	: GridEditor<MidiEventsEditorComponent>(context, v), midiClip(*clip, &context.edit.getUndoManager()), state(clip->state)
+	: GridEditor<MidiEventsEditorComponent>(context, v, FumeIDs::MidiClipMoveToolState), midiClip(*clip, &context.edit.getUndoManager()), state(clip->state)
 {
     state.addListener(this);
-	selectedEvents.addChangeListener(this);
+	selectedEvents->addChangeListener(this);
 
+    toolStateManager.addToolState(std::make_unique<MidiClipMoveToolState>(this));
     toolStateManager.addToolState(std::make_unique<MidiClipSelectToolState>(this));
+    toolStateManager.addToolState(std::make_unique<MidiClipDeselectToolState>(this));
+    toolStateManager.addToolState(std::make_unique<MidiClipDeleteToolState>(this));
+    toolStateManager.addToolState(std::make_unique<MidiClipWriteToolState>(this));
     
     //uiContext.edit.state.setProperty(FumeIDs::ZoomX, 1.0f, &uiContext.edit.getUndoManager());
     //uiContext.edit.state.setProperty(FumeIDs::ZoomY, 1.0f, &uiContext.edit.getUndoManager());
     //uiContext.edit.state.setProperty(FumeIDs::Quantisation, 1.0f, &uiContext.edit.getUndoManager());
 
-    toolStateManager.activateToolStateByIdentifier(FumeIDs::TrackListSelectToolState);
+	midiClip.getClip().state.addListener(this);
+
+    toolStateManager.activateToolStateByIdentifier(FumeIDs::MidiClipMoveToolState);
 }
 
 MidiEventsEditorComponent::~MidiEventsEditorComponent()
@@ -26,7 +36,7 @@ MidiEventsEditorComponent::~MidiEventsEditorComponent()
 
 void MidiEventsEditorComponent::resized()
 {
-    setSize((int)(midiClip.getClip().getLengthInBeats().inBeats() * FUME_MIDI_EDITOR_BEAT_WIDTH), 128 * FUME_MIDI_EDITOR_NOTE_HEIGHT);
+    setSize((int)(midiClip.getClip().getLengthInBeats().inBeats() * fumeUI::midiEditorBeatWidth), 128 * fumeUI::midiEditorNoteHeight);
 }
 
 void MidiEventsEditorComponent::selectItemsInBox(const juce::Rectangle<double>& selectionBox)
@@ -37,37 +47,42 @@ void MidiEventsEditorComponent::selectItemsInBox(const juce::Rectangle<double>& 
     auto yMin = 127 - selectionBox.getBottom();
     auto yMax = 127 - selectionBox.getY();
 
-    for (auto* note : selectedEvents.getSelectedNotes())
+    for (auto* note : selectedEvents->getSelectedNotes())
     {
         if (note->getBeatPosition().inBeats() > xMax || note->getEndBeat().inBeats() < xMin  || note->getNoteNumber() < yMin || note->getNoteNumber() > yMax)
         {
-			selectedEvents.removeSelectedEvent(note);
+			selectedEvents->removeSelectedEvent(note);
         }
     }
-
-	DBG("Selecting notes in box: xMin=" << xMin << ", xMax=" << xMax << ", yMin=" << yMin << ", yMax=" << yMax);
 
     for (auto* note : midiClip.getClip().getSequence().getNotes())
     {
         if (note->getBeatPosition().inBeats() <= xMax && note->getEndBeat().inBeats() >= xMin && note->getNoteNumber() >= yMin && note->getNoteNumber() <= yMax)
         {
-            selectedEvents.addSelectedEvent(note, true);
-			DBG("Selected note: " << note->getNoteNumber() << " at beat: " << note->getBeatPosition().inBeats());
+            selectedEvents->addSelectedEvent(note, true);
         }
     }
 }
 
 void MidiEventsEditorComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
-    if (source == &selectedEvents)
+	if (source == selectedEvents.get())
     {
-        repaint();
+	    repaint();
     }
 }
 
 juce::Point<double> MidiEventsEditorComponent::getGridSize() const
 {
     return { midiClip.getClip().getLengthInBeats().inBeats(), 128.0 };
+}
+
+te::SelectedMidiEvents& MidiEventsEditorComponent::clearSelectedEvents() {
+    selectedEvents.get()->removeAllChangeListeners();
+    selectedEvents = std::make_unique<te::SelectedMidiEvents>(midiClip.getClip());
+    selectedEvents.get()->addChangeListener(this);
+    repaint();
+    return *selectedEvents;
 }
 
 void MidiEventsEditorComponent::paint(juce::Graphics& g)
@@ -87,7 +102,7 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
     g.setColour(juce::Colours::grey);
     g.drawRect(getLocalBounds(), 1);
 
-    fumeUI::drawGrid(g, clipBounds, *this, juce::Colours::lightgrey.darker(0.8f), juce::Colours::lightgrey.darker(0.2f));
+    fumeUI::drawGrid(g, clipBounds, *this, juce::Colours::lightgrey.darker(0.8f), juce::Colours::lightgrey.darker(0.2f), true);
     // Fetch clip parameters safely on the Message Thread
     const auto clipLength = midiClip.getClip().getLengthInBeats().inBeats();
     if (clipLength <= 0.0)
@@ -117,7 +132,7 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
         {
             continue; // Skip rendering notes outside the visible area
         }
-		if (selectedEvents.getSelectedNotes().contains(note))
+		if (selectedEvents->getSelectedNotes().contains(note))
 		{
 			g.setColour(juce::Colours::orange);
 		}
@@ -157,9 +172,11 @@ void MidiEventsEditorComponent::valueTreeChildOrderChanged(juce::ValueTree& pare
 
 void MidiEventsEditorComponent::valueTreeParentChanged(juce::ValueTree& treeWhoseParentHasChanged)
 {
+    triggerAsyncUpdate();
 }
 
 void MidiEventsEditorComponent::handleAsyncUpdate()
 {
     resized();
+    repaint();
 }

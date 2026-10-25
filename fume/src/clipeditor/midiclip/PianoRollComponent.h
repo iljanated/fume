@@ -14,11 +14,11 @@ public:
 
 		g.fillAll(juce::Colours::grey);
 
-		auto startY = -scrollOffset % FUME_MIDI_EDITOR_NOTE_HEIGHT;
+		auto startY = -scrollOffset % fumeUI::midiEditorNoteHeight;
 
-		auto noteIndex = 127 - scrollOffset / FUME_MIDI_EDITOR_NOTE_HEIGHT;
+		auto noteIndex = 127 - scrollOffset / fumeUI::midiEditorNoteHeight;
 
-		for (auto y = startY; y < localBounds.getBottom(); y += FUME_MIDI_EDITOR_NOTE_HEIGHT)
+		for (auto y = startY; y < localBounds.getBottom(); y += fumeUI::midiEditorNoteHeight)
 		{
 			auto localNoteIndex = noteIndex % 12;
 
@@ -31,17 +31,17 @@ public:
 				g.setColour(juce::Colours::white);
 			}
 
-			g.fillRect(30, y, 20, FUME_MIDI_EDITOR_NOTE_HEIGHT);
+			g.fillRect(30, y, 20, fumeUI::midiEditorNoteHeight);
 
 			g.setColour(juce::Colours::grey);
-			g.drawRect(30, y, 20, FUME_MIDI_EDITOR_NOTE_HEIGHT);
+			g.drawRect(30, y, 20, fumeUI::midiEditorNoteHeight);
 
 			if (localNoteIndex == 0)
 			{
 				g.setColour(juce::Colours::darkgrey);
-				g.drawLine(0, y + FUME_MIDI_EDITOR_NOTE_HEIGHT, 30, y + FUME_MIDI_EDITOR_NOTE_HEIGHT);
+				g.drawLine(0, y + fumeUI::midiEditorNoteHeight, 30, y + fumeUI::midiEditorNoteHeight);
 				auto note = static_cast<int>(noteIndex / 12);
-				auto rect = juce::Rectangle{ 0, y, 30, FUME_MIDI_EDITOR_NOTE_HEIGHT };
+				auto rect = juce::Rectangle{ 0, y, 30, fumeUI::midiEditorNoteHeight };
 				auto label = "c-" + juce::String(note);
 				g.drawText(label, rect, juce::Justification::centred, false);
 			}

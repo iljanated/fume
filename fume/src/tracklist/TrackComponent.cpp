@@ -12,7 +12,7 @@ TrackComponent::TrackComponent(te::AudioTrack& t, fumeUI::UIContext& context)
     track(t),
     uiContext(context)
 {
-    rebuildObjects();
+	rebuildObjects();
 }
 
 TrackComponent::~TrackComponent()
@@ -33,7 +33,10 @@ void TrackComponent::resized()
 {
     auto localBounds = getLocalBounds();
 
-    auto beatWidth = FUME_TIMELINE_BEAT_WIDTH;
+    float zoomX = uiContext.edit.state.getProperty(FumeIDs::ZoomX, 1.0f);
+	DBG("TrackComponent::resized() - zoomX: " << zoomX);
+
+    auto beatWidth = fumeUI::timelineBeatWidth * zoomX;
 
     for (auto objectWrapper : objects)
     {
@@ -108,7 +111,7 @@ void TrackComponent::valueTreePropertyChanged(juce::ValueTree& treeWhoseProperty
 	// call super class implementation to handle property changes
     te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<ClipComponent>>::valueTreePropertyChanged(treeWhosePropertyHasChanged, property);
 
-	if(property == te::IDs::length)
+	if(treeWhosePropertyHasChanged.hasType(te::IDs::MIDICLIP) && property == te::IDs::length)
     {
 		asyncResizer.resizeAsync();
     }

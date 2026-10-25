@@ -5,6 +5,7 @@
 #include "ToolState.h"
 #include "SelectionBoxComponent.h"
 #include "GridEditor.h"
+#include "ExtendedEdit.h"
 
 namespace te = tracktion;
 
@@ -32,6 +33,8 @@ public:
     
     void selectItemsInBox(const juce::Rectangle<double>& selectionBox) override;
 
+	ExtendedEdit& getExtendedEdit() { return extendedEdit; }
+
     // tracks
 	int getTrackCount() const { return objects.size(); }
 	te::AudioTrack* getTrackAt(int index) const;
@@ -41,7 +44,7 @@ public:
      */
     //@{
     juce::Point<double> getGridSize() const override;
-	juce::Point<double> getUnitSize() const override { return { FUME_TIMELINE_BEAT_WIDTH, FUME_TIMELINE_TRACK_HEIGHT }; }
+	juce::Point<double> getUnitSize() const override;
 	juce::Point<double> getCellSize() const override { return { 4, 1 }; }
 	int getCellGroupSize() const override { return 4; }
     double getSnappingInterval() const override { return 1.0; }
@@ -49,6 +52,7 @@ public:
 
 private:
     //==============================================================================
+	ExtendedEdit extendedEdit{ uiContext.edit, &uiContext.edit.getUndoManager() };
 	DrawableRectangle currentPositionMarker;
 	Helpers::AsyncResizer asyncResizer{ *this };
 
@@ -60,6 +64,9 @@ private:
     void newObjectAdded(Helpers::AsyncValueTreeItem<TrackComponent>*) override;
     void objectRemoved(Helpers::AsyncValueTreeItem<TrackComponent>*) override;
     void objectOrderChanged() override;
+
+    void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
+        const juce::Identifier& property) override;
 
     void timerCallback() override;
 

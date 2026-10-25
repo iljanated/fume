@@ -11,7 +11,7 @@ public:
         zoomX.referTo(clip.state, FumeIDs::ZoomX, nullptr, 1.0f);
 		zoomY.referTo(clip.state, FumeIDs::ZoomY, nullptr, 1.0f);
 		scrollX.referTo(clip.state, FumeIDs::ScrollX, nullptr, 0);
-		scrollY.referTo(clip.state, FumeIDs::ScrollY, nullptr, 64 * FUME_MIDI_EDITOR_NOTE_HEIGHT);
+		scrollY.referTo(clip.state, FumeIDs::ScrollY, nullptr, 64 * fumeUI::midiEditorNoteHeight);
     }
 
     te::MidiClip& getClip() const { return clip; }

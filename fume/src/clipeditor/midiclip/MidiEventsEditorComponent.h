@@ -19,24 +19,38 @@ public:
     ~MidiEventsEditorComponent();
     void paint(juce::Graphics& g) override;
     void resized() override;
+
 	void selectItemsInBox(const juce::Rectangle<double>& selectionBox) override;
 	void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+	te::SelectedMidiEvents& getSelectedEvents() { return *selectedEvents; }
+    te::SelectedMidiEvents& getSelectedEvents(bool selectCursorIfEmpty) { 
+        if (selectCursorIfEmpty && selectedEvents->getSelectedNotes().isEmpty())
+        {
+            auto cursorPosition = cursorComponent.getCursorPosition();
+            selectItemsInBox({cursorPosition.getX(), cursorPosition.getY(), 0, 0});
+        }
+        
+        return getSelectedEvents();
+    }
+	ExtendedMidiClip& getMidiClip() { return midiClip; }
 
     /**
      * @name Overrides from fumeUI::Grid
      */
      //@{
     juce::Point<double> getGridSize() const override;
-    juce::Point<double> getUnitSize() const override { return { FUME_MIDI_EDITOR_BEAT_WIDTH, FUME_MIDI_EDITOR_NOTE_HEIGHT }; }
+    juce::Point<double> getUnitSize() const override { return { fumeUI::midiEditorBeatWidth, static_cast<double>(fumeUI::midiEditorNoteHeight) }; }
     juce::Point<double> getCellSize() const override { return { 0.25, 1 }; }
     int getCellGroupSize() const override { return 4; }
     double getSnappingInterval() const override { return 0.25; }
     //@}
 
+	te::SelectedMidiEvents& clearSelectedEvents();
+
 private:
     ExtendedMidiClip midiClip;
     juce::ValueTree state;
-	te::SelectedMidiEvents selectedEvents { midiClip.getClip() };
+	std::unique_ptr<te::SelectedMidiEvents> selectedEvents { std::make_unique<te::SelectedMidiEvents>(midiClip.getClip()) };
     
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
     void valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded) override;

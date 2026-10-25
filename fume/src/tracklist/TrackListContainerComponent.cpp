@@ -2,8 +2,9 @@
 #pragma once
 
 TrackListContainerComponent::TrackListContainerComponent(fumeUI::UIContext& context)
-	: trackListComponent(context, trackListViewport), trackHeadersComponent(context)
+	: trackListComponent(context, trackListViewport), trackHeadersComponent(context), timelineComponent(context, trackListComponent)
 {
+	addAndMakeVisible(timelineComponent);
 	addAndMakeVisible(trackHeadersComponent);
 
 	trackListComponent.setSize(2024, 1600);
@@ -24,7 +25,10 @@ void TrackListContainerComponent::paint(juce::Graphics& g)
 void TrackListContainerComponent::resized()
 {
 	auto localBounds = getLocalBounds();
-	trackHeadersComponent.setBounds(localBounds.removeFromLeft(100));
+	auto timelineBounds = localBounds.removeFromTop(fumeUI::timelineTimelineHeight);
+	timelineBounds.removeFromLeft(fumeUI::timelineTrackHeadWidth);
+	timelineComponent.setBounds(timelineBounds);
+	trackHeadersComponent.setBounds(localBounds.removeFromLeft(fumeUI::timelineTrackHeadWidth));
 	trackListViewport.setBounds(localBounds);
 }
 
@@ -33,5 +37,6 @@ void TrackListContainerComponent::componentMovedOrResized(juce::Component& compo
 	if (&component == &trackListComponent)
 	{
 		trackHeadersComponent.setTrackOffset(trackListComponent.getY());
+		timelineComponent.setOffset(trackListComponent.getX());
 	}
 }

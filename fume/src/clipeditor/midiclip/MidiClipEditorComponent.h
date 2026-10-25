@@ -6,6 +6,7 @@
 #include "ManualViewport.h"
 #include "MidiEventsEditorComponent.h"
 #include "PianoRollComponent.h"
+#include "TimelineComponent.h"
 
 
 class MidiClipEditorComponent : public ClipEditorImplementationComponent, private juce::ComponentListener
@@ -21,6 +22,7 @@ private:
 	ManualViewport midiEventsViewport;
 	MidiEventsEditorComponent midiEventsEditorComponent;
 	PianoRollComponent pianoRollComponent;
+	TimelineComponent timelineComponent;
 
 	void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
 

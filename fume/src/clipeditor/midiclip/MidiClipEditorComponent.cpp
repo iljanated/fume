@@ -3,9 +3,10 @@
 #include "MidiClipEditorComponent.h"
 
 MidiClipEditorComponent::MidiClipEditorComponent(te::MidiClip* clip, fumeUI::UIContext& context)
-	: midiClip(*clip, &context.edit.getUndoManager()), midiEventsEditorComponent(clip, context, midiEventsViewport)
+	: midiClip(*clip, &context.edit.getUndoManager()), midiEventsEditorComponent(clip, context, midiEventsViewport), timelineComponent(context, midiEventsEditorComponent)
 {
 	addAndMakeVisible(pianoRollComponent);
+	addAndMakeVisible(timelineComponent);
 
 	midiEventsEditorComponent.setSize(2024, 1600);
 	midiEventsEditorComponent.addComponentListener(this);
@@ -22,7 +23,10 @@ MidiClipEditorComponent::~MidiClipEditorComponent()
 void MidiClipEditorComponent::resized()
 {
 	auto localBounds = getLocalBounds();
-	pianoRollComponent.setBounds(localBounds.removeFromLeft(50));
+	auto timelineBounds = localBounds.removeFromTop(fumeUI::midiEditorTimelineHeight);
+	timelineBounds.removeFromLeft(fumeUI::midiEditorPianoRollWidth);
+	timelineComponent.setBounds(timelineBounds);
+	pianoRollComponent.setBounds(localBounds.removeFromLeft(fumeUI::midiEditorPianoRollWidth));
     midiEventsViewport.setBounds(localBounds);
 }
 

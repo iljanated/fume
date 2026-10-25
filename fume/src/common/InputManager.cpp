@@ -11,6 +11,13 @@ InputManager::InputManager()
 	actionBindings.set(InputAction::Up, ActionBinding{ juce::KeyPress::upKey, juce::ModifierKeys::noModifiers });
 	actionBindings.set(InputAction::Down, ActionBinding{ juce::KeyPress::downKey, juce::ModifierKeys::noModifiers });
 
+	// move
+
+	actionBindings.set(InputAction::MoveLeft, ActionBinding{ juce::KeyPress::leftKey, juce::ModifierKeys::shiftModifier });
+	actionBindings.set(InputAction::MoveRight, ActionBinding{ juce::KeyPress::rightKey, juce::ModifierKeys::shiftModifier });
+	actionBindings.set(InputAction::MoveUp, ActionBinding{ juce::KeyPress::upKey, juce::ModifierKeys::shiftModifier });
+	actionBindings.set(InputAction::MoveDown, ActionBinding{ juce::KeyPress::downKey, juce::ModifierKeys::shiftModifier });
+
 	// next
 
 	actionBindings.set(InputAction::NextLeft, ActionBinding{ juce::KeyPress::leftKey, juce::ModifierKeys::ctrlModifier });
@@ -21,13 +28,16 @@ InputManager::InputManager()
 	// actions
 
 	actionBindings.set(InputAction::Select, ActionBinding{ 'S', juce::ModifierKeys::noModifiers});
+	actionBindings.set(InputAction::MultiSelect, ActionBinding{ 'S', juce::ModifierKeys::shiftModifier });
+	actionBindings.set(InputAction::Deselect, ActionBinding{ 'S', juce::ModifierKeys::ctrlModifier });
 	actionBindings.set(InputAction::Write, ActionBinding{ 'D', juce::ModifierKeys::noModifiers});
 	actionBindings.set(InputAction::Delete, ActionBinding{ 'D', juce::ModifierKeys::shiftModifier });
-
+	actionBindings.set(InputAction::Zoom, ActionBinding{ 'A', juce::ModifierKeys::noModifiers });
+	
 	// undo/redo
 
-	actionBindings.set(InputAction::Undo, ActionBinding{ 'Z', juce::ModifierKeys::noModifiers });
-	actionBindings.set(InputAction::Redo, ActionBinding{ 'Z', juce::ModifierKeys::shiftModifier });
+	actionBindings.set(InputAction::Undo, ActionBinding{ 'W', juce::ModifierKeys::noModifiers });
+	actionBindings.set(InputAction::Redo, ActionBinding{ 'W', juce::ModifierKeys::shiftModifier });
 
 	// play
 
@@ -149,7 +159,7 @@ void InputManager::pollSDL()
 	while (i.next())
 	{
 		auto time = i.getValue();
-		if (time > 0 && time >= FUME_INPUT_REPEAT_DELAY_FRAMES && (time - FUME_INPUT_REPEAT_DELAY_FRAMES) % FUME_INPUT_REPEAT_FRAMES == 0)
+		if (time > 0 && time >= fumeUI::inputRepeatDelayFrames && (time - fumeUI::inputRepeatDelayFrames) % fumeUI::inputRepeatFrames == 0)
 		{
 			// buttonPressed(static_cast<SDL_GamepadButton>(i.getKey()));
 		}

@@ -47,11 +47,21 @@ target_sources(Fume PRIVATE
     src/clipeditor/midiclip/MidiClipEditorComponent.cpp
     src/clipeditor/midiclip/MidiClipEditorComponent.h
     src/clipeditor/midiclip/PianoRollComponent.h
+    src/clipeditor/midiclip/toolstates/MidiClipDeleteToolState.cpp
+    src/clipeditor/midiclip/toolstates/MidiClipDeleteToolState.h
+    src/clipeditor/midiclip/toolstates/MidiClipDeselectToolState.h
+    src/clipeditor/midiclip/toolstates/MidiClipMoveToolState.cpp
+    src/clipeditor/midiclip/toolstates/MidiClipMoveToolState.h
     src/clipeditor/midiclip/toolstates/MidiClipSelectToolState.cpp
     src/clipeditor/midiclip/toolstates/MidiClipSelectToolState.h
+    src/clipeditor/midiclip/toolstates/MidiClipWriteToolState.cpp
+    src/clipeditor/midiclip/toolstates/MidiClipWriteToolState.h
+    src/common/ExtendedEdit.h
+    src/common/ExtendedMidiClip.h
     src/common/InputManager.cpp
     src/common/InputManager.h
     src/common/ToolState.h
+    src/common/Utilities.cpp
     src/common/Utilities.h
     src/CursorComponent.cpp
     src/CursorComponent.h
@@ -66,6 +76,8 @@ target_sources(Fume PRIVATE
     src/selectables/SelectableClipClass.h
     src/SelectionBoxComponent.cpp
     src/SelectionBoxComponent.h
+    src/TimelineComponent.cpp
+    src/TimelineComponent.h
     src/tracklist/AudioClipComponent.cpp
     src/tracklist/AudioClipComponent.h
     src/tracklist/ClipComponent.cpp
@@ -78,6 +90,8 @@ target_sources(Fume PRIVATE
     src/tracklist/toolstates/TrackListSelectToolState.h
     src/tracklist/toolstates/TrackListWriteToolState.cpp
     src/tracklist/toolstates/TrackListWriteToolState.h
+    src/tracklist/toolstates/TrackListZoomToolState.cpp
+    src/tracklist/toolstates/TrackListZoomToolState.h
     src/tracklist/TrackComponent.cpp
     src/tracklist/TrackComponent.h
     src/tracklist/TrackHeadersComponent.cpp
@@ -87,9 +101,7 @@ target_sources(Fume PRIVATE
     src/tracklist/TrackListContainerComponent.cpp
     src/tracklist/TrackListContainerComponent.h
     src/TransportComponent.cpp
-    src/TransportComponent.h
-    
-)
+    src/TransportComponent.h)
 
 # Koppel de standaard JUCE modules
 target_link_libraries(Fume PRIVATE

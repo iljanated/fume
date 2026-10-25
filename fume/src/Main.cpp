@@ -1,10 +1,10 @@
 #include <JuceHeader.h>
 #include "MainComponent.h"
 
-class TracktionAppApplication : public juce::JUCEApplication
+class FumeApplication : public juce::JUCEApplication
 {
 public:
-    TracktionAppApplication() {}
+    FumeApplication() {}
 
     const juce::String getApplicationName() override { return "Fume"; }
     const juce::String getApplicationVersion() override { return "1.0.0"; }
@@ -59,13 +59,24 @@ public:
             JUCEApplication::getInstance()->systemRequestedQuit();
         }
 
+        static juce::PropertySet* getGlobalSettings()
+        {
+            if (instance != nullptr)
+                return instance->appProperties.getUserSettings();
+
+            return nullptr;
+        }
+
     private:
+
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainWindow)
     };
 
 private:
     std::unique_ptr<MainWindow> mainWindow;
+    juce::ApplicationProperties appProperties;
+    static FumeApplication* instance;
 };
 
 // Macro die de main()-functie genereert en de app opstart
-START_JUCE_APPLICATION(TracktionAppApplication)
+START_JUCE_APPLICATION(FumeApplication)

@@ -10,6 +10,10 @@ enum class InputAction : uint32_t
 	Right,
 	Up,
 	Down,
+	MoveLeft,
+	MoveRight,
+	MoveUp,
+	MoveDown,
 	NextLeft,
 	NextRight,
 	NextUp,
@@ -19,8 +23,11 @@ enum class InputAction : uint32_t
 	Write,
 	Delete,
 	Select,
+	MultiSelect,
+	Deselect,
 	Undo,
-	Redo
+	Redo,
+	Zoom
 };
 
 struct InputActionHashGenerator

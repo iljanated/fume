@@ -2,11 +2,12 @@
 #include "toolstates/TrackListSelectToolState.h"
 #include "toolstates/TrackListWriteToolState.h"
 #include "toolstates/TrackListDeleteToolState.h"
+#include "toolstates/TrackListZoomToolState.h"
 
 namespace te = tracktion;
 
 TrackListComponent::TrackListComponent(fumeUI::UIContext& context, juce::Viewport& v)
-	: GridEditor<TrackListComponent>(context, v), te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<TrackComponent>>(context.edit.state)
+	: GridEditor<TrackListComponent>(context, v, FumeIDs::TrackListSelectToolState), te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<TrackComponent>>(context.edit.state)
 {
 	addAndMakeVisible(currentPositionMarker);
 	currentPositionMarker.setFill(Colours::white.withAlpha(0.85f));
@@ -17,6 +18,7 @@ TrackListComponent::TrackListComponent(fumeUI::UIContext& context, juce::Viewpor
 	toolStateManager.addToolState(std::make_unique<TrackListSelectToolState>(this));
 	toolStateManager.addToolState(std::make_unique<TrackListWriteToolState>(this));
 	toolStateManager.addToolState(std::make_unique<TrackListDeleteToolState>(this));
+	toolStateManager.addToolState(std::make_unique<TrackListZoomToolState>(this));
 
 	//uiContext.edit.state.setProperty(FumeIDs::ZoomX, 1.0f, &uiContext.edit.getUndoManager());
 	//uiContext.edit.state.setProperty(FumeIDs::ZoomY, 1.0f, &uiContext.edit.getUndoManager());
@@ -31,6 +33,7 @@ TrackListComponent::TrackListComponent(fumeUI::UIContext& context, juce::Viewpor
 
 TrackListComponent::~TrackListComponent()
 {
+	uiContext.selectionManager.removeChangeListener(this);
 	freeObjects();
 }
 
@@ -54,12 +57,29 @@ void TrackListComponent::paint(juce::Graphics& g)
 
 	float zoomX = uiContext.edit.state.getProperty(FumeIDs::ZoomX, 1.0f);
 	float zoomY = uiContext.edit.state.getProperty(FumeIDs::ZoomY, 1.0f);
-	auto beatWidth = FUME_TIMELINE_BEAT_WIDTH * zoomX;
-	auto trackHeight = FUME_TIMELINE_TRACK_HEIGHT * zoomY;
+	auto beatWidth = fumeUI::timelineBeatWidth * zoomX;
+	auto trackHeight = fumeUI::timelineTrackHeight * zoomY;
+
+	double minimumPixelWidthForGridLines = 20.0;
+
+	te::TempoSequence dummySequence(uiContext.edit);
+	dummySequence.createEmptyState();
+	auto firstTempo = dummySequence.insertTempo(te::BeatPosition::fromBeats(0.0), 120.0, 0.0f);
+	
+	double secondsPerBeat = 60.0 / firstTempo->getBpm();
+	double pixelsPerSecond = beatWidth / secondsPerBeat;
+	double secondsPerPixel = 1.0 / pixelsPerSecond;
+
+	bool isTripletOverride = false;
+	auto displayFormat = uiContext.edit.getTimecodeFormat();
+	auto snapType = displayFormat.getBestSnapType(*firstTempo, te::TimeDuration::fromSeconds(secondsPerPixel), isTripletOverride);
+		
+	DBG("TrackListComponent::paint: snapType: " << snapType.getDescription(*firstTempo, isTripletOverride) << ", level: " << snapType.getLevel() << ", type: " << static_cast<int>(snapType.type));	
+	
 
 	g.fillAll(juce::Colours::lightgrey);
 
-	fumeUI::drawGrid(g, clipBounds, *this, juce::Colours::lightgrey.darker(0.8f), juce::Colours::lightgrey.darker(0.2f));
+	fumeUI::drawGrid(g, clipBounds, *this, juce::Colours::lightgrey.darker(0.8f), juce::Colours::lightgrey.darker(0.2f), false);
 	
 	if (hasKeyboardFocus(true))
 	{
@@ -80,18 +100,20 @@ void TrackListComponent::resized()
 	{
 		if (auto object = objectWrapper->getObject())
 		{
-			object->setBounds(localBounds.removeFromTop(FUME_TIMELINE_TRACK_HEIGHT));
+			object->setBounds(localBounds.removeFromTop(fumeUI::timelineTrackHeight * extendedEdit.zoomY));
 		}
 	}
 }
 
 void TrackListComponent::focusGained(FocusChangeType cause)
 {
+	GridEditor<TrackListComponent>::focusGained(cause);
 	repaint();
 }
 
 void TrackListComponent::focusLost(FocusChangeType cause)
 {
+	GridEditor<TrackListComponent>::focusLost(cause);
 	repaint();
 }
 
@@ -136,6 +158,15 @@ void TrackListComponent::objectOrderChanged()
 	asyncResizer.resizeAsync();
 }
 
+void TrackListComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
+{
+	if (property == FumeIDs::ZoomX || property == FumeIDs::ZoomY)
+	{
+		resizeViewport();
+		asyncResizer.resizeAsync();
+	}
+}
+
 void TrackListComponent::timerCallback()
 {
 	updateCurrentPositionMarker();
@@ -147,7 +178,7 @@ void TrackListComponent::updateCurrentPositionMarker()
 	auto position = uiContext.edit.getTransport().getPosition();
 	te::TempoSequence& tempoSequence = uiContext.edit.tempoSequence;
 	auto beats = tempoSequence.toBeats(position);
-	auto offset = (float)beats.inBeats() * FUME_TIMELINE_BEAT_WIDTH * zoom;
+	auto offset = (float)beats.inBeats() * fumeUI::timelineBeatWidth * zoom;
 	currentPositionMarker.setRectangle(Rectangle<float>(offset, 0, 1.5f, (float)(getHeight())));
 }
 
@@ -167,8 +198,6 @@ void TrackListComponent::selectItemsInBox(const juce::Rectangle<double>& selecti
 	auto xMax = selectionBox.getRight();
 	auto yMin = selectionBox.getY();
 	auto yMax = selectionBox.getBottom();
-
-	DBG(selectionBox.toString());
 
 	for (auto* selectable : uiContext.selectionManager.getSelectedObjects())
 	{
@@ -212,4 +241,12 @@ juce::Point<double> TrackListComponent::getGridSize() const
 	auto height = static_cast<double>(getTrackCount());
 
 	return { width, height };
+}
+
+juce::Point<double> TrackListComponent::getUnitSize() const 
+{ 
+	return { 
+		fumeUI::timelineBeatWidth * extendedEdit.zoomX, 
+		static_cast<double>(fumeUI::timelineTrackHeight)* extendedEdit.zoomY
+	}; 
 }
