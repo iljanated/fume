@@ -28,6 +28,8 @@ TrackListComponent::TrackListComponent(fumeUI::UIContext& context, juce::Viewpor
 
 	toolStateManager.activateToolStateByIdentifier(FumeIDs::TrackListSelectToolState);
 
+	updateSnapType();
+
 	startTimerHz(30);
 }
 
@@ -55,21 +57,12 @@ void TrackListComponent::paint(juce::Graphics& g)
 {
 	auto clipBounds = g.getClipBounds();
 
-	float zoomX = uiContext.edit.state.getProperty(FumeIDs::ZoomX, 1.0f);
-	float zoomY = uiContext.edit.state.getProperty(FumeIDs::ZoomY, 1.0f);
-	auto beatWidth = fumeUI::timelineBeatWidth * zoomX;
+	auto leftSeconds = te::TimePosition::fromSeconds(clipBounds.getX() * secondsPerPixel);
+	te::TempoSequence& tempoSequence = uiContext.edit.tempoSequence;
+	
+	float zoomY = extendedEdit.zoomY;
 	auto trackHeight = fumeUI::timelineTrackHeight * zoomY;
 
-	auto secondsPerPixel = fumeUI::timelineSecondsPerPixel / zoomX;
-	
-	auto leftSeconds = te::TimePosition::fromSeconds(clipBounds.getX() * secondsPerPixel);
-
-	te::TempoSequence& tempoSequence = uiContext.edit.tempoSequence;
-	bool isTripletOverride = false;
-	auto displayFormat = uiContext.edit.getTimecodeFormat();
-	auto snapType = fumeHelpers::getBestSnapType(displayFormat, fumeUI::timelineMinimumPixelsPerSnap, tempoSequence.getTempoAt(leftSeconds), te::TimeDuration::fromSeconds(secondsPerPixel), isTripletOverride);
-
-	
 	g.fillAll(juce::Colours::lightgrey);
 	
 	juce::Path gridPath;
@@ -183,7 +176,15 @@ void TrackListComponent::objectOrderChanged()
 
 void TrackListComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
 {
-	if (property == FumeIDs::ZoomX || property == FumeIDs::ZoomY)
+	if (property == FumeIDs::ZoomX)
+	{
+		float zoomX = treeWhosePropertyHasChanged.getProperty(FumeIDs::ZoomX, 1.0f);
+		secondsPerPixel = fumeUI::timelineSecondsPerPixel / zoomX;
+		updateSnapType();
+		resizeViewport();
+		asyncResizer.resizeAsync();
+	}
+	else if (property == FumeIDs::ZoomY)
 	{
 		resizeViewport();
 		asyncResizer.resizeAsync();
@@ -299,4 +300,13 @@ void TrackListComponent::findLassoItemsInArea(Array<te::Clip*>& itemsFound, cons
 
 void TrackListComponent::lassoSelectionChanged(SelectedItemSet<te::Clip*>& newSelection)
 {
+}
+
+void TrackListComponent::updateSnapType()
+{
+	auto leftSeconds = te::TimePosition::fromSeconds(viewport.getViewPositionX() * secondsPerPixel);
+	te::TempoSequence& tempoSequence = uiContext.edit.tempoSequence;
+	bool isTripletOverride = false;
+	auto displayFormat = uiContext.edit.getTimecodeFormat();
+	snapType = fumeHelpers::getBestSnapType(displayFormat, fumeUI::timelineMinimumPixelsPerSnap, tempoSequence.getTempoAt(leftSeconds), te::TimeDuration::fromSeconds(secondsPerPixel), isTripletOverride);
 }

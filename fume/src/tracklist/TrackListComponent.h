@@ -3,7 +3,6 @@
 #include "TrackComponent.h"
 #include "Utilities.h"
 #include "ToolState.h"
-#include "SelectionBoxComponent.h"
 #include "GridEditor.h"
 #include "ExtendedEdit.h"
 
@@ -59,6 +58,8 @@ private:
 	ExtendedEdit extendedEdit{ uiContext.edit, &uiContext.edit.getUndoManager() };
 	DrawableRectangle currentPositionMarker;
 	Helpers::AsyncResizer asyncResizer{ *this };
+	te::engine::TimecodeSnapType snapType{ te::engine::TimecodeType::barsBeats, 1 };
+	double secondsPerPixel = fumeUI::timelineSecondsPerPixel;
 
 	void activateToolState(ToolState* newState);
 
@@ -75,6 +76,7 @@ private:
     void timerCallback() override;
 
 	void updateCurrentPositionMarker();
+	void updateSnapType();
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackListComponent)
 };

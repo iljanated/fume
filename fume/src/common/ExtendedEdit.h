@@ -12,7 +12,7 @@ public:
         zoomY.referTo(edit.state, FumeIDs::ZoomY, nullptr, 1.0f);
         scrollX.referTo(edit.state, FumeIDs::ScrollX, nullptr, 0);
         scrollY.referTo(edit.state, FumeIDs::ScrollY, nullptr, 0);
-    }
+	}
 
     te::Edit& getEdit() const { return edit; }
 
