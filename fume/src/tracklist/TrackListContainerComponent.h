@@ -3,7 +3,7 @@
 #include "ManualViewport.h"
 #include "TrackHeadersComponent.h"
 #include "TrackListComponent.h"
-#include "TimelineComponent.h"
+#include "TrackListTimelineComponent.h"
 
 class TrackListContainerComponent : public Component, private juce::ComponentListener
 {
@@ -21,7 +21,7 @@ private:
 	TrackHeadersComponent trackHeadersComponent;
 	ManualViewport trackListViewport;
 	TrackListComponent trackListComponent;
-	TimelineComponent timelineComponent;
+	TrackListTimelineComponent timelineComponent;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackListContainerComponent)
 };

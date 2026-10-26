@@ -1,14 +1,13 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "ToolState.h"
-#include "InputManager.h"
+#include "TrackListToolState.h"
 
 class TrackListComponent;
 
 namespace te = tracktion;
 
-class TrackListWriteToolState : public ToolState<TrackListComponent>
+class TrackListWriteToolState : public TrackListToolState
 {
 public:
 	TrackListWriteToolState(TrackListComponent* component);

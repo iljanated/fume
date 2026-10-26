@@ -34,17 +34,17 @@ void TrackComponent::resized()
     auto localBounds = getLocalBounds();
 
     float zoomX = uiContext.edit.state.getProperty(FumeIDs::ZoomX, 1.0f);
-	DBG("TrackComponent::resized() - zoomX: " << zoomX);
-
-    auto beatWidth = fumeUI::timelineBeatWidth * zoomX;
-
+	
+	auto pixelsPerSecond = zoomX / fumeUI::timelineSecondsPerPixel;
+    
     for (auto objectWrapper : objects)
     {
         if (auto object = objectWrapper->getObject())
         {
             te::Clip& clip = object->getClip();
-            auto beatRange = clip.getEditBeatRange();
-            object->setBounds((int)(beatRange.getStart().inBeats() * beatWidth), 0, (int)(beatRange.getLength().inBeats() * beatWidth), localBounds.getHeight());
+			auto clipPosition = clip.getPosition();
+            object->setBounds((int)(clipPosition.getStart().inSeconds() * pixelsPerSecond), 0, (int)(clipPosition.getLength().inSeconds() * pixelsPerSecond), localBounds.getHeight());
+			DBG("Clip: " << clip.getName() << " Start: " << clipPosition.getStart().inSeconds() << " Length: " << clipPosition.getLength().inSeconds() << " Bounds: " << object->getBounds().toString());
         }
     }
 }

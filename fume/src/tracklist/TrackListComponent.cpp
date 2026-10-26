@@ -1,8 +1,8 @@
 #include "TrackListComponent.h"
-#include "toolstates/TrackListSelectToolState.h"
-#include "toolstates/TrackListWriteToolState.h"
-#include "toolstates/TrackListDeleteToolState.h"
-#include "toolstates/TrackListZoomToolState.h"
+#include "TrackListWriteToolState.h"
+#include "TrackListDeleteToolState.h"
+#include "TrackListSelectToolState.h"
+#include "TrackListZoomToolState.h"
 
 namespace te = tracktion;
 
@@ -60,27 +60,50 @@ void TrackListComponent::paint(juce::Graphics& g)
 	auto beatWidth = fumeUI::timelineBeatWidth * zoomX;
 	auto trackHeight = fumeUI::timelineTrackHeight * zoomY;
 
-	double minimumPixelWidthForGridLines = 20.0;
-
-	te::TempoSequence dummySequence(uiContext.edit);
-	dummySequence.createEmptyState();
-	auto firstTempo = dummySequence.insertTempo(te::BeatPosition::fromBeats(0.0), 120.0, 0.0f);
+	auto secondsPerPixel = fumeUI::timelineSecondsPerPixel / zoomX;
 	
-	double secondsPerBeat = 60.0 / firstTempo->getBpm();
-	double pixelsPerSecond = beatWidth / secondsPerBeat;
-	double secondsPerPixel = 1.0 / pixelsPerSecond;
+	auto leftSeconds = te::TimePosition::fromSeconds(clipBounds.getX() * secondsPerPixel);
 
+	te::TempoSequence& tempoSequence = uiContext.edit.tempoSequence;
 	bool isTripletOverride = false;
 	auto displayFormat = uiContext.edit.getTimecodeFormat();
-	auto snapType = displayFormat.getBestSnapType(*firstTempo, te::TimeDuration::fromSeconds(secondsPerPixel), isTripletOverride);
-		
-	DBG("TrackListComponent::paint: snapType: " << snapType.getDescription(*firstTempo, isTripletOverride) << ", level: " << snapType.getLevel() << ", type: " << static_cast<int>(snapType.type));	
-	
+	auto snapType = fumeHelpers::getBestSnapType(displayFormat, fumeUI::timelineMinimumPixelsPerSnap, tempoSequence.getTempoAt(leftSeconds), te::TimeDuration::fromSeconds(secondsPerPixel), isTripletOverride);
 
+	
 	g.fillAll(juce::Colours::lightgrey);
-
-	fumeUI::drawGrid(g, clipBounds, *this, juce::Colours::lightgrey.darker(0.8f), juce::Colours::lightgrey.darker(0.2f), false);
 	
+	juce::Path gridPath;
+
+	auto minX = clipBounds.getX();
+	auto maxX = clipBounds.getRight();
+	auto minY = clipBounds.getY();
+	auto maxY = clipBounds.getBottom();
+	
+	auto startTime = snapType.roundTimeUp(leftSeconds, tempoSequence);
+	auto endTime = te::TimePosition::fromSeconds(maxX * secondsPerPixel);
+	
+	auto time = startTime;
+	while (time < endTime)
+	{
+		auto x = time.inSeconds() / secondsPerPixel;
+		gridPath.startNewSubPath(x, minY);
+		gridPath.lineTo(x, maxY);
+
+		time = snapType.roundTimeUp(time + te::TimeDuration::fromSeconds(0.0001), tempoSequence);
+	}
+	
+	// horizontal lines
+
+	for (auto y = minY + trackHeight - std::fmod(minY, trackHeight); y < maxY; y += trackHeight)
+	{
+		gridPath.startNewSubPath(minX, y);
+		gridPath.lineTo(maxX, y);
+	}
+
+	g.setColour(juce::Colours::lightgrey.darker(0.2));
+
+	g.strokePath(gridPath, juce::PathStrokeType(1.0f));
+
 	if (hasKeyboardFocus(true))
 	{
 		g.setColour(juce::Colours::red);
@@ -249,4 +272,31 @@ juce::Point<double> TrackListComponent::getUnitSize() const
 		fumeUI::timelineBeatWidth * extendedEdit.zoomX, 
 		static_cast<double>(fumeUI::timelineTrackHeight)* extendedEdit.zoomY
 	}; 
+}
+
+void TrackListComponent::findLassoItemsInArea(Array<te::Clip*>& itemsFound, const Rectangle<int>& area)
+{
+	auto xMin = area.getX();
+	auto xMax = area.getRight();
+	auto yMin = area.getY();
+	auto yMax = area.getBottom();
+
+	for (int i = yMin; i <= yMax; ++i)
+	{
+		if (auto track = getTrackAt(i))
+		{
+			for (auto clip : track->getClips())
+			{
+				auto timeRange = clip->getEditTimeRange();
+				if (timeRange.getStart().inSeconds() * getUnitSize().x <= xMax && timeRange.getEnd().inSeconds() * getUnitSize().x >= xMin)
+				{
+					itemsFound.add(clip);
+				}
+			}
+		}
+	}
+}
+
+void TrackListComponent::lassoSelectionChanged(SelectedItemSet<te::Clip*>& newSelection)
+{
 }

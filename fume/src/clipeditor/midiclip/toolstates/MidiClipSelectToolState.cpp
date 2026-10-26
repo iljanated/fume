@@ -1,9 +1,8 @@
 #include "MidiClipSelectToolState.h"
-
 #include "MidiEventsEditorComponent.h"
 
 MidiClipSelectToolState::MidiClipSelectToolState(MidiEventsEditorComponent* component)
-	: ToolState<MidiEventsEditorComponent>(component, FumeIDs::MidiClipSelectToolState, InputAction::Select)
+	: MidiClipToolState(component, FumeIDs::MidiClipSelectToolState, InputAction::Select)
 {
 }
 

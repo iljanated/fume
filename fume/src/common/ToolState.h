@@ -3,12 +3,11 @@
 #include <JuceHeader.h>
 #include "InputManager.h"
 
-template <typename T>
 class ToolState
 {
 public:
-	ToolState(T* component, const juce::Identifier identifier, InputAction inputAction) :
-		component(component), identifier(identifier), inputAction(inputAction) {
+	ToolState(const juce::Identifier identifier, InputAction inputAction) :
+		identifier(identifier), inputAction(inputAction) {
 	}
 	virtual ~ToolState() = default;
 
@@ -16,7 +15,7 @@ public:
 	{
 	public:
 		virtual ~ToolStateListener() = default;
-		virtual void toolFinished(ToolState<T>* toolState) = 0;
+		virtual void toolFinished(ToolState* toolState) = 0;
 	};
 
 	virtual void onEnterState() = 0;
@@ -33,7 +32,6 @@ public:
 	void removeListener(ToolStateListener* listenerToRemove) { listeners.remove(listenerToRemove); }
 
 protected:
-	T* component = nullptr;
 	juce::Identifier identifier;
 	InputAction inputAction;
 	juce::ListenerList<ToolStateListener> listeners;
@@ -51,7 +49,7 @@ protected:
 /// </summary>
 /// <typeparam name="T"></typeparam>
 template <typename T>
-class ToolStateManager : public ToolState<T>::ToolStateListener
+class ToolStateManager : public ToolState::ToolStateListener
 {
 public:
 	ToolStateManager(InputManager& inputManager, juce::Identifier defaultToolStateIdentifier) : inputManager(inputManager), defaultToolStateIdentifier(defaultToolStateIdentifier)
@@ -60,7 +58,7 @@ public:
 
 	~ToolStateManager() override = default;
 
-	void toolFinished(ToolState<T>* toolState) override
+	void toolFinished(ToolState* toolState) override
 	{
 		if (toolState == currentToolState)
 		{
@@ -101,7 +99,7 @@ public:
 	}
 
 	/** Adds a new tool state to the manager */
-	void addToolState(std::unique_ptr<class ToolState<T>> toolState)
+	void addToolState(std::unique_ptr<class ToolState> toolState)
 	{
 		toolStates.push_back(std::move(toolState));
 	}
@@ -119,12 +117,12 @@ public:
 	}
 private:
 	InputManager& inputManager;
-	std::vector<std::unique_ptr<ToolState<T>>> toolStates;
-	ToolState<T>* currentToolState{ nullptr };
+	std::vector<std::unique_ptr<ToolState>> toolStates;
+	ToolState* currentToolState{ nullptr };
 	juce::Identifier defaultToolStateIdentifier;
 
 	/** Activates the given tool state, deactivating the current one if necessary */
-	void activateToolState(ToolState<T>* newState)
+	void activateToolState(ToolState* newState)
 	{
 		if (currentToolState == newState)
 		{

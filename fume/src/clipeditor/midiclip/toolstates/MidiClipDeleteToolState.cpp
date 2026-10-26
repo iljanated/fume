@@ -1,11 +1,8 @@
-#include "TrackListDeleteToolState.h"
-#include "TrackListDeleteToolState.h"
 #include "MidiClipDeleteToolState.h"
-
 #include "MidiEventsEditorComponent.h"
 
 MidiClipDeleteToolState::MidiClipDeleteToolState(MidiEventsEditorComponent* component)
-	: ToolState<MidiEventsEditorComponent>(component, FumeIDs::MidiClipDeleteToolState, InputAction::Delete)
+	: MidiClipToolState(component, FumeIDs::MidiClipDeleteToolState, InputAction::Delete)
 {
 }
 

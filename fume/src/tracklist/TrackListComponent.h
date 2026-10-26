@@ -48,15 +48,19 @@ public:
 	juce::Point<double> getCellSize() const override { return { 4, 1 }; }
 	int getCellGroupSize() const override { return 4; }
     double getSnappingInterval() const override { return 1.0; }
+
+
     //@}
 
+    void findLassoItemsInArea(Array<te::Clip*>& itemsFound, const Rectangle<int>& area);
+	void lassoSelectionChanged(SelectedItemSet<te::Clip*>& newSelection);
 private:
     //==============================================================================
 	ExtendedEdit extendedEdit{ uiContext.edit, &uiContext.edit.getUndoManager() };
 	DrawableRectangle currentPositionMarker;
 	Helpers::AsyncResizer asyncResizer{ *this };
 
-	void activateToolState(ToolState<TrackListComponent>* newState);
+	void activateToolState(ToolState* newState);
 
     bool isSuitableType(const juce::ValueTree& v) const override;
     Helpers::AsyncValueTreeItem<TrackComponent>* createNewObject(const juce::ValueTree& v) override;

@@ -2,7 +2,7 @@
 #pragma once
 
 TrackListContainerComponent::TrackListContainerComponent(fumeUI::UIContext& context)
-	: trackListComponent(context, trackListViewport), trackHeadersComponent(context), timelineComponent(context, trackListComponent)
+	: trackListComponent(context, trackListViewport), trackHeadersComponent(context), timelineComponent(context)
 {
 	addAndMakeVisible(timelineComponent);
 	addAndMakeVisible(trackHeadersComponent);
@@ -37,6 +37,6 @@ void TrackListContainerComponent::componentMovedOrResized(juce::Component& compo
 	if (&component == &trackListComponent)
 	{
 		trackHeadersComponent.setTrackOffset(trackListComponent.getY());
-		timelineComponent.setOffset(trackListComponent.getX());
+		timelineComponent.setOffset(-trackListComponent.getX());
 	}
 }

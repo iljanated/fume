@@ -5,6 +5,9 @@
 namespace fumeUI
 {
     const double timelineBeatWidth = 20;
+    const double timelineSecondsPerPixel = 0.1;
+    const int timelineMinimumPixelsPerSnap = 12;
+    const int timelineHeaderMinimumPixelsPerSnap = 48;
     const int timelineTrackHeight = 30;
     const int timelineTrackHeadWidth = 100;
     const int timelineTimelineHeight = 20;

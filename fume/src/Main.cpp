@@ -1,5 +1,6 @@
 #include <JuceHeader.h>
 #include "MainComponent.h"
+#include "FumeLookAndFeel.h"
 
 class FumeApplication : public juce::JUCEApplication
 {
@@ -13,6 +14,7 @@ public:
     void initialise(const juce::String& commandLine) override
     {
         // Maak het hoofdvenster aan wanneer de app start
+        juce::LookAndFeel::setDefaultLookAndFeel(&fumeLookAndFeel);
         mainWindow = std::make_unique<MainWindow>(getApplicationName());
     }
 
@@ -76,6 +78,7 @@ private:
     std::unique_ptr<MainWindow> mainWindow;
     juce::ApplicationProperties appProperties;
     static FumeApplication* instance;
+    FumeLookAndFeel fumeLookAndFeel;
 };
 
 // Macro die de main()-functie genereert en de app opstart

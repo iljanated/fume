@@ -1,9 +1,8 @@
 #include "TrackListWriteToolState.h"
-
 #include "TrackListComponent.h"
 
 TrackListWriteToolState::TrackListWriteToolState(TrackListComponent* component)
-	: ToolState<TrackListComponent>(component, FumeIDs::TrackListWriteToolState, InputAction::Write)
+	: TrackListToolState(component, FumeIDs::TrackListWriteToolState, InputAction::Write)
 {
 }
 

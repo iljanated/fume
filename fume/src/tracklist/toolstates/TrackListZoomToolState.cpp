@@ -1,10 +1,9 @@
 #include "TrackListZoomToolState.h"
-
 #include "TrackListComponent.h"
 #include "Utilities.h"
 
 TrackListZoomToolState::TrackListZoomToolState(TrackListComponent* component)
-	: ToolState<TrackListComponent>(component, FumeIDs::TrackListZoomToolState, InputAction::Zoom)
+	: TrackListToolState(component, FumeIDs::TrackListZoomToolState, InputAction::Zoom)
 {
 }
 

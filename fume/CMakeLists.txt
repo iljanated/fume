@@ -54,12 +54,14 @@ target_sources(Fume PRIVATE
     src/clipeditor/midiclip/toolstates/MidiClipMoveToolState.h
     src/clipeditor/midiclip/toolstates/MidiClipSelectToolState.cpp
     src/clipeditor/midiclip/toolstates/MidiClipSelectToolState.h
+    src/clipeditor/midiclip/toolstates/MidiClipToolState.h
     src/clipeditor/midiclip/toolstates/MidiClipWriteToolState.cpp
     src/clipeditor/midiclip/toolstates/MidiClipWriteToolState.h
     src/common/ExtendedEdit.h
     src/common/ExtendedMidiClip.h
     src/common/InputManager.cpp
     src/common/InputManager.h
+    src/common/ManualLassoComponent.h
     src/common/ToolState.h
     src/common/Utilities.cpp
     src/common/Utilities.h
@@ -67,6 +69,7 @@ target_sources(Fume PRIVATE
     src/CursorComponent.h
     src/EditContainerComponent.cpp
     src/EditContainerComponent.h
+    src/FumeLookAndFeel.h
     src/GridEditor.h
     src/Main.cpp
     src/MainComponent.cpp
@@ -84,10 +87,11 @@ target_sources(Fume PRIVATE
     src/tracklist/ClipComponent.h
     src/tracklist/MidiClipComponent.cpp
     src/tracklist/MidiClipComponent.h
+    src/tracklist/TrackListTimelineComponent.h
     src/tracklist/toolstates/TrackListDeleteToolState.cpp
     src/tracklist/toolstates/TrackListDeleteToolState.h
-    src/tracklist/toolstates/TrackListSelectToolState.cpp
     src/tracklist/toolstates/TrackListSelectToolState.h
+    src/tracklist/toolstates/TrackListToolState.h
     src/tracklist/toolstates/TrackListWriteToolState.cpp
     src/tracklist/toolstates/TrackListWriteToolState.h
     src/tracklist/toolstates/TrackListZoomToolState.cpp

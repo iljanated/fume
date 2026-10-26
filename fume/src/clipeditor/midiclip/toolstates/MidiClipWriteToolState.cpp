@@ -1,9 +1,8 @@
 #include "MidiClipWriteToolState.h"
-
 #include "MidiEventsEditorComponent.h"
 
 MidiClipWriteToolState::MidiClipWriteToolState(MidiEventsEditorComponent* component)
-	: ToolState<MidiEventsEditorComponent>(component, FumeIDs::MidiClipWriteToolState, InputAction::Write)
+	: MidiClipToolState(component, FumeIDs::MidiClipWriteToolState, InputAction::Write)
 {
 }
 

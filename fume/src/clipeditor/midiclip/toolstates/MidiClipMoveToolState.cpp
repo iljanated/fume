@@ -1,9 +1,8 @@
 #include "MidiClipMoveToolState.h"
-
 #include "MidiEventsEditorComponent.h"
 
 MidiClipMoveToolState::MidiClipMoveToolState(MidiEventsEditorComponent* component)
-	: ToolState<MidiEventsEditorComponent>(component, FumeIDs::MidiClipMoveToolState, InputAction::None)
+	: MidiClipToolState(component, FumeIDs::MidiClipMoveToolState, InputAction::None)
 {
 }
 
@@ -87,7 +86,7 @@ bool MidiClipMoveToolState::keyStateChanged(bool isKeyDown)
 
 void MidiClipMoveToolState::moveNote(te::MidiNote* note, double deltaBeats, int deltaPitch, juce::UndoManager& undoManager)
 {
-	if (deltaBeats != 0.0)
+	if (component && deltaBeats != 0.0)
 	{
 		auto length = note->getLengthBeats();
 		auto newStart = note->getStartBeat() + te::BeatDuration::fromBeats(deltaBeats);

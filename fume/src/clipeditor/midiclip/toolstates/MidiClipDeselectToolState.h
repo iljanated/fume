@@ -1,18 +1,17 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "ToolState.h"
-#include "InputManager.h"
+#include "MidiClipToolState.h"
 
 class MidiEventsEditorComponent;
 
 namespace te = tracktion;
 
-class MidiClipDeselectToolState : public ToolState<MidiEventsEditorComponent>
+class MidiClipDeselectToolState : public MidiClipToolState
 {
 public:
 	MidiClipDeselectToolState(MidiEventsEditorComponent* component)
-		: ToolState<MidiEventsEditorComponent>(component, FumeIDs::MidiClipDeselectToolState, InputAction::Deselect)
+		: MidiClipToolState(component, FumeIDs::MidiClipDeselectToolState, InputAction::Deselect)
 	{
 	}
 
