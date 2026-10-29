@@ -1,7 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Utilities.h"
+#include "UIContext.h"
 
 class TrackHeaderComponent : public juce::Component
 {

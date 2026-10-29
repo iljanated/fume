@@ -46,14 +46,6 @@ namespace fumeUI
 	extern const int inputRepeatFrames;
 	extern const float zoomStepSize;
 
-	struct UIContext
-	{
-		te::Engine& engine;
-		te::Edit& edit;
-		te::SelectionManager& selectionManager;
-		InputManager& inputManager;
-	};
-
 	class Grid
 	{
 	public:

@@ -1,7 +1,8 @@
 #pragma once
 #include <JuceHeader.h>
 #include "ClipEditorComponent.h"
-#include "Utilities.h"
+#include "ExtendedEdit.h"
+#include "UIContext.h"
 #include "TrackListContainerComponent.h"
 #include "TransportComponent.h"
 
@@ -25,7 +26,8 @@ public:
 private:
     //==============================================================================
     // JUCE en Tracktion objecten (volgorde van declaratie bepaalt de destructie-volgorde)
-	fumeUI::UIContext uiContext;
+	ExtendedEdit extendedEdit;
+    fumeUI::UIContext uiContext;
 
 	TrackListContainerComponent trackListContainerComponent{ uiContext };
     ClipEditorComponent clipEditorComponent{ uiContext };

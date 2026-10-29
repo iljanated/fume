@@ -21,6 +21,7 @@ bool MidiClipWriteToolState::keyPressed(const juce::KeyPress& key)
 		return false;
 	}
 	auto& uiContext = component->getUIContext();
+	auto& edit = uiContext.extendedEdit.getEdit();
 	auto& inputManager = uiContext.inputManager;
 
 	auto modifiers = key.getModifiers();
@@ -42,7 +43,7 @@ bool MidiClipWriteToolState::keyPressed(const juce::KeyPress& key)
 
 		auto& sequence = component->getMidiClip().getClip().getSequence();
 
-		auto* note = sequence.addNote(noteNumber, startBeat, duration, velocity, 0, &uiContext.edit.getUndoManager());
+		auto* note = sequence.addNote(noteNumber, startBeat, duration, velocity, 0, &edit.getUndoManager());
 
 		auto& selectedEvents = component->clearSelectedEvents();
 		selectedEvents.addSelectedEvent(note, true);
@@ -54,7 +55,7 @@ bool MidiClipWriteToolState::keyPressed(const juce::KeyPress& key)
 		auto snappingInterval = component->getSnappingInterval();
 		auto selectedNotes = component->getSelectedEvents().getSelectedNotes();
 
-		auto& undoManager = uiContext.edit.getUndoManager();
+		auto& undoManager = edit.getUndoManager();
 
 		for (auto* note : selectedNotes)
 		{
@@ -75,7 +76,7 @@ bool MidiClipWriteToolState::keyPressed(const juce::KeyPress& key)
 		auto snappingInterval = component->getSnappingInterval();
 		auto selectedNotes = component->getSelectedEvents().getSelectedNotes();
 
-		auto& undoManager = uiContext.edit.getUndoManager();
+		auto& undoManager = edit.getUndoManager();
 
 		for (auto* note : selectedNotes)
 		{

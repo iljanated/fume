@@ -36,7 +36,7 @@ bool MidiClipDeleteToolState::keyStateChanged(bool isKeyDown)
 	{
 		auto& selectedEvents = component->getSelectedEvents(true);
 
-		auto& undoManager = component->getUIContext().edit.getUndoManager();
+		auto& undoManager = component->getUIContext().extendedEdit.getUndoManager();
 		auto& clip = component->getMidiClip().getClip();
 
 		for (auto* note : selectedEvents.getSelectedNotes())

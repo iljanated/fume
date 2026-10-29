@@ -1,14 +1,13 @@
 #pragma once
 #include <JuceHeader.h>
 #include "TrackComponent.h"
-#include "Utilities.h"
+#include "UIContext.h"
 #include "ToolState.h"
-#include "GridEditor.h"
-#include "ExtendedEdit.h"
+#include "TrackListCursorComponent.h"
 
 namespace te = tracktion;
 
-class TrackListComponent : public GridEditor<TrackListComponent>,
+class TrackListComponent : public juce::Component,
     private te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<TrackComponent>>,
 	private juce::Timer,
     public juce::ChangeListener
@@ -28,38 +27,48 @@ public:
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
     void focusGained(FocusChangeType cause) override;
     void focusLost(FocusChangeType cause) override;
+	bool keyPressed(const juce::KeyPress& key) override
+	{
+		if (toolStateManager.keyPressed(key))
+		{
+			return true;
+		}
 
-    
-    void selectItemsInBox(const juce::Rectangle<double>& selectionBox) override;
+		if (cursorComponent.keyPressed(key))
+		{
+			return true;
+		}
+		return false;
+	}
 
-	ExtendedEdit& getExtendedEdit() { return extendedEdit; }
+	bool keyStateChanged(bool isKeyDown) override
+	{
+		if (toolStateManager.keyStateChanged(isKeyDown))
+		{
+			return true;
+		}
+		return false;
+	}
 
     // tracks
 	int getTrackCount() const { return objects.size(); }
 	te::AudioTrack* getTrackAt(int index) const;
 
-	/**
-	 * @name Overrides from fumeUI::Grid
-     */
-    //@{
-    juce::Point<double> getGridSize() const override;
-	juce::Point<double> getUnitSize() const override;
-	juce::Point<double> getCellSize() const override { return { 4, 1 }; }
-	int getCellGroupSize() const override { return 4; }
-    double getSnappingInterval() const override { return 1.0; }
-
-
-    //@}
-
     void findLassoItemsInArea(Array<te::Clip*>& itemsFound, const Rectangle<int>& area);
 	void lassoSelectionChanged(SelectedItemSet<te::Clip*>& newSelection);
+
+	fumeUI::UIContext& getUIContext() { return uiContext; }
+	TrackListCursorComponent& getCursorComponent() { return cursorComponent; }
+	te::engine::TimecodeSnapType& getSnapType() { return snapType; }
 private:
     //==============================================================================
-	ExtendedEdit extendedEdit{ uiContext.edit, &uiContext.edit.getUndoManager() };
+	juce::Viewport& viewport;
+    fumeUI::UIContext& uiContext;
 	DrawableRectangle currentPositionMarker;
 	Helpers::AsyncResizer asyncResizer{ *this };
 	te::engine::TimecodeSnapType snapType{ te::engine::TimecodeType::barsBeats, 1 };
-	double secondsPerPixel = fumeUI::timelineSecondsPerPixel;
+	ToolStateManager<TrackListComponent> toolStateManager{ uiContext.inputManager, FumeIDs::TrackListSelectToolState};
+	TrackListCursorComponent cursorComponent{ uiContext, *this };
 
 	void activateToolState(ToolState* newState);
 
@@ -77,6 +86,7 @@ private:
 
 	void updateCurrentPositionMarker();
 	void updateSnapType();
+	void updateBounds();
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackListComponent)
 };

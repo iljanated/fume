@@ -57,12 +57,14 @@ target_sources(Fume PRIVATE
     src/clipeditor/midiclip/toolstates/MidiClipToolState.h
     src/clipeditor/midiclip/toolstates/MidiClipWriteToolState.cpp
     src/clipeditor/midiclip/toolstates/MidiClipWriteToolState.h
+    src/common/ExtendedEdit.cpp
     src/common/ExtendedEdit.h
     src/common/ExtendedMidiClip.h
     src/common/InputManager.cpp
     src/common/InputManager.h
     src/common/ManualLassoComponent.h
     src/common/ToolState.h
+    src/common/UIContext.h
     src/common/Utilities.cpp
     src/common/Utilities.h
     src/CursorComponent.cpp
@@ -87,6 +89,8 @@ target_sources(Fume PRIVATE
     src/tracklist/ClipComponent.h
     src/tracklist/MidiClipComponent.cpp
     src/tracklist/MidiClipComponent.h
+    src/tracklist/TrackListCursorComponent.cpp
+    src/tracklist/TrackListCursorComponent.h
     src/tracklist/TrackListTimelineComponent.h
     src/tracklist/toolstates/TrackListDeleteToolState.cpp
     src/tracklist/toolstates/TrackListDeleteToolState.h

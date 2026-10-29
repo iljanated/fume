@@ -10,6 +10,7 @@ public:
     //==============================================================================
     /** Creates a Lasso component. */
     ManualLassoComponent() = default;
+	~ManualLassoComponent() override = default;
 
     //==============================================================================
     void beginLasso(juce::Point<int> position, juce::ModifierKeys modifiers, LassoSource<SelectableItemType>* lassoSource)
@@ -25,6 +26,8 @@ public:
 
         setSize(0, 0);
         dragStartPos = position;
+        selectionRectangle = juce::Rectangle<int>(dragStartPos, dragStartPos);
+		dragLasso(position, modifiers);
     }
 
     /** Call this in your mouseDrag event, to update the lasso's position.
@@ -43,11 +46,14 @@ public:
     {
         if (source != nullptr)
         {
-            setBounds(Rectangle<int>(dragStartPos, position));
+            selectionRectangle = juce::Rectangle<int>(dragStartPos, position);
+            auto drawRectangle = selectionRectangle.expanded(margin, margin);
+			drawRectangle.setHeight(rowHeight + drawRectangle.getHeight());
+			setBounds(drawRectangle);
             setVisible(true);
 
             Array<SelectableItemType> itemsInLasso;
-            source->findLassoItemsInArea(itemsInLasso, getBounds());
+            source->findLassoItemsInArea(itemsInLasso, selectionRectangle);
 
             if (modifiers.isShiftDown())
             {
@@ -104,11 +110,19 @@ public:
     /** @internal */
     bool hitTest(int, int) override { return false; }
 
+    void setRowHeight(int height) { rowHeight = height; }
+    int getRowHeight() const { return rowHeight; }
+
+    void setMargin(int m) { margin = m; }
+    int getMargin() const { return margin; }
 private:
     //==============================================================================
     Array<SelectableItemType> originalSelection;
     LassoSource<SelectableItemType>* source = nullptr;
     Point<int> dragStartPos;
+    int rowHeight = 0;
+    int margin = 0;
+    juce::Rectangle<int> selectionRectangle;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ManualLassoComponent)
 };

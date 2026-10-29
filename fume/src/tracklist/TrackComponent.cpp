@@ -32,19 +32,23 @@ void TrackComponent::paint(juce::Graphics& g)
 void TrackComponent::resized()
 {
     auto localBounds = getLocalBounds();
+	auto& extendedEdit = uiContext.extendedEdit;
+	auto secondsPerPixel = extendedEdit.getSecondsPerPixel();
+	auto& tempoSequence = extendedEdit.getTempoSequence();
 
-    float zoomX = uiContext.edit.state.getProperty(FumeIDs::ZoomX, 1.0f);
-	
-	auto pixelsPerSecond = zoomX / fumeUI::timelineSecondsPerPixel;
-    
     for (auto objectWrapper : objects)
     {
         if (auto object = objectWrapper->getObject())
         {
             te::Clip& clip = object->getClip();
-			auto clipPosition = clip.getPosition();
-            object->setBounds((int)(clipPosition.getStart().inSeconds() * pixelsPerSecond), 0, (int)(clipPosition.getLength().inSeconds() * pixelsPerSecond), localBounds.getHeight());
-			DBG("Clip: " << clip.getName() << " Start: " << clipPosition.getStart().inSeconds() << " Length: " << clipPosition.getLength().inSeconds() << " Bounds: " << object->getBounds().toString());
+			
+            if (auto* midiClip = dynamic_cast<tracktion_engine::MidiClip*> (&clip))
+            {
+                auto start = tempoSequence.beatsToTime(clip.getStartBeat()).inSeconds() / secondsPerPixel;
+                auto end = tempoSequence.beatsToTime(clip.getEndBeat()).inSeconds() / secondsPerPixel;
+				object->setBounds(static_cast<int>(start), 0, static_cast<int>(end - start), localBounds.getHeight());
+
+            }
         }
     }
 }

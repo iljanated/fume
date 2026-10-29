@@ -54,6 +54,7 @@ public:
 		}
 		auto& uiContext = component->getUIContext();
 		auto& inputManager = uiContext.inputManager;
+		auto& extendedEdit = uiContext.extendedEdit;
 
 		auto modifiers = key.getModifiers();
 		auto keyCode = key.getKeyCode();
@@ -64,36 +65,29 @@ public:
 			component->getCursorComponent().setVisible(false);
 			component->addAndMakeVisible(lassoComponent);
 
-			dragPosition = juce::Point<int>(20, 20);
-			lassoComponent.beginLasso(dragPosition, modifiers, this);
-			dragPosition += juce::Point<int>(20, 20);
-			lassoComponent.dragLasso(dragPosition, modifiers);
+			dragPosition = component->getCursorComponent().getCursorPosition();
+			beginLasso(modifiers);
+			//dragLasso(juce::Point<int>(1, 1), modifiers);
 			return true;
 		}
 		else if (isLassoActive && inputManager.validate(keyCode, InputAction::Left))
 		{
-			dragPosition.x -= 20;
-			lassoComponent.dragLasso(dragPosition, modifiers);
+			dragLasso(juce::Point<int>(-1, 0), modifiers);
 			return true;
 		}
 		else if (isLassoActive && inputManager.validate(keyCode, InputAction::Right))
 		{
-			dragPosition.x += 20;
-			lassoComponent.dragLasso(dragPosition, modifiers);
+			dragLasso(juce::Point<int>(1, 0), modifiers);
 			return true;
 		}
 		else if (isLassoActive && inputManager.validate(keyCode, InputAction::Up))
 		{
-			auto unitSize = component->getUnitSize();
-			dragPosition.y -= unitSize.getY();
-			lassoComponent.dragLasso(dragPosition, modifiers);
+			dragLasso(juce::Point<int>(0, -1), modifiers);
 			return true;
 		}
 		else if (isLassoActive && inputManager.validate(keyCode, InputAction::Down))
 		{
-			auto unitSize = component->getUnitSize();
-			dragPosition.y += unitSize.getY();
-			lassoComponent.dragLasso(dragPosition, modifiers);
+			dragLasso(juce::Point<int>(0, 1), modifiers);
 			return true;
 		}
 		return false;
@@ -123,10 +117,61 @@ public:
 
 
 private:
-	juce::Point<int> dragPosition;
+	juce::Point<double> dragPosition;
 	bool isLassoActive = false;
 	SelectedItemSet<te::Clip*> selectedItemSet;
 	ManualLassoComponent<te::Clip*> lassoComponent;
+
+	void beginLasso(juce::ModifierKeys modifiers)
+	{
+		auto& uiContext = component->getUIContext();
+		auto& extendedEdit = uiContext.extendedEdit;
+
+		auto secondsPerPixel = extendedEdit.getSecondsPerPixel();
+		auto trackHeight =	extendedEdit.getTrackHeight();
+
+		auto pixelPosition = juce::Point<int>(static_cast<int>(dragPosition.getX() / secondsPerPixel), static_cast<int>(dragPosition.getY() * trackHeight));
+		lassoComponent.setRowHeight(trackHeight);
+		lassoComponent.setMargin(2);
+		lassoComponent.beginLasso(pixelPosition, modifiers, this);
+	}
+
+	void dragLasso(juce::Point<int> delta, juce::ModifierKeys modifiers)
+	{
+		auto& uiContext = component->getUIContext();
+		auto& extendedEdit = uiContext.extendedEdit;
+
+		auto secondsPerPixel = extendedEdit.getSecondsPerPixel();
+		auto trackHeight =	extendedEdit.getTrackHeight();
+
+		auto deltaX = delta.getX();
+
+		if (deltaX != 0)
+		{
+			auto timePosition = te::TimePosition::fromSeconds(dragPosition.getX());
+			auto timeOffset = te::TimeDuration::fromSeconds(0.0001);
+
+			auto& snapType = component->getSnapType();
+			auto& tempoSequence = extendedEdit.getTempoSequence();
+
+			if (deltaX > 0)
+			{
+				dragPosition.setX(snapType.roundTimeUp(timePosition + timeOffset, tempoSequence).inSeconds());
+			}
+			else
+			{
+				dragPosition.setX(snapType.roundTimeDown(timePosition - timeOffset, tempoSequence).inSeconds());
+			}
+
+			dragPosition.setX(std::clamp(dragPosition.getX(), 0.0, extendedEdit.getEdit().getMaximumLength().inSeconds()));
+
+		}
+		
+		dragPosition.setY(std::clamp(dragPosition.getY() + delta.getY(), 0.0, static_cast<double>(component->getTrackCount())));
+
+		auto pixelPosition = juce::Point<int>(static_cast<int>(dragPosition.getX() / secondsPerPixel), static_cast<int>(dragPosition.getY() * trackHeight));
+		lassoComponent.dragLasso(pixelPosition, modifiers);
+	}
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackListSelectToolState)
 };

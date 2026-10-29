@@ -80,17 +80,17 @@ void TrackListZoomToolState::zoom(float x, float y)
 {
 	if (component)
 	{
-		auto& extendedEdit = component->getExtendedEdit();
+		auto& extendedEdit = component->getUIContext().extendedEdit;
 
-		auto zoomX = extendedEdit.zoomX.get();
-		auto zoomY = extendedEdit.zoomY.get();
+		auto zoomX = extendedEdit.getZoomX();
+		auto zoomY = extendedEdit.getZoomY();
 
 		auto zoomStepSize = fumeUI::zoomStepSize;
 
 		zoomX = std::clamp(zoomX + x * zoomStepSize, 1.0f - zoomStepSize * 5, 1.0f + zoomStepSize * 10.0f);
 		zoomY = std::clamp(zoomY + y * zoomStepSize, 1.0f - zoomStepSize * 5, 1.0f + zoomStepSize * 10.0f);
 
-		extendedEdit.zoomX.setValue(zoomX, nullptr);
-		extendedEdit.zoomY.setValue(zoomY, nullptr);
+		extendedEdit.setZoomX(zoomX);
+		extendedEdit.setZoomY(zoomY);
 	}
 }

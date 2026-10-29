@@ -3,7 +3,7 @@
 #include "MidiClipEditorComponent.h"
 
 MidiClipEditorComponent::MidiClipEditorComponent(te::MidiClip* clip, fumeUI::UIContext& context)
-	: midiClip(*clip, &context.edit.getUndoManager()), midiEventsEditorComponent(clip, context, midiEventsViewport), timelineComponent(context, midiEventsEditorComponent)
+	: midiClip(*clip, &context.extendedEdit.getUndoManager()), midiEventsEditorComponent(clip, context, midiEventsViewport), timelineComponent(context, midiEventsEditorComponent)
 {
 	addAndMakeVisible(pianoRollComponent);
 	addAndMakeVisible(timelineComponent);

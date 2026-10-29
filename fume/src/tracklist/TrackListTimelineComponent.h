@@ -1,7 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Utilities.h"
+#include "UIContext.h"
 
 class TrackListTimelineComponent : public juce::Component
 {
@@ -14,19 +14,20 @@ public:
 
 	void paint(juce::Graphics& g) override
 	{
+		auto& edit = uiContext.extendedEdit.getEdit();
 		auto localBounds = getLocalBounds();
 
 		g.fillAll(juce::Colours::lightgrey);
 
-		float zoomX = uiContext.edit.state.getProperty(FumeIDs::ZoomX, 1.0f);
+		float zoomX = edit.state.getProperty(FumeIDs::ZoomX, 1.0f);
 		
 		auto secondsPerPixel = fumeUI::timelineSecondsPerPixel / zoomX;
 
 		auto leftSeconds = te::TimePosition::fromSeconds(offset * secondsPerPixel);
 
-		te::TempoSequence& tempoSequence = uiContext.edit.tempoSequence;
+		te::TempoSequence& tempoSequence = edit.tempoSequence;
 		bool isTripletOverride = false;
-		auto displayFormat = uiContext.edit.getTimecodeFormat();
+		auto displayFormat = edit.getTimecodeFormat();
 		auto snapType = fumeHelpers::getBestSnapType(displayFormat, fumeUI::timelineHeaderMinimumPixelsPerSnap, tempoSequence.getTempoAt(leftSeconds), te::TimeDuration::fromSeconds(secondsPerPixel), isTripletOverride);
 
 		auto startTime = snapType.roundTimeUp(leftSeconds, tempoSequence);

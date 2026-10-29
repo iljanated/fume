@@ -7,11 +7,16 @@
 namespace te = tracktion;
 
 TrackListComponent::TrackListComponent(fumeUI::UIContext& context, juce::Viewport& v)
-	: GridEditor<TrackListComponent>(context, v, FumeIDs::TrackListSelectToolState), te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<TrackComponent>>(context.edit.state)
+	: viewport(v), uiContext(context), te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<TrackComponent>>(context.extendedEdit.getState())
 {
 	addAndMakeVisible(currentPositionMarker);
+	addAndMakeVisible(cursorComponent);
+	cursorComponent.setAlwaysOnTop(true);
+
 	currentPositionMarker.setFill(Colours::white.withAlpha(0.85f));
 	currentPositionMarker.setAlwaysOnTop(true);
+
+	setWantsKeyboardFocus(true);
 
 	uiContext.selectionManager.addChangeListener(this);
 	
@@ -19,10 +24,6 @@ TrackListComponent::TrackListComponent(fumeUI::UIContext& context, juce::Viewpor
 	toolStateManager.addToolState(std::make_unique<TrackListWriteToolState>(this));
 	toolStateManager.addToolState(std::make_unique<TrackListDeleteToolState>(this));
 	toolStateManager.addToolState(std::make_unique<TrackListZoomToolState>(this));
-
-	//uiContext.edit.state.setProperty(FumeIDs::ZoomX, 1.0f, &uiContext.edit.getUndoManager());
-	//uiContext.edit.state.setProperty(FumeIDs::ZoomY, 1.0f, &uiContext.edit.getUndoManager());
-	//uiContext.edit.state.setProperty(FumeIDs::Quantisation, 1.0f, &uiContext.edit.getUndoManager());
 
 	rebuildObjects();
 
@@ -57,11 +58,14 @@ void TrackListComponent::paint(juce::Graphics& g)
 {
 	auto clipBounds = g.getClipBounds();
 
+	auto& extendedEdit = uiContext.extendedEdit;
+
+	auto secondsPerPixel = extendedEdit.getSecondsPerPixel();
+
 	auto leftSeconds = te::TimePosition::fromSeconds(clipBounds.getX() * secondsPerPixel);
-	te::TempoSequence& tempoSequence = uiContext.edit.tempoSequence;
+	te::TempoSequence& tempoSequence = extendedEdit.getTempoSequence();
 	
-	float zoomY = extendedEdit.zoomY;
-	auto trackHeight = fumeUI::timelineTrackHeight * zoomY;
+	auto trackHeight = extendedEdit.getTrackHeight();
 
 	g.fillAll(juce::Colours::lightgrey);
 	
@@ -112,24 +116,33 @@ void TrackListComponent::paint(juce::Graphics& g)
 void TrackListComponent::resized()
 {
 	auto localBounds = getLocalBounds();
+	auto& extendedEdit = uiContext.extendedEdit;
+
+	auto trackHeight = extendedEdit.getTrackHeight();
+
 	for (auto objectWrapper : objects)
 	{
 		if (auto object = objectWrapper->getObject())
 		{
-			object->setBounds(localBounds.removeFromTop(fumeUI::timelineTrackHeight * extendedEdit.zoomY));
+			object->setBounds(localBounds.removeFromTop(trackHeight));
 		}
+	}
+
+	if (cursorComponent.isVisible())
+	{
+		cursorComponent.updateBounds();
 	}
 }
 
 void TrackListComponent::focusGained(FocusChangeType cause)
 {
-	GridEditor<TrackListComponent>::focusGained(cause);
+	cursorComponent.setVisible(true);
 	repaint();
 }
 
 void TrackListComponent::focusLost(FocusChangeType cause)
 {
-	GridEditor<TrackListComponent>::focusLost(cause);
+	cursorComponent.setVisible(true);
 	repaint();
 }
 
@@ -143,7 +156,7 @@ Helpers::AsyncValueTreeItem<TrackComponent>* TrackListComponent::createNewObject
 	return new Helpers::AsyncValueTreeItem<TrackComponent>(v,
 		[this](auto state)
 		{
-			auto t = Helpers::findObjectForState(te::getAudioTracks(uiContext.edit), state);
+			auto t = Helpers::findObjectForState(te::getAudioTracks(uiContext.extendedEdit.getEdit()), state);
 			assert(t);
 			auto tc = std::make_unique<TrackComponent>(*t, uiContext);
 			addAndMakeVisible(*tc);
@@ -159,13 +172,13 @@ void TrackListComponent::deleteObject(Helpers::AsyncValueTreeItem<TrackComponent
 
 void TrackListComponent::newObjectAdded(Helpers::AsyncValueTreeItem<TrackComponent>*)
 {
-	resizeViewport();
+	updateBounds();
 	asyncResizer.resizeAsync();
 }
 
 void TrackListComponent::objectRemoved(Helpers::AsyncValueTreeItem<TrackComponent>*)
 {
-	resizeViewport();
+	updateBounds();
 	asyncResizer.resizeAsync();
 }
 
@@ -179,14 +192,13 @@ void TrackListComponent::valueTreePropertyChanged(juce::ValueTree& treeWhoseProp
 	if (property == FumeIDs::ZoomX)
 	{
 		float zoomX = treeWhosePropertyHasChanged.getProperty(FumeIDs::ZoomX, 1.0f);
-		secondsPerPixel = fumeUI::timelineSecondsPerPixel / zoomX;
 		updateSnapType();
-		resizeViewport();
+		updateBounds();
 		asyncResizer.resizeAsync();
 	}
 	else if (property == FumeIDs::ZoomY)
 	{
-		resizeViewport();
+		updateBounds();
 		asyncResizer.resizeAsync();
 	}
 }
@@ -198,11 +210,9 @@ void TrackListComponent::timerCallback()
 
 void TrackListComponent::updateCurrentPositionMarker()
 {
-	float zoom = uiContext.edit.state.getProperty(FumeIDs::ZoomX, 1.0f);
-	auto position = uiContext.edit.getTransport().getPosition();
-	te::TempoSequence& tempoSequence = uiContext.edit.tempoSequence;
-	auto beats = tempoSequence.toBeats(position);
-	auto offset = (float)beats.inBeats() * fumeUI::timelineBeatWidth * zoom;
+	auto position = uiContext.extendedEdit.getEdit().getTransport().getPosition();
+	auto pixelsPerSecond = uiContext.extendedEdit.getSecondsPerPixel();
+	auto offset = static_cast<float>(position.inSeconds() * pixelsPerSecond);
 	currentPositionMarker.setRectangle(Rectangle<float>(offset, 0, 1.5f, (float)(getHeight())));
 }
 
@@ -214,99 +224,66 @@ void TrackListComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 	}
 }
 
-void TrackListComponent::selectItemsInBox(const juce::Rectangle<double>& selectionBox)
-{
-	auto& selectionManager = uiContext.selectionManager;
-
-	auto xMin = selectionBox.getX();
-	auto xMax = selectionBox.getRight();
-	auto yMin = selectionBox.getY();
-	auto yMax = selectionBox.getBottom();
-
-	for (auto* selectable : uiContext.selectionManager.getSelectedObjects())
-	{
-		if (te::Clip* clip = dynamic_cast<te::Clip*> (selectable))
-		{
-			if (auto* track = clip->getTrack())
-			{
-				int trackIndex = track->getIndexInEditTrackList();
-				if (trackIndex < yMin || trackIndex > yMax || clip->getEndBeat().inBeats() < xMin || clip->getStartBeat().inBeats() > xMax)
-				{
-					selectionManager.deselect(clip);
-				}
-			}
-			else
-			{
-				selectionManager.deselect(clip);
-			}
-		}
-	}
-
-	for (int i = yMin; i <= yMax; ++i)
-	{
-		if (auto track = getTrackAt(i))
-		{
-			for (auto clip : track->getClips())
-			{
-				if (clip->getStartBeat().inBeats() <= xMax && clip->getEndBeat().inBeats() >= xMin)
-				{
-					selectionManager.addToSelection(*clip);
-				}
-			}
-		}
-	}
-}
-
-juce::Point<double> TrackListComponent::getGridSize() const
-{
-	auto& edit = uiContext.edit;
-	te::TimePosition timePosition = te::TimePosition::fromSeconds(edit.getMaximumLength().inSeconds());
-	auto width = edit.tempoSequence.timeToBeats(timePosition).inBeats();
-	auto height = static_cast<double>(getTrackCount());
-
-	return { width, height };
-}
-
-juce::Point<double> TrackListComponent::getUnitSize() const 
-{ 
-	return { 
-		fumeUI::timelineBeatWidth * extendedEdit.zoomX, 
-		static_cast<double>(fumeUI::timelineTrackHeight)* extendedEdit.zoomY
-	}; 
-}
-
 void TrackListComponent::findLassoItemsInArea(Array<te::Clip*>& itemsFound, const Rectangle<int>& area)
 {
-	auto xMin = area.getX();
-	auto xMax = area.getRight();
-	auto yMin = area.getY();
-	auto yMax = area.getBottom();
+	auto& extendedEdit = uiContext.extendedEdit;
+	auto& tempoSequence = extendedEdit.getTempoSequence();
+	auto secondsPerPixel = extendedEdit.getSecondsPerPixel();
+	auto trackHeight = extendedEdit.getTrackHeight();
+
+	auto xMin = area.getX() * secondsPerPixel;
+	auto xMax = area.getRight() * secondsPerPixel;
+	auto yMin = static_cast<int>(area.getY() / trackHeight);
+	auto yMax = static_cast<int>(area.getBottom() / trackHeight);
+
 
 	for (int i = yMin; i <= yMax; ++i)
 	{
 		if (auto track = getTrackAt(i))
 		{
+
 			for (auto clip : track->getClips())
 			{
-				auto timeRange = clip->getEditTimeRange();
-				if (timeRange.getStart().inSeconds() * getUnitSize().x <= xMax && timeRange.getEnd().inSeconds() * getUnitSize().x >= xMin)
+				if (auto* midiClip = dynamic_cast<tracktion_engine::MidiClip*> (clip))
 				{
-					itemsFound.add(clip);
+					auto start = tempoSequence.beatsToTime(clip->getStartBeat()).inSeconds();
+					auto end = tempoSequence.beatsToTime(clip->getEndBeat()).inSeconds();
+					if (start < xMax && end > xMin)
+					{
+						itemsFound.add(clip);
+					}
 				}
 			}
 		}
 	}
+
+	DBG("Lasso found " << itemsFound.size() << " items in area: " << area.toString());
 }
 
 void TrackListComponent::lassoSelectionChanged(SelectedItemSet<te::Clip*>& newSelection)
 {
+	uiContext.selectionManager.select(newSelection.getItemArray());
 }
 
 void TrackListComponent::updateSnapType()
 {
+	auto& edit = uiContext.extendedEdit.getEdit();
+	auto secondsPerPixel = uiContext.extendedEdit.getSecondsPerPixel();
 	auto leftSeconds = te::TimePosition::fromSeconds(viewport.getViewPositionX() * secondsPerPixel);
-	te::TempoSequence& tempoSequence = uiContext.edit.tempoSequence;
+	te::TempoSequence& tempoSequence = edit.tempoSequence;
 	bool isTripletOverride = false;
-	auto displayFormat = uiContext.edit.getTimecodeFormat();
+	auto displayFormat = edit.getTimecodeFormat();
 	snapType = fumeHelpers::getBestSnapType(displayFormat, fumeUI::timelineMinimumPixelsPerSnap, tempoSequence.getTempoAt(leftSeconds), te::TimeDuration::fromSeconds(secondsPerPixel), isTripletOverride);
+}
+
+void TrackListComponent::updateBounds()
+{
+	auto& extendedEdit = uiContext.extendedEdit;
+
+	auto secondsPerPixel = extendedEdit.getSecondsPerPixel();
+	auto trackHeight = extendedEdit.getTrackHeight();
+
+	auto width = secondsPerPixel * extendedEdit.getEdit().getMaximumLength().inSeconds();
+	auto height = trackHeight * getTrackCount();
+	setBounds(0, 0, width, height);
 }

@@ -33,11 +33,12 @@ bool MidiClipMoveToolState::keyPressed(const juce::KeyPress& key)
 	auto modifiers = key.getModifiers();
 
 	auto& uiContext = component->getUIContext();
+	auto& edit = uiContext.extendedEdit.getEdit();
 	auto& inputManager = uiContext.inputManager;
 
 	if (inputManager.validate(keyCode, modifiers, InputAction::MoveLeft))
 	{
-		auto& undoManager = uiContext.edit.getUndoManager();
+		auto& undoManager = edit.getUndoManager();
 		double delta = -component->getSnappingInterval();
 		for (auto* note : selectedNotes)
 		{
@@ -47,7 +48,7 @@ bool MidiClipMoveToolState::keyPressed(const juce::KeyPress& key)
 	}
 	else if (inputManager.validate(keyCode, modifiers, InputAction::MoveRight))
 	{
-		auto& undoManager = uiContext.edit.getUndoManager();
+		auto& undoManager = edit.getUndoManager();
 		double delta = component->getSnappingInterval();
 		for (auto* note : selectedNotes)
 		{
@@ -57,7 +58,7 @@ bool MidiClipMoveToolState::keyPressed(const juce::KeyPress& key)
 	}
 	else if (inputManager.validate(keyCode, modifiers, InputAction::MoveUp))
 	{
-		auto& undoManager = uiContext.edit.getUndoManager();
+		auto& undoManager = edit.getUndoManager();
 		int delta = 1;
 		for (auto* note : selectedNotes)
 		{
@@ -67,7 +68,7 @@ bool MidiClipMoveToolState::keyPressed(const juce::KeyPress& key)
 	}
 	else if (inputManager.validate(keyCode, modifiers, InputAction::MoveDown))
 	{
-		auto& undoManager = uiContext.edit.getUndoManager();
+		auto& undoManager = edit.getUndoManager();
 		int delta = -1;
 		for (auto* note : selectedNotes)
 		{

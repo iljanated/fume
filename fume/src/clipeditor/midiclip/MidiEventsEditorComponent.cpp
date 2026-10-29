@@ -7,8 +7,8 @@
 #include "MidiClipDeleteToolState.h"
 #include "MidiClipWriteToolState.h"
 
-MidiEventsEditorComponent::MidiEventsEditorComponent(te::MidiClip* clip, fumeUI::UIContext& context, juce::Viewport& v)
-	: GridEditor<MidiEventsEditorComponent>(context, v, FumeIDs::MidiClipMoveToolState), midiClip(*clip, &context.edit.getUndoManager()), state(clip->state)
+MidiEventsEditorComponent::MidiEventsEditorComponent(te::MidiClip* clip, fumeUI::UIContext& uiContext, juce::Viewport& v)
+	: GridEditor<MidiEventsEditorComponent>(uiContext, v, FumeIDs::MidiClipMoveToolState), midiClip(*clip, &uiContext.extendedEdit.getUndoManager()), state(clip->state)
 {
     state.addListener(this);
 	selectedEvents->addChangeListener(this);

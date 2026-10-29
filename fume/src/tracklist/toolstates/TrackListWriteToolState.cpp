@@ -20,6 +20,7 @@ bool TrackListWriteToolState::keyPressed(const juce::KeyPress& key)
 	{
 		return false;
 	}
+	/*
 	auto& uiContext = component->getUIContext();
 	auto& inputManager = uiContext.inputManager;
 
@@ -35,7 +36,7 @@ bool TrackListWriteToolState::keyPressed(const juce::KeyPress& key)
 		cursorComponent.setVisible(false);
 		auto cursorPosition = cursorComponent.getCursorPosition();
 
-		auto& edit = component->getUIContext().edit;
+		auto& edit = component->getUIContext().extendedEdit.getEdit();
 
 		auto startBeat = te::BeatPosition::fromBeats(cursorPosition.x);
 		auto endBeat = te::BeatPosition::fromBeats(cursorPosition.x + 4.0);
@@ -53,7 +54,7 @@ bool TrackListWriteToolState::keyPressed(const juce::KeyPress& key)
 	}
 	else if (isWriting && inputManager.validate(keyCode, modifiers, InputAction::Left))
 	{
-		auto& edit = component->getUIContext().edit;
+		auto& edit = component->getUIContext().extendedEdit.getEdit();
 
 		auto snappingInterval = component->getSnappingInterval();
 		auto& selectionManager = component->getUIContext().selectionManager;
@@ -76,9 +77,9 @@ bool TrackListWriteToolState::keyPressed(const juce::KeyPress& key)
 	}
 	else if (isWriting && inputManager.validate(keyCode, modifiers, InputAction::Right))
 	{
-		auto& edit = component->getUIContext().edit;
+		auto& edit = component->getUIContext().extendedEdit.getEdit();
 
-		auto snappingInterval = component->getSnappingInterval();
+		auto snappingInterval = 34;
 		auto& selectionManager = component->getUIContext().selectionManager;
 
 		for (auto* selectable : selectionManager.getSelectedObjects())
@@ -93,6 +94,7 @@ bool TrackListWriteToolState::keyPressed(const juce::KeyPress& key)
 			}
 		}
 	}
+	*/
 	return false;
 }
 
@@ -102,6 +104,7 @@ bool TrackListWriteToolState::keyStateChanged(bool isKeyDown)
 	{
 		return false;
 	}
+	/*
 	auto& selectionBoxComponent = component->getSelectionBoxComponent();
 	auto& inputManager = component->getUIContext().inputManager;
 
@@ -130,5 +133,6 @@ bool TrackListWriteToolState::keyStateChanged(bool isKeyDown)
 		cursorComponent.setVisible(true);
 		return true;
 	}
+	*/
 	return false;	
 }

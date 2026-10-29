@@ -1,11 +1,9 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Utilities.h"
+#include "UIContext.h"
 #include "ClipEditorComponent.h"
 #include "ExtendedMidiClip.h"
-#include "SelectionBoxComponent.h"
-#include "ToolState.h"
 #include "GridEditor.h"
 
 class MidiEventsEditorComponent

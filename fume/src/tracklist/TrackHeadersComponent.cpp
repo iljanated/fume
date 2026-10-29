@@ -2,7 +2,7 @@
 #include "TrackHeadersComponent.h"
 
 TrackHeadersComponent::TrackHeadersComponent(fumeUI::UIContext& context)
-	: te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<TrackHeaderComponent>>(context.edit.state), uiContext(context)
+	: te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<TrackHeaderComponent>>(context.extendedEdit.getState()), uiContext(context)
 {
 	rebuildObjects();
 }
@@ -20,7 +20,7 @@ void TrackHeadersComponent::paint(juce::Graphics& g)
 void TrackHeadersComponent::resized()
 {
 	auto localBounds = getLocalBounds();
-	float zoomY = uiContext.edit.state.getProperty(FumeIDs::ZoomY, 1.0f);
+	float zoomY = uiContext.extendedEdit.getState().getProperty(FumeIDs::ZoomY, 1.0f);
 	auto trackHeight = fumeUI::timelineTrackHeight * zoomY;
 	auto rect = juce::Rectangle{ 0, trackOffset, localBounds.getWidth(), static_cast<int>(objects.size() * trackHeight) };
 	for (auto objectWrapper : objects)
@@ -44,7 +44,7 @@ Helpers::AsyncValueTreeItem<TrackHeaderComponent>* TrackHeadersComponent::create
 	return new Helpers::AsyncValueTreeItem<TrackHeaderComponent>(v,
 		[this](auto state)
 		{
-			auto t = Helpers::findObjectForState(te::getAudioTracks(uiContext.edit), state);
+			auto t = Helpers::findObjectForState(te::getAudioTracks(uiContext.extendedEdit.getEdit()), state);
 			assert(t);
 			auto tc = std::make_unique<TrackHeaderComponent>(*t, uiContext);
 			addAndMakeVisible(*tc);

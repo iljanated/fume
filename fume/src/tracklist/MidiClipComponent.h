@@ -1,7 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "ClipComponent.h"
-#include "Utilities.h"
+#include "UIContext.h"
 
 namespace te = tracktion;
 

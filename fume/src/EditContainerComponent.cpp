@@ -1,12 +1,12 @@
 #pragma once
 #include "EditContainerComponent.h"
 #include "Utilities.h"
-
+#include "ExtendedEdit.h"
 namespace te = tracktion;
 using namespace tracktion::literals;
 
 EditContainerComponent::EditContainerComponent(te::Engine& engine, te::Edit& edit, te::SelectionManager& selectionManager, InputManager& inputManager)
-	: uiContext{ engine, edit, selectionManager, inputManager }
+	: extendedEdit{ edit, &edit.getUndoManager() },  uiContext {engine, extendedEdit, selectionManager, inputManager }
 {
 	addAndMakeVisible(trackListContainerComponent);
 
@@ -14,16 +14,16 @@ EditContainerComponent::EditContainerComponent(te::Engine& engine, te::Edit& edi
 
 	addAndMakeVisible(clipEditorComponent);
 	
-	uiContext.edit.state.setProperty(FumeIDs::SongLength, 1024, &uiContext.edit.getUndoManager());
+	edit.state.setProperty(FumeIDs::SongLength, 1024, &edit.getUndoManager());
 
-	EngineHelpers::getOrInsertAudioTrackAt(uiContext.edit, 16);
+	EngineHelpers::getOrInsertAudioTrackAt(edit, 16);
 
 	
-	auto synthPlugin = dynamic_cast<te::FourOscPlugin*> (uiContext.edit.getPluginCache().createNewPlugin(te::FourOscPlugin::xmlTypeName, {}).get());
-	auto track = te::getAudioTracks(uiContext.edit)[4];
+	auto synthPlugin = dynamic_cast<te::FourOscPlugin*> (edit.getPluginCache().createNewPlugin(te::FourOscPlugin::xmlTypeName, {}).get());
+	auto track = te::getAudioTracks(edit)[4];
 	track->pluginList.insertPlugin(synthPlugin, 0, nullptr);
 
-	te::TempoSequence& tempoSequence = uiContext.edit.tempoSequence;
+	te::TempoSequence& tempoSequence = edit.tempoSequence;
 
 	auto midiClip = track->insertMIDIClip(tempoSequence.toTime({ 0_bp, 16_bp }), nullptr);
 
@@ -33,7 +33,7 @@ EditContainerComponent::EditContainerComponent(te::Engine& engine, te::Edit& edi
 	seq.addNote(59, 8_bp, 4_bd, 110, 0, nullptr);
 	seq.addNote(38, 12_bp, 4_bd, 100, 0, nullptr);
 
-	auto track2 = te::getAudioTracks(uiContext.edit)[3];
+	auto track2 = te::getAudioTracks(edit)[3];
 
 
 	auto midiClip2 = track2->insertMIDIClip(tempoSequence.toTime({ 16_bp, 32_bp }), nullptr);
@@ -45,10 +45,10 @@ EditContainerComponent::EditContainerComponent(te::Engine& engine, te::Edit& edi
 	seq2.addNote(38, 12_bp, 4_bd, 100, 0, nullptr);
 	
 
-	uiContext.edit.getUndoManager().clearUndoHistory();
+	edit.getUndoManager().clearUndoHistory();
 
 	// Start de transport direct
-	uiContext.edit.getTransport().play(false);
+	edit.getTransport().play(false);
 }
 
 EditContainerComponent::~EditContainerComponent()
@@ -73,34 +73,35 @@ void EditContainerComponent::resized()
 
 bool EditContainerComponent::keyPressed(const juce::KeyPress& key)
 {
+	auto& edit = extendedEdit.getEdit();
 	auto keyCode = key.getKeyCode();
 	auto modifiers = key.getModifiers();
 	auto& inputManager = uiContext.inputManager;
 	if (inputManager.validate(keyCode, modifiers, InputAction::Undo))
 	{
-		uiContext.edit.getUndoManager().undo();
+		edit.getUndoManager().undo();
 		return true;
 	}
 	else if (inputManager.validate(keyCode, modifiers, InputAction::Redo))
 	{
-		uiContext.edit.getUndoManager().redo();
+		edit.getUndoManager().redo();
 		return true;
 	}
 	else if (inputManager.validate(keyCode, modifiers, InputAction::Play))
 	{
-		if (uiContext.edit.getTransport().isPlaying())
+		if (edit.getTransport().isPlaying())
 		{
-			uiContext.edit.getTransport().stop(false, false);
+			edit.getTransport().stop(false, false);
 		}
 		else
 		{
-			uiContext.edit.getTransport().play(false);
+			edit.getTransport().play(false);
 		}
 		return true;
 	}
 	else if (inputManager.validate(keyCode, modifiers, InputAction::PlayFromStart))
 	{
-		uiContext.edit.getTransport().playFromStart(false);
+		edit.getTransport().playFromStart(false);
 		return true;
 	}
 	else if (inputManager.validate(keyCode, modifiers, InputAction::NextLeft))

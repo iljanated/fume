@@ -40,7 +40,7 @@ void TransportComponent::buttonClicked(juce::Button* button)
 
 void TransportComponent::togglePlay()
 {
-	auto& transport = uiContext.edit.getTransport();
+	auto& transport = uiContext.extendedEdit.getEdit().getTransport();
 
 	if (transport.isPlaying())
 	{
