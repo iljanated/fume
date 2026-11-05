@@ -8,7 +8,7 @@ using namespace tracktion::literals;
 MainComponent::MainComponent()
 	: engine("Fume")
 {
-	setSize(500, 700);
+	setSize(1024, 768);
 
 	// 1. Haal de JUCE AudioDeviceManager op uit de Tracktion Engine
 	auto& deviceManager = engine.getDeviceManager().deviceManager;

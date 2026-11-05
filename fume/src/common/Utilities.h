@@ -65,6 +65,8 @@ namespace fumeUI
 
 	/** Draw the grid. */
 	void drawGrid(juce::Graphics& g, juce::Rectangle<int> bounds, fumeUI::Grid& grid, juce::Colour lineColour, juce::Colour rectColour, bool blackKeys);
+
+	void makeComponentVisibleInViewport(juce::Viewport& viewport, juce::Component& component, int padding = fumeUI::scrollPadding);
 }
 
 namespace fumeHelpers

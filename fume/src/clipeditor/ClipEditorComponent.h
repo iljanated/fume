@@ -3,7 +3,7 @@
 #include "UIContext.h"   
 #include "ClipEditorImplementationComponent.h"
 
-class ClipEditorComponent : public juce::Component, private juce::ChangeListener
+class ClipEditorComponent : public juce::Component, private juce::ChangeListener, public juce::ValueTree::Listener
 {
 public:
     ClipEditorComponent(fumeUI::UIContext& context);
@@ -20,8 +20,11 @@ public:
     }
     void focusLost(FocusChangeType cause) override {}
 
+    void valueTreeParentChanged(juce::ValueTree& treeWhoseParentHasChanged) override;
+
 private:
     fumeUI::UIContext& uiContext;
+	juce::ValueTree currentClipState;
 	std::unique_ptr<ClipEditorImplementationComponent> implementationComponent;
 
 	void changeListenerCallback(juce::ChangeBroadcaster* source) override;

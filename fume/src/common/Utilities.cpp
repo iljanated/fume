@@ -106,4 +106,42 @@ namespace fumeUI
         }
         g.strokePath(gridPath, juce::PathStrokeType(1.0f));
     }
+    void makeComponentVisibleInViewport(juce::Viewport& viewport, juce::Component& component, int padding)
+    {
+		auto targetRect = component.getBounds().expanded(padding);
+
+        int viewX = viewport.getViewPositionX();
+        int viewY = viewport.getViewPositionY();
+        int viewW = viewport.getViewWidth();
+        int viewH = viewport.getViewHeight();
+
+        int newX = viewX;
+        int newY = viewY;
+
+        // Check horizontal bounds
+        if (targetRect.getX() < viewX)
+        {
+            newX = targetRect.getX();
+        }
+        else if (targetRect.getRight() > viewX + viewW)
+        {
+            newX = targetRect.getRight() - viewW;
+        }
+
+        // Check vertical bounds
+        if (targetRect.getY() < viewY)
+        {
+            newY = targetRect.getY();
+        }
+        else if (targetRect.getBottom() > viewY + viewH)
+        {
+            newY = targetRect.getBottom() - viewH;
+        }
+
+        // Apply the new position if it changed
+        if (newX != viewX || newY != viewY)
+        {
+            viewport.setViewPosition(newX, newY);
+        }
+    }
 }

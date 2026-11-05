@@ -36,6 +36,17 @@ void ClipEditorComponent::resized()
 	}
 }
 
+void ClipEditorComponent::valueTreeParentChanged(juce::ValueTree& treeWhoseParentHasChanged)
+{
+	if (!currentClipState.getParent().isValid())
+	{
+		// If the current clip state has been removed from the ValueTree, reset the implementation component
+		currentClipState.removeListener(this);
+		removeChildComponent(implementationComponent.get());
+		implementationComponent.reset();
+	}
+}
+
 void ClipEditorComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
 	auto& selectionManager = uiContext.selectionManager;
@@ -50,6 +61,8 @@ void ClipEditorComponent::changeListenerCallback(juce::ChangeBroadcaster* source
 				if (implementationComponent == nullptr || implementationComponent->getClip() != clip)
 				{
 					implementationComponent = std::make_unique<MidiClipEditorComponent>(clip, uiContext);
+					currentClipState = clip->state;
+					currentClipState.addListener(this);
 					addAndMakeVisible(implementationComponent.get());
 					resized();
 					return;
@@ -58,7 +71,9 @@ void ClipEditorComponent::changeListenerCallback(juce::ChangeBroadcaster* source
 					return;
 			}
 		}
+
 		// If no clip is selected, reset the implementation component
+		currentClipState.removeListener(this);
 		removeChildComponent(implementationComponent.get());
 		implementationComponent.reset();
 	}

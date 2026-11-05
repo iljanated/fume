@@ -20,14 +20,12 @@ bool TrackListWriteToolState::keyPressed(const juce::KeyPress& key)
 	{
 		return false;
 	}
-	/*
+	
 	auto& uiContext = component->getUIContext();
 	auto& inputManager = uiContext.inputManager;
 
 	auto modifiers = key.getModifiers();
 	auto keyCode = key.getKeyCode();
-
-	auto& selectionBoxComponent = component->getSelectionBoxComponent();
 
 	if (inputManager.validate(keyCode, modifiers, inputAction) && !isWriting)
 	{
@@ -36,65 +34,82 @@ bool TrackListWriteToolState::keyPressed(const juce::KeyPress& key)
 		cursorComponent.setVisible(false);
 		auto cursorPosition = cursorComponent.getCursorPosition();
 
-		auto& edit = component->getUIContext().extendedEdit.getEdit();
+		auto& extendedEdit = uiContext.extendedEdit;
+		auto& tempoSequence = extendedEdit.getTempoSequence();
 
-		auto startBeat = te::BeatPosition::fromBeats(cursorPosition.x);
-		auto endBeat = te::BeatPosition::fromBeats(cursorPosition.x + 4.0);
+		auto startBeat = tempoSequence.timeToBeats(te::TimePosition::fromSeconds(cursorPosition.x));
+		auto endBeat = te::BeatPosition::fromBeats(startBeat.inBeats() + 4.0);
 
 		auto trackIndex = (int)cursorPosition.y;
 		auto track = component->getTrackAt(trackIndex);
-		te::TempoSequence& tempoSequence = edit.tempoSequence;
-		auto midiClip = track->insertMIDIClip(tempoSequence.toTime({ startBeat, endBeat }), nullptr);
-
 		auto& selectionManager = component->getUIContext().selectionManager;
-		selectionManager.deselectAll();
-		selectionManager.addToSelection(midiClip);
+
+		auto midiClip = track->insertMIDIClip(tempoSequence.toTime({ startBeat, endBeat }), &selectionManager);
+
+		cursorPosition.setX(tempoSequence.beatsToTime(endBeat).inSeconds());
+		cursorComponent.setCursorPosition(cursorPosition);
 		
 		return true;
 	}
 	else if (isWriting && inputManager.validate(keyCode, modifiers, InputAction::Left))
 	{
-		auto& edit = component->getUIContext().extendedEdit.getEdit();
+		auto& extendedEdit = uiContext.extendedEdit;
+		auto& tempoSequence = extendedEdit.getTempoSequence();
+		auto snapType = component->getSnapType();
 
-		auto snappingInterval = component->getSnappingInterval();
 		auto& selectionManager = component->getUIContext().selectionManager;
 
 		for (auto* selectable : selectionManager.getSelectedObjects())
 		{
 			if (auto* midiClip = dynamic_cast<tracktion_engine::MidiClip*> (selectable))
 			{
-				if (midiClip->getLengthInBeats().inBeats() <= snappingInterval)
+				auto startTime = tempoSequence.beatsToTime(midiClip->getStartBeat());
+				auto endTime = tempoSequence.beatsToTime(midiClip->getEndBeat());
+
+				auto newEndTime = snapType.roundTimeDown(endTime - te::TimeDuration::fromSeconds(0.0001), tempoSequence);
+
+				if (newEndTime <= startTime)
 				{
 					DBG("Cannot shrink clip below snapping interval");
 					continue;
 				}
-				auto endBeat = midiClip->getEndBeat();
-				auto newEndBeat = te::BeatPosition::fromBeats(endBeat.inBeats() - snappingInterval);
-				auto newEndTime = edit.tempoSequence.toTime(newEndBeat);
+
 				midiClip->setEnd(newEndTime,false);
+
+				auto& cursorComponent = component->getCursorComponent();
+				auto cursorPosition = cursorComponent.getCursorPosition();
+				cursorPosition.setX(newEndTime.inSeconds());
+				cursorComponent.setCursorPosition(cursorPosition);
 			}
 		}
 	}
 	else if (isWriting && inputManager.validate(keyCode, modifiers, InputAction::Right))
 	{
-		auto& edit = component->getUIContext().extendedEdit.getEdit();
+		auto& extendedEdit = uiContext.extendedEdit;
+		auto& tempoSequence = extendedEdit.getTempoSequence();
+		auto snapType = component->getSnapType();
 
-		auto snappingInterval = 34;
+
 		auto& selectionManager = component->getUIContext().selectionManager;
 
 		for (auto* selectable : selectionManager.getSelectedObjects())
 		{
 			if (auto* midiClip = dynamic_cast<tracktion_engine::MidiClip*> (selectable))
 			{
-				auto endBeat = midiClip->getEndBeat();
-				auto newEndBeat = te::BeatPosition::fromBeats(endBeat.inBeats() + snappingInterval);
-				auto newEndTime = edit.tempoSequence.toTime(newEndBeat);
+				auto endTime = tempoSequence.beatsToTime(midiClip->getEndBeat());
+
+				auto newEndTime = snapType.roundTimeUp(endTime + te::TimeDuration::fromSeconds(0.0001), tempoSequence);
+
 				midiClip->setEnd(newEndTime, false);
-				DBG("Extended clip to " << newEndBeat.inBeats() << " beats");
+
+				auto& cursorComponent = component->getCursorComponent();
+				auto cursorPosition = cursorComponent.getCursorPosition();
+				cursorPosition.setX(newEndTime.inSeconds());
+				cursorComponent.setCursorPosition(cursorPosition);
 			}
 		}
 	}
-	*/
+	
 	return false;
 }
 
@@ -104,8 +119,7 @@ bool TrackListWriteToolState::keyStateChanged(bool isKeyDown)
 	{
 		return false;
 	}
-	/*
-	auto& selectionBoxComponent = component->getSelectionBoxComponent();
+	
 	auto& inputManager = component->getUIContext().inputManager;
 
 	if (!isKeyDown && isWriting && !inputManager.isCurrentlyPressed(inputAction))
@@ -128,11 +142,22 @@ bool TrackListWriteToolState::keyStateChanged(bool isKeyDown)
 
 		if (endBeat >= 0.0)
 		{
-			cursorComponent.setCursorPosition({ endBeat, cursorComponent.getCursorPosition().y });
+			auto uiContext = component->getUIContext();
+			auto& extendedEdit = uiContext.extendedEdit;
+			auto& tempoSequence = extendedEdit.getTempoSequence();
+			auto snapType = component->getSnapType();
+
+			auto endTimePosition = tempoSequence.toTime(te::BeatPosition::fromBeats(endBeat));
+			auto nextTimePosition = snapType.roundTimeUp(endTimePosition, tempoSequence);
+
+			auto cursorPosition = cursorComponent.getCursorPosition();
+			cursorPosition.setX(nextTimePosition.inSeconds());
+			cursorComponent.setCursorPosition(cursorPosition);
 		}
 		cursorComponent.setVisible(true);
+		notifyToolFinished();
 		return true;
 	}
-	*/
+	
 	return false;	
 }

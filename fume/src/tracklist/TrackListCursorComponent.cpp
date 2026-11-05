@@ -7,7 +7,6 @@ TrackListCursorComponent::TrackListCursorComponent(fumeUI::UIContext& uiContext,
 	: uiContext(uiContext), trackListComponent(trackListComponent)
 {
 	uiContext.extendedEdit.getState().addListener(this);
-	alignCursorPosition(juce::Point<int>(0, 0));
 	updateBounds();
 }
 
@@ -56,8 +55,10 @@ bool TrackListCursorComponent::keyPressed(const juce::KeyPress& key)
 	return false;
 }
 
-void TrackListCursorComponent::alignCursorPosition(const juce::Point<int>& targetPosition)
+void TrackListCursorComponent::setCursorPosition(const juce::Point<double>& newPosition)
 {
+	cursorPosition = newPosition;
+	updateBounds();
 }
 
 void TrackListCursorComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
@@ -92,8 +93,6 @@ void TrackListCursorComponent::moveCursorPosition(const juce::Point<int>& delta)
 		cursorPosition.setX(std::clamp(cursorPosition.getX(), 0.0, uiContext.extendedEdit.getEdit().getMaximumEditEnd().inSeconds()));
 	}
 
-	DBG(cursorPosition.getX());
-
 	cursorPosition.setY(std::clamp(cursorPosition.getY() + delta.getY(), 0.0, (double)trackListComponent.getTrackCount() - 1));
 	updateBounds();
 }
@@ -103,10 +102,17 @@ void TrackListCursorComponent::updateBounds()
 	auto& extendedEdit = uiContext.extendedEdit;
 
 	int margin = 2;
-	setBounds(
+	
+	auto rect = juce::Rectangle<int>(
 		cursorPosition.getX() / extendedEdit.getSecondsPerPixel() - margin,
 		cursorPosition.getY() * extendedEdit.getTrackHeight() - margin,
 		margin * 2,
 		extendedEdit.getTrackHeight() + margin * 2
 	);
+	
+	auto bounds = getBounds();
+	if (rect != bounds)
+	{
+		setBounds(rect);
+	}
 }

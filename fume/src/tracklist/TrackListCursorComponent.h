@@ -22,8 +22,8 @@ public:
 	/* Get the current cursor position */
 	juce::Point<double> getCursorPosition() const { return cursorPosition; }
 
-	/* Move the cursor to a position close to the target pixel position*/
-	void alignCursorPosition(const juce::Point<int>& targetPosition);
+	/* Set the cursor position */
+	void setCursorPosition(const juce::Point<double>& newPosition);
 
 	void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
 

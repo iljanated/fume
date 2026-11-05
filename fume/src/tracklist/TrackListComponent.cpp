@@ -265,6 +265,14 @@ void TrackListComponent::lassoSelectionChanged(SelectedItemSet<te::Clip*>& newSe
 	uiContext.selectionManager.select(newSelection.getItemArray());
 }
 
+void TrackListComponent::childBoundsChanged(juce::Component* child)
+{
+	if (child == &cursorComponent)
+	{
+		fumeUI::makeComponentVisibleInViewport(viewport, cursorComponent, fumeUI::scrollPadding);
+	}
+}
+
 void TrackListComponent::updateSnapType()
 {
 	auto& edit = uiContext.extendedEdit.getEdit();

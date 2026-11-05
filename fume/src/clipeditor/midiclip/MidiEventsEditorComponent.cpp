@@ -8,7 +8,7 @@
 #include "MidiClipWriteToolState.h"
 
 MidiEventsEditorComponent::MidiEventsEditorComponent(te::MidiClip* clip, fumeUI::UIContext& uiContext, juce::Viewport& v)
-	: GridEditor<MidiEventsEditorComponent>(uiContext, v, FumeIDs::MidiClipMoveToolState), midiClip(*clip, &uiContext.extendedEdit.getUndoManager()), state(clip->state)
+	: GridEditor<MidiEventsEditorComponent>(uiContext, v, FumeIDs::MidiClipMoveToolState), midiClip(clip, &uiContext.extendedEdit.getUndoManager()), state(clip->state)
 {
     state.addListener(this);
 	selectedEvents->addChangeListener(this);
@@ -23,19 +23,19 @@ MidiEventsEditorComponent::MidiEventsEditorComponent(te::MidiClip* clip, fumeUI:
     //uiContext.edit.state.setProperty(FumeIDs::ZoomY, 1.0f, &uiContext.edit.getUndoManager());
     //uiContext.edit.state.setProperty(FumeIDs::Quantisation, 1.0f, &uiContext.edit.getUndoManager());
 
-	midiClip.getClip().state.addListener(this);
-
-    toolStateManager.activateToolStateByIdentifier(FumeIDs::MidiClipMoveToolState);
+	toolStateManager.activateToolStateByIdentifier(FumeIDs::MidiClipMoveToolState);
 }
 
 MidiEventsEditorComponent::~MidiEventsEditorComponent()
 {
+    selectedEvents->removeChangeListener(this);
     state.removeListener(this);
     cancelPendingUpdate();
 }
 
 void MidiEventsEditorComponent::resized()
 {
+
     setSize((int)(midiClip.getClip().getLengthInBeats().inBeats() * fumeUI::midiEditorBeatWidth), 128 * fumeUI::midiEditorNoteHeight);
 }
 
@@ -87,13 +87,15 @@ te::SelectedMidiEvents& MidiEventsEditorComponent::clearSelectedEvents() {
 
 void MidiEventsEditorComponent::paint(juce::Graphics& g)
 {
+	auto& clip = midiClip.getClip();
+
     auto clipBounds = g.getClipBounds();
     if (clipBounds.isEmpty())
     {
         return;
     }
-    float zoomX = midiClip.getClip().state.getProperty(FumeIDs::ZoomX, 1.0f);
-    float zoomY = midiClip.getClip().state.getProperty(FumeIDs::ZoomY, 1.0f);
+    float zoomX = clip.state.getProperty(FumeIDs::ZoomX, 1.0f);
+    float zoomY = clip.state.getProperty(FumeIDs::ZoomY, 1.0f);
 
     auto unitSize = getUnitSize();
 
@@ -104,16 +106,16 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
 
     fumeUI::drawGrid(g, clipBounds, *this, juce::Colours::lightgrey.darker(0.8f), juce::Colours::lightgrey.darker(0.2f), true);
     // Fetch clip parameters safely on the Message Thread
-    const auto clipLength = midiClip.getClip().getLengthInBeats().inBeats();
+    const auto clipLength = clip.getLengthInBeats().inBeats();
     if (clipLength <= 0.0)
     {
         return;
     }
 
-    g.setColour(juce::Colours::aqua);
-
     // Render individual MIDI notes safely using Tracktion's high-level MIDI sequence wrapper
-    auto& sequence = midiClip.getClip().getSequence();
+    auto& sequence = clip.getSequence();
+
+    g.setColour(juce::Colours::aqua);
 
     for (auto* note : sequence.getNotes())
     {
@@ -178,5 +180,5 @@ void MidiEventsEditorComponent::valueTreeParentChanged(juce::ValueTree& treeWhos
 void MidiEventsEditorComponent::handleAsyncUpdate()
 {
     resized();
-    repaint();
+    //repaint();
 }

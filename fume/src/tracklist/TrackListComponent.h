@@ -60,6 +60,8 @@ public:
 	fumeUI::UIContext& getUIContext() { return uiContext; }
 	TrackListCursorComponent& getCursorComponent() { return cursorComponent; }
 	te::engine::TimecodeSnapType& getSnapType() { return snapType; }
+
+	void childBoundsChanged(juce::Component* child) override;
 private:
     //==============================================================================
 	juce::Viewport& viewport;

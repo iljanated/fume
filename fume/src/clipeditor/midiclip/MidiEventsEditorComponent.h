@@ -2,12 +2,11 @@
 
 #include <JuceHeader.h>
 #include "UIContext.h"
-#include "ClipEditorComponent.h"
+#include "ToolState.h"
 #include "ExtendedMidiClip.h"
-#include "GridEditor.h"
 
 class MidiEventsEditorComponent
-    : public GridEditor<MidiEventsEditorComponent>,
+    : public juce::Component,
     private juce::ValueTree::Listener,
     private juce::AsyncUpdater,
     public juce::ChangeListener
@@ -18,7 +17,6 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
 
-	void selectItemsInBox(const juce::Rectangle<double>& selectionBox) override;
 	void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 	te::SelectedMidiEvents& getSelectedEvents() { return *selectedEvents; }
     te::SelectedMidiEvents& getSelectedEvents(bool selectCursorIfEmpty) { 
