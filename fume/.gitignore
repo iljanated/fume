@@ -1046,5 +1046,5 @@ dkms.conf
 
 
 # tracktion_engine & juce
-modules/
+
 third_party/

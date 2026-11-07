@@ -83,11 +83,11 @@ void TrackListCursorComponent::moveCursorPosition(const juce::Point<int>& delta)
 		if (x > 0)
 		{
 
-			cursorPosition.setX(snapType.roundTimeUp(timePosition + timeOffset, tempoSequence).inSeconds());
+			cursorPosition.setX(snapType.roundTimeUp(timePosition + timeOffset, tempoSequence, false).inSeconds());
 		}
 		else
 		{
-			cursorPosition.setX(snapType.roundTimeDown(timePosition - timeOffset, tempoSequence).inSeconds());
+			cursorPosition.setX(snapType.roundTimeDown(timePosition - timeOffset, tempoSequence, false).inSeconds());
 		}
 
 		cursorPosition.setX(std::clamp(cursorPosition.getX(), 0.0, uiContext.extendedEdit.getEdit().getMaximumEditEnd().inSeconds()));

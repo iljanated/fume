@@ -14,7 +14,8 @@ namespace FumeIDs
 	static const juce::Identifier ZoomY("fume_zoomY");
 	static const juce::Identifier ScrollX("fume_scrollX");
 	static const juce::Identifier ScrollY("fume_scrollY");
-	static const juce::Identifier Quantisation("fume_quantisation");
+	static const juce::Identifier NoteLength("fume_noteLength");
+	static const juce::Identifier CursorQuantisation("CursorQuantisation");
 	static const juce::Identifier SongLength("fume_songLength");
 	static const juce::Identifier TrackListDeleteToolState("fume_tracklist_delete_toolstate");
 	static const juce::Identifier TrackListWriteToolState("fume_tracklist_write_toolstate");
@@ -24,7 +25,6 @@ namespace FumeIDs
 	static const juce::Identifier MidiClipMoveToolState("fume_midiclip_move_toolstate");
 	static const juce::Identifier MidiClipSelectToolState("fume_midiclip_select_toolstate");
 	static const juce::Identifier MidiClipWriteToolState("fume_midiclip_write_toolstate");
-	static const juce::Identifier MidiClipDeselectToolState("fume_midiclip_deselect_toolstate");
 }
 
 namespace fumeUI
@@ -36,7 +36,7 @@ namespace fumeUI
 	extern const int timelineTrackHeight;
 	extern const int timelineTrackHeadWidth;
 	extern const int timelineTimelineHeight;
-	extern const double midiEditorBeatWidth;
+	extern const double midiEditorBeatsPerPixel;
 	extern const int midiEditorNoteHeight;
 	extern const int midiEditorTimelineHeight;
 	extern const int midiEditorPianoRollWidth;
@@ -45,26 +45,6 @@ namespace fumeUI
 	extern const int inputRepeatDelayFrames;
 	extern const int inputRepeatFrames;
 	extern const float zoomStepSize;
-
-	class Grid
-	{
-	public:
-		/** Get the gridsize in beats. */
-		virtual juce::Point<double> getGridSize() const = 0;
-		/** Get the pixels per beat. */
-		virtual juce::Point<double> getUnitSize() const = 0;
-		/** Get the beats per cell. */
-		virtual juce::Point<double> getCellSize() const = 0;
-		/** Get the number of cells per group. */
-		virtual int getCellGroupSize() const = 0;
-		/** Get the snapping interval in beats. */
-		virtual double getSnappingInterval() const { return 1.0; }
-		/** Get the horizontal margin of the grid: how many units before and after gridSize should be drawn. */
-		virtual juce::Point<double> getGridHorizontalMargin() const { return { 0.0, 0.0 }; }
-	};
-
-	/** Draw the grid. */
-	void drawGrid(juce::Graphics& g, juce::Rectangle<int> bounds, fumeUI::Grid& grid, juce::Colour lineColour, juce::Colour rectColour, bool blackKeys);
 
 	void makeComponentVisibleInViewport(juce::Viewport& viewport, juce::Component& component, int padding = fumeUI::scrollPadding);
 }

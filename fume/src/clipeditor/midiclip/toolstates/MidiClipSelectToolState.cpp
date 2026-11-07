@@ -8,11 +8,6 @@ MidiClipSelectToolState::MidiClipSelectToolState(MidiEventsEditorComponent* comp
 
 void MidiClipSelectToolState::onEnterState()
 {
-	if (component)
-	{
-		auto& selectionBoxComponent = component->getSelectionBoxComponent();
-		selectionBoxComponent.setColour(juce::Colours::white);
-	}
 }
 
 void MidiClipSelectToolState::onExitState()
@@ -25,6 +20,7 @@ bool MidiClipSelectToolState::keyPressed(const juce::KeyPress& key)
 	{
 		return false;
 	}
+	/*
 	auto& uiContext = component->getUIContext();
 	auto& inputManager = uiContext.inputManager;
 
@@ -40,6 +36,7 @@ bool MidiClipSelectToolState::keyPressed(const juce::KeyPress& key)
 		selectionBoxComponent.startSelection(cursorComponent.getCursorPosition());
 		return true;
 	}
+	*/
 	return false;
 }
 
@@ -49,6 +46,7 @@ bool MidiClipSelectToolState::keyStateChanged(bool isKeyDown)
 	{
 		return false;
 	}
+	/*
 	auto& selectionBoxComponent = component->getSelectionBoxComponent();
 	auto& inputManager = component->getUIContext().inputManager;
 
@@ -62,5 +60,6 @@ bool MidiClipSelectToolState::keyStateChanged(bool isKeyDown)
 		notifyToolFinished();
 		return true;
 	}
+	*/
 	return false;
 }

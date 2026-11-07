@@ -1,24 +1,26 @@
 #pragma once
 
-#include <JuceHeader.h>
+#include "UIMidiClipContext.h"
 
 class PianoRollComponent : public juce::Component
 {
 public:
-    PianoRollComponent() {}
+    PianoRollComponent(fumeUI::UIMidiClipContext& uiContext) : uiContext(uiContext) {}
     ~PianoRollComponent() override {}
 
     void paint(juce::Graphics& g) override
     {
         auto localBounds = getLocalBounds();
 
+		auto noteHeight = uiContext.extendedMidiClip.getNoteHeight();
+
 		g.fillAll(juce::Colours::grey);
 
-		auto startY = -scrollOffset % fumeUI::midiEditorNoteHeight;
+		auto startY = -std::fmod(scrollOffset, noteHeight);
 
-		auto noteIndex = 127 - scrollOffset / fumeUI::midiEditorNoteHeight;
+		auto noteIndex = static_cast<int>(127 - scrollOffset / noteHeight);
 
-		for (auto y = startY; y < localBounds.getBottom(); y += fumeUI::midiEditorNoteHeight)
+		for (auto y = startY; y < localBounds.getBottom(); y += noteHeight)
 		{
 			auto localNoteIndex = noteIndex % 12;
 
@@ -39,9 +41,9 @@ public:
 			if (localNoteIndex == 0)
 			{
 				g.setColour(juce::Colours::darkgrey);
-				g.drawLine(0, y + fumeUI::midiEditorNoteHeight, 30, y + fumeUI::midiEditorNoteHeight);
+				g.drawLine(0, y + noteHeight, 30, y + noteHeight);
 				auto note = static_cast<int>(noteIndex / 12);
-				auto rect = juce::Rectangle{ 0, y, 30, fumeUI::midiEditorNoteHeight };
+				auto rect = juce::Rectangle{ 0, static_cast<int>(y), 30, static_cast<int>(noteHeight) };
 				auto label = "c-" + juce::String(note);
 				g.drawText(label, rect, juce::Justification::centred, false);
 			}
@@ -61,6 +63,7 @@ public:
 	}
 
 private:
+	fumeUI::UIMidiClipContext& uiContext;
 	std::array<int, 5> blackNotes = { 1, 3, 6, 8, 10 };
 	int scrollOffset = 0;
 

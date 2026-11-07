@@ -20,6 +20,9 @@ bool MidiClipWriteToolState::keyPressed(const juce::KeyPress& key)
 	{
 		return false;
 	}
+
+	/*
+
 	auto& uiContext = component->getUIContext();
 	auto& edit = uiContext.extendedEdit.getEdit();
 	auto& inputManager = uiContext.inputManager;
@@ -87,6 +90,8 @@ bool MidiClipWriteToolState::keyPressed(const juce::KeyPress& key)
 		}
 		return true;
 	}
+
+	*/
 	return false;
 }
 
@@ -96,6 +101,8 @@ bool MidiClipWriteToolState::keyStateChanged(bool isKeyDown)
 	{
 		return false;
 	}
+
+	/*
 	auto& inputManager = component->getUIContext().inputManager;
 
 	if (!isKeyDown && isWriting && !inputManager.isCurrentlyPressed(inputAction))
@@ -114,5 +121,6 @@ bool MidiClipWriteToolState::keyStateChanged(bool isKeyDown)
 		notifyToolFinished();
 		return true;
 	}
+	*/
 	return false;
 }

@@ -44,12 +44,13 @@ target_sources(Fume PRIVATE
     src/clipeditor/ClipEditorImplementationComponent.h
     src/clipeditor/midiclip/MidiEventsEditorComponent.cpp
     src/clipeditor/midiclip/MidiEventsEditorComponent.h
+    src/clipeditor/midiclip/MidiEventsEditorCursorComponent.cpp
+    src/clipeditor/midiclip/MidiEventsEditorCursorComponent.h
     src/clipeditor/midiclip/MidiClipEditorComponent.cpp
     src/clipeditor/midiclip/MidiClipEditorComponent.h
     src/clipeditor/midiclip/PianoRollComponent.h
     src/clipeditor/midiclip/toolstates/MidiClipDeleteToolState.cpp
     src/clipeditor/midiclip/toolstates/MidiClipDeleteToolState.h
-    src/clipeditor/midiclip/toolstates/MidiClipDeselectToolState.h
     src/clipeditor/midiclip/toolstates/MidiClipMoveToolState.cpp
     src/clipeditor/midiclip/toolstates/MidiClipMoveToolState.h
     src/clipeditor/midiclip/toolstates/MidiClipSelectToolState.cpp
@@ -59,30 +60,26 @@ target_sources(Fume PRIVATE
     src/clipeditor/midiclip/toolstates/MidiClipWriteToolState.h
     src/common/ExtendedEdit.cpp
     src/common/ExtendedEdit.h
+    src/common/ExtendedMidiClip.cpp
     src/common/ExtendedMidiClip.h
     src/common/InputManager.cpp
     src/common/InputManager.h
     src/common/ManualLassoComponent.h
     src/common/ToolState.h
     src/common/UIContext.h
+    src/common/UIMidiClipContext.h
     src/common/Utilities.cpp
     src/common/Utilities.h
-    src/CursorComponent.cpp
-    src/CursorComponent.h
+    src/common/VarConverters.h
     src/EditContainerComponent.cpp
     src/EditContainerComponent.h
     src/FumeLookAndFeel.h
-    src/GridEditor.h
     src/Main.cpp
     src/MainComponent.cpp
     src/MainComponent.h
     src/ManualViewport.h
     src/selectables/SelectableClipClass.cpp
     src/selectables/SelectableClipClass.h
-    src/SelectionBoxComponent.cpp
-    src/SelectionBoxComponent.h
-    src/TimelineComponent.cpp
-    src/TimelineComponent.h
     src/tracklist/AudioClipComponent.cpp
     src/tracklist/AudioClipComponent.h
     src/tracklist/ClipComponent.cpp

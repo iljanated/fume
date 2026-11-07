@@ -23,6 +23,7 @@ bool MidiClipMoveToolState::keyPressed(const juce::KeyPress& key)
 	{
 		return false;
 	}
+	/*
 	auto& selectedNotes = component->getSelectedEvents().getSelectedNotes();
 	if(selectedNotes.isEmpty())
 	{
@@ -76,7 +77,7 @@ bool MidiClipMoveToolState::keyPressed(const juce::KeyPress& key)
 		}
 		return true;
 	}
-
+	*/
 	return false;
 }
 
@@ -87,6 +88,7 @@ bool MidiClipMoveToolState::keyStateChanged(bool isKeyDown)
 
 void MidiClipMoveToolState::moveNote(te::MidiNote* note, double deltaBeats, int deltaPitch, juce::UndoManager& undoManager)
 {
+	/*
 	if (component && deltaBeats != 0.0)
 	{
 		auto length = note->getLengthBeats();
@@ -107,4 +109,5 @@ void MidiClipMoveToolState::moveNote(te::MidiNote* note, double deltaBeats, int 
 			note->setNoteNumber(newPitch, &undoManager);
 		}
 	}
+	*/
 }

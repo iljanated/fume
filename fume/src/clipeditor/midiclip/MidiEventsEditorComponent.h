@@ -1,60 +1,82 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "UIContext.h"
+#include "UIMidiClipContext.h"
 #include "ToolState.h"
 #include "ExtendedMidiClip.h"
+#include "MidiEventsEditorCursorComponent.h"
 
 class MidiEventsEditorComponent
     : public juce::Component,
     private juce::ValueTree::Listener,
-    private juce::AsyncUpdater,
     public juce::ChangeListener
 {
 public:
-    MidiEventsEditorComponent(te::MidiClip* clip, fumeUI::UIContext& context, juce::Viewport& v);
+    MidiEventsEditorComponent(fumeUI::UIMidiClipContext& context, juce::Viewport& v);
     ~MidiEventsEditorComponent();
     void paint(juce::Graphics& g) override;
     void resized() override;
 
 	void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+
+	bool keyPressed(const juce::KeyPress& key) override
+	{
+		if (toolStateManager.keyPressed(key))
+		{
+			return true;
+		}
+
+		if (cursorComponent.keyPressed(key))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	bool keyStateChanged(bool isKeyDown) override
+	{
+		if (toolStateManager.keyStateChanged(isKeyDown))
+		{
+			return true;
+		}
+		return false;
+	}
+
 	te::SelectedMidiEvents& getSelectedEvents() { return *selectedEvents; }
-    te::SelectedMidiEvents& getSelectedEvents(bool selectCursorIfEmpty) { 
-        if (selectCursorIfEmpty && selectedEvents->getSelectedNotes().isEmpty())
-        {
-            auto cursorPosition = cursorComponent.getCursorPosition();
-            selectItemsInBox({cursorPosition.getX(), cursorPosition.getY(), 0, 0});
-        }
-        
-        return getSelectedEvents();
-    }
-	ExtendedMidiClip& getMidiClip() { return midiClip; }
+	te::SelectedMidiEvents& getSelectedEvents(bool selectCursorIfEmpty) {
+		if (selectCursorIfEmpty && selectedEvents->getSelectedNotes().isEmpty())
+		{
+			//auto cursorPosition = cursorComponent.getCursorPosition();
+			//selectItemsInBox({ cursorPosition.getX(), cursorPosition.getY(), 0, 0 });
+		}
 
-    /**
-     * @name Overrides from fumeUI::Grid
-     */
-     //@{
-    juce::Point<double> getGridSize() const override;
-    juce::Point<double> getUnitSize() const override { return { fumeUI::midiEditorBeatWidth, static_cast<double>(fumeUI::midiEditorNoteHeight) }; }
-    juce::Point<double> getCellSize() const override { return { 0.25, 1 }; }
-    int getCellGroupSize() const override { return 4; }
-    double getSnappingInterval() const override { return 0.25; }
-    //@}
+		return getSelectedEvents();
+	}
 
-	te::SelectedMidiEvents& clearSelectedEvents();
+	void findLassoItemsInArea(Array<te::Clip*>& itemsFound, const Rectangle<int>& area);
+	void lassoSelectionChanged(SelectedItemSet<te::Clip*>& newSelection);
 
-private:
-    ExtendedMidiClip midiClip;
-    juce::ValueTree state;
-	std::unique_ptr<te::SelectedMidiEvents> selectedEvents { std::make_unique<te::SelectedMidiEvents>(midiClip.getClip()) };
+	fumeUI::UIMidiClipContext& getUIContext() { return uiContext; }
+	MidiEventsEditorCursorComponent& getCursorComponent() { return cursorComponent; }
+
+	void childBoundsChanged(juce::Component* child) override;
     
+private:
+	juce::Viewport& viewport;
+	Helpers::AsyncResizer asyncResizer{ *this };
+	fumeUI::UIMidiClipContext& uiContext;
+	juce::ValueTree state;
+	ToolStateManager<MidiEventsEditorComponent> toolStateManager{ uiContext.inputManager, FumeIDs::MidiClipSelectToolState };
+	std::unique_ptr<te::SelectedMidiEvents> selectedEvents { std::make_unique<te::SelectedMidiEvents>(uiContext.extendedMidiClip.getClip()) };
+	MidiEventsEditorCursorComponent cursorComponent{ uiContext, *this };
+    
+	void activateToolState(ToolState* newState);
+
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
     void valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded) override;
     void valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int index) override;
     void valueTreeChildOrderChanged(juce::ValueTree& parentTree, int oldIndex, int newIndex) override;
     void valueTreeParentChanged(juce::ValueTree& treeWhoseParentHasChanged) override;
-
-    void handleAsyncUpdate() override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiEventsEditorComponent)
 };

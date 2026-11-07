@@ -10,8 +10,6 @@ void MidiClipDeleteToolState::onEnterState()
 {
 	if (component)
 	{
-		auto& selectionBoxComponent = component->getSelectionBoxComponent();
-		selectionBoxComponent.setColour(juce::Colours::yellow);
 	}
 }
 
@@ -30,6 +28,7 @@ bool MidiClipDeleteToolState::keyStateChanged(bool isKeyDown)
 	{
 		return false;
 	}
+	/*
 	auto& inputManager = component->getUIContext().inputManager;
 
 	if (!isKeyDown && !inputManager.isCurrentlyPressed(inputAction))
@@ -49,5 +48,6 @@ bool MidiClipDeleteToolState::keyStateChanged(bool isKeyDown)
 		
 		return true;
 	}
+	*/
 	return false;
 }

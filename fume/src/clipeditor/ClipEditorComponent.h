@@ -13,7 +13,7 @@ public:
     void resized() override;
 
     void focusGained(FocusChangeType cause) override { 
-        if(implementationComponent)
+        if(implementationComponent && implementationComponent->getParentComponent() != nullptr && implementationComponent->isShowing())
         {
             implementationComponent->grabKeyboardFocus(); 
         }

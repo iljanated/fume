@@ -2,7 +2,7 @@
 
 #include "ExtendedEdit.h"
 
-ExtendedEdit::ExtendedEdit(te::Edit& e, juce::UndoManager* um) : edit(e)
+ExtendedEdit::ExtendedEdit(te::Edit& e) : edit(e)
 {
     zoomX.referTo(edit.state, FumeIDs::ZoomX, nullptr, 1.0f);
     zoomY.referTo(edit.state, FumeIDs::ZoomY, nullptr, 1.0f);

@@ -1,12 +1,11 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Utilities.h"
+#include "UIMidiClipContext.h"
 #include "ClipEditorImplementationComponent.h"
 #include "ManualViewport.h"
 #include "MidiEventsEditorComponent.h"
 #include "PianoRollComponent.h"
-#include "TimelineComponent.h"
 
 
 class MidiClipEditorComponent : public ClipEditorImplementationComponent, private juce::ComponentListener
@@ -16,13 +15,20 @@ public:
 	~MidiClipEditorComponent() override;
 	te::Clip* getClip() override;
 	void resized() override;
+	void focusGained(FocusChangeType cause) override {
+		if (midiEventsEditorComponent.getParentComponent() != nullptr && midiEventsEditorComponent.isShowing())
+		{
+			midiEventsEditorComponent.grabKeyboardFocus();
+		}
+	}
+	void focusLost(FocusChangeType cause) override {}
 
 private:
     ExtendedMidiClip midiClip;
+	fumeUI::UIMidiClipContext uiContext;
 	ManualViewport midiEventsViewport;
 	MidiEventsEditorComponent midiEventsEditorComponent;
 	PianoRollComponent pianoRollComponent;
-	TimelineComponent timelineComponent;
 
 	void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
 

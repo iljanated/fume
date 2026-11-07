@@ -6,7 +6,7 @@ namespace te = tracktion;
 using namespace tracktion::literals;
 
 EditContainerComponent::EditContainerComponent(te::Engine& engine, te::Edit& edit, te::SelectionManager& selectionManager, InputManager& inputManager)
-	: extendedEdit{ edit, &edit.getUndoManager() },  uiContext {engine, extendedEdit, selectionManager, inputManager }
+	: extendedEdit{ edit },  uiContext {engine, extendedEdit, selectionManager, inputManager }
 {
 	addAndMakeVisible(trackListContainerComponent);
 

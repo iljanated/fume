@@ -3,16 +3,16 @@
 #include "MidiClipEditorComponent.h"
 
 MidiClipEditorComponent::MidiClipEditorComponent(te::MidiClip* clip, fumeUI::UIContext& context)
-	: midiClip(clip, &context.extendedEdit.getUndoManager()), midiEventsEditorComponent(clip, context, midiEventsViewport), timelineComponent(context, midiEventsEditorComponent)
+	: midiClip(clip), uiContext(context, midiClip), midiEventsEditorComponent(uiContext, midiEventsViewport), pianoRollComponent(uiContext)
 {
+	setWantsKeyboardFocus(true);
 	addAndMakeVisible(pianoRollComponent);
-	addAndMakeVisible(timelineComponent);
-
+	
 	midiEventsEditorComponent.setSize(2024, 1600);
 	midiEventsEditorComponent.addComponentListener(this);
 
 	midiEventsViewport.setViewedComponent(&midiEventsEditorComponent, false);
-	midiEventsViewport.setViewPosition(midiClip.scrollX.get(), midiClip.scrollY.get());
+	midiEventsViewport.setViewPosition(midiClip.getScrollX(), midiClip.getScrollY());
 	addAndMakeVisible(midiEventsViewport);
 }
 
@@ -25,7 +25,6 @@ void MidiClipEditorComponent::resized()
 	auto localBounds = getLocalBounds();
 	auto timelineBounds = localBounds.removeFromTop(fumeUI::midiEditorTimelineHeight);
 	timelineBounds.removeFromLeft(fumeUI::midiEditorPianoRollWidth);
-	timelineComponent.setBounds(timelineBounds);
 	pianoRollComponent.setBounds(localBounds.removeFromLeft(fumeUI::midiEditorPianoRollWidth));
     midiEventsViewport.setBounds(localBounds);
 }
@@ -39,8 +38,8 @@ void MidiClipEditorComponent::componentMovedOrResized(juce::Component& component
 {
 	if (&component == &midiEventsEditorComponent)
 	{
-		midiClip.scrollX = -component.getX();
-		midiClip.scrollY = -component.getY();
+		midiClip.setScrollX(-component.getX());
+		midiClip.setScrollY(-component.getY());
 		pianoRollComponent.setScrollOffset(-component.getY());
 	}
 }

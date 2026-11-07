@@ -8,7 +8,7 @@ namespace te = tracktion;
 class ExtendedEdit
 {
 public:
-    ExtendedEdit(te::Edit& e, juce::UndoManager* um);
+    ExtendedEdit(te::Edit& e);
 	~ExtendedEdit() = default;
 
     te::Edit& getEdit() const { return edit; }
