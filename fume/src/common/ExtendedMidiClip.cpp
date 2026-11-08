@@ -10,4 +10,10 @@ ExtendedMidiClip::ExtendedMidiClip(te::MidiClip* c)
 	scrollX.referTo(clip->state, FumeIDs::ScrollX, nullptr, 0);
 	scrollY.referTo(clip->state, FumeIDs::ScrollY, nullptr, 64 * fumeUI::midiEditorNoteHeight);
 	noteLength.referTo(clip->state, FumeIDs::NoteLength, nullptr, 0.12);
+
+	if (cursorQuantisation.getType(false) == cursorQuantisation.getAvailableQuantiseTypes(false)[0])
+	{
+		cursorQuantisation.setType(cursorQuantisation.getAvailableQuantiseTypes(false)[5]);
+	}		
+	DBG("ExtendedMidiClip::ExtendedMidiClip: cursorQuantisation.getType(false) = " << cursorQuantisation.getType(false));
 }

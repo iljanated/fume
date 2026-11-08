@@ -9,12 +9,12 @@ namespace te = tracktion;
 TrackListComponent::TrackListComponent(fumeUI::UIContext& context, juce::Viewport& v)
 	: viewport(v), uiContext(context), te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<TrackComponent>>(context.extendedEdit.getState())
 {
-	addAndMakeVisible(currentPositionMarker);
+	//addAndMakeVisible(currentPositionMarker);
 	addAndMakeVisible(cursorComponent);
 	cursorComponent.setAlwaysOnTop(true);
 
 	currentPositionMarker.setFill(Colours::white.withAlpha(0.85f));
-	currentPositionMarker.setAlwaysOnTop(true);
+	//currentPositionMarker.setAlwaysOnTop(true);
 
 	setWantsKeyboardFocus(true);
 

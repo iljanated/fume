@@ -76,26 +76,19 @@ void MidiEventsEditorCursorComponent::moveCursorPosition(const juce::Point<int>&
 	{
 		auto& extendedMidiClip = uiContext.extendedMidiClip;
 
-		auto& tempoSequence = uiContext.extendedEdit.getTempoSequence();
-
-		auto timePosition = tempoSequence.beatsToTime(te::BeatPosition::fromBeats(cursorPosition.getX()));
-
-		auto snapType = te::TimecodeSnapType(te::TimecodeType::barsBeats, extendedMidiClip.getSnapLevel());
-
-		auto timeOffset = te::TimeDuration::fromSeconds(0.0001);
-
+		auto beatPosition = te::BeatPosition::fromBeats(cursorPosition.getX());
+		
 		if (x > 0)
 		{
-			auto nextTime = snapType.roundTimeUp(timePosition + timeOffset, tempoSequence, extendedMidiClip.getSnapUseTriplets());
-			cursorPosition.setX(tempoSequence.timeToBeats(nextTime).inBeats());
+			auto beatOffset = te::BeatDuration::fromBeats(0.0001);
+			auto nextBeat = extendedMidiClip.getCursorQuantisation().roundBeatUp(beatPosition + beatOffset);
+			cursorPosition.setX(std::clamp(nextBeat.inBeats(), 0.0, 512.0));
 		}
 		else
 		{
-			auto nextTime = snapType.roundTimeDown(timePosition - timeOffset, tempoSequence, extendedMidiClip.getSnapUseTriplets());
-			cursorPosition.setX(tempoSequence.timeToBeats(nextTime).inBeats());
+			auto previousBeat = extendedMidiClip.getCursorQuantisation().roundBeatDown(beatPosition);
+			cursorPosition.setX(std::clamp(previousBeat.inBeats(), 0.0, 512.0));
 		}
-
-		cursorPosition.setX(std::clamp(cursorPosition.getX(), 0.0, 512.0));
 	}
 
 	cursorPosition.setY(std::clamp(cursorPosition.getY() + delta.getY(), 0.0, 127.0));
@@ -119,6 +112,5 @@ void MidiEventsEditorCursorComponent::updateBounds()
 	if (rect != bounds)
 	{
 		setBounds(rect);
-		DBG(rect.toString());
 	}
 }

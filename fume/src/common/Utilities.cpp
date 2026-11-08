@@ -11,7 +11,7 @@ namespace fumeUI
     const int timelineTrackHeight = 30;
     const int timelineTrackHeadWidth = 100;
     const int timelineTimelineHeight = 20;
-    const double midiEditorBeatsPerPixel = 0.01;
+    const double midiEditorBeatsPerPixel = 0.004;
     const int midiEditorNoteHeight = 10;
     const int midiEditorTimelineHeight = 20;
     const int midiEditorPianoRollWidth = 50;

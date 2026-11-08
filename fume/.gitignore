@@ -1047,15 +1047,5 @@ dkms.conf
 
 # tracktion_engine & juce
 # Ignore everything under modules by default
-modules/**
-
-# ...except QuantisationType files
-!modules/tracktion_engine/
-!modules/tracktion_engine/modules/
-!modules/tracktion_engine/modules/tracktion_engine/
-!modules/tracktion_engine/modules/tracktion_engine/model/
-!modules/tracktion_engine/modules/tracktion_engine/model/edit/
-!modules/tracktion_engine/modules/tracktion_engine/model/edit/tracktion_QuantisationType.h
-!modules/tracktion_engine/modules/tracktion_engine/model/edit/tracktion_QuantisationType.cpp
-
+modules/
 third_party/

@@ -56,18 +56,11 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
 	auto& clip = extendedMidiClip.getClip();
 
     auto clipBounds = g.getClipBounds();
-    if (clipBounds.isEmpty())
+	if (clipBounds.isEmpty())
     {
         return;
     }
-    float zoomX = clip.state.getProperty(FumeIDs::ZoomX, 1.0f);
-    float zoomY = clip.state.getProperty(FumeIDs::ZoomY, 1.0f);
-
-    // Draw the background frame
-    g.fillAll(juce::Colours::lightgrey);
-    g.setColour(juce::Colours::grey);
-    g.drawRect(getLocalBounds(), 1);
-
+    
     const auto clipLength = clip.getLengthInBeats().inBeats();
     if (clipLength <= 0.0)
     {
@@ -75,13 +68,10 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
     }
 
     // draw grid
-    /*
+    
 	auto beatsPerPixel = extendedMidiClip.getBeatsPerPixel();
 
-    auto leftSeconds = te::TimePosition::fromSeconds(clipBounds.getX() * secondsPerPixel);
-    te::TempoSequence& tempoSequence = extendedEdit.getTempoSequence();
-
-    auto trackHeight = extendedEdit.getTrackHeight();
+	auto noteHeight = extendedMidiClip.getNoteHeight();
 
     g.fillAll(juce::Colours::lightgrey);
 
@@ -92,22 +82,38 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
     auto minY = clipBounds.getY();
     auto maxY = clipBounds.getBottom();
 
-    auto startTime = snapType.roundTimeUp(leftSeconds, tempoSequence);
-    auto endTime = te::TimePosition::fromSeconds(maxX * secondsPerPixel);
+	auto& quantisationType = extendedMidiClip.getCursorQuantisation();
 
-    auto time = startTime;
-    while (time < endTime)
+    auto gridStartBeat = quantisationType.roundBeatUp(te::BeatPosition::fromBeats(minX) * beatsPerPixel);
+    auto gridEndBeat = te::BeatPosition::fromBeats(maxX * beatsPerPixel);
+
+    auto beat = gridStartBeat;
+	
+    while (beat < gridEndBeat)
     {
-        auto x = time.inSeconds() / secondsPerPixel;
+		auto x = beat.inBeats() / beatsPerPixel;
         gridPath.startNewSubPath(x, minY);
         gridPath.lineTo(x, maxY);
 
-        time = snapType.roundTimeUp(time + te::TimeDuration::fromSeconds(0.0001), tempoSequence);
+        beat = quantisationType.roundBeatUp(beat + te::BeatDuration::fromBeats(0.0001));
+    }
+
+    // black notes
+
+    g.setColour(juce::Colours::lightgrey.darker(0.1));
+
+    for (auto y = minY + noteHeight - std::fmod(minY, noteHeight); y < maxY; y += noteHeight)
+    {
+        auto noteNumber = (127 - static_cast<int>(y / noteHeight)) % 12;
+        if (noteNumber == 1 || noteNumber == 3 || noteNumber == 6 || noteNumber == 8 || noteNumber == 10)
+        {
+            g.fillRect(minX, (int)y, maxX - minX, (int)noteHeight);
+        }
     }
 
     // horizontal lines
 
-    for (auto y = minY + trackHeight - std::fmod(minY, trackHeight); y < maxY; y += trackHeight)
+    for (auto y = minY + noteHeight - std::fmod(minY, noteHeight); y < maxY; y += noteHeight)
     {
         gridPath.startNewSubPath(minX, y);
         gridPath.lineTo(maxX, y);
@@ -117,7 +123,7 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
 
     g.strokePath(gridPath, juce::PathStrokeType(1.0f));
 
-    */
+    
 
     // draw notes
 
@@ -125,10 +131,7 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
 
     g.setColour(juce::Colours::aqua);
 
-	auto beatsPerPixel = uiContext.extendedMidiClip.getBeatsPerPixel();
-	auto noteHeight = uiContext.extendedMidiClip.getNoteHeight();
-
-    for (auto* note : sequence.getNotes())
+	for (auto* note : sequence.getNotes())
     {
         if (note == nullptr) continue;
 
