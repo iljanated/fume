@@ -191,7 +191,6 @@ void TrackListComponent::valueTreePropertyChanged(juce::ValueTree& treeWhoseProp
 {
 	if (property == FumeIDs::ZoomX)
 	{
-		float zoomX = treeWhosePropertyHasChanged.getProperty(FumeIDs::ZoomX, 1.0f);
 		updateSnapType();
 		updateBounds();
 		asyncResizer.resizeAsync();
@@ -200,6 +199,14 @@ void TrackListComponent::valueTreePropertyChanged(juce::ValueTree& treeWhoseProp
 	{
 		updateBounds();
 		asyncResizer.resizeAsync();
+	}
+
+	if (property == FumeIDs::CursorX || property == FumeIDs::CursorY)
+	{
+		juce::MessageManager::callAsync([this]() {
+			fumeUI::makeComponentVisibleInViewport(viewport, cursorComponent, fumeUI::scrollPadding);
+			});
+		return;
 	}
 }
 
@@ -236,9 +243,11 @@ void TrackListComponent::findLassoItemsInArea(Array<te::Clip*>& itemsFound, cons
 	auto yMin = static_cast<int>(area.getY() / trackHeight);
 	auto yMax = static_cast<int>(area.getBottom() / trackHeight);
 
+	DBG("Trackheight: " << trackHeight << "area: " << area.getY());
 
 	for (int i = yMin; i <= yMax; ++i)
 	{
+		DBG("Checking track index: " << i);
 		if (auto track = getTrackAt(i))
 		{
 
@@ -263,14 +272,6 @@ void TrackListComponent::findLassoItemsInArea(Array<te::Clip*>& itemsFound, cons
 void TrackListComponent::lassoSelectionChanged(SelectedItemSet<te::Clip*>& newSelection)
 {
 	uiContext.selectionManager.select(newSelection.getItemArray());
-}
-
-void TrackListComponent::childBoundsChanged(juce::Component* child)
-{
-	if (child == &cursorComponent)
-	{
-		fumeUI::makeComponentVisibleInViewport(viewport, cursorComponent, fumeUI::scrollPadding);
-	}
 }
 
 void TrackListComponent::updateSnapType()

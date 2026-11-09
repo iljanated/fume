@@ -62,10 +62,10 @@ public:
 		if (!isLassoActive && inputManager.validate(keyCode, modifiers, inputAction))
 		{
 			isLassoActive = true;
-			component->getCursorComponent().setVisible(false);
+			component->showCursor(false);
 			component->addAndMakeVisible(lassoComponent);
 
-			dragPosition = component->getCursorComponent().getCursorPosition();
+			dragPosition = juce::Point<double>(extendedEdit.getCursorX(), extendedEdit.getCursorY());
 			beginLasso(modifiers);
 			//dragLasso(juce::Point<int>(1, 1), modifiers);
 			return true;
@@ -106,7 +106,7 @@ public:
 			isLassoActive = false;
 			lassoComponent.endLasso();
 			component->removeChildComponent(&lassoComponent);
-			component->getCursorComponent().setVisible(true);
+			component->showCursor(true);
 
 			return true;
 		}
@@ -131,6 +131,7 @@ private:
 		auto trackHeight =	extendedEdit.getTrackHeight();
 
 		auto pixelPosition = juce::Point<int>(static_cast<int>(dragPosition.getX() / secondsPerPixel), static_cast<int>(dragPosition.getY() * trackHeight));
+		DBG("pixelPosition: " << pixelPosition.getX() << ", " << pixelPosition.getY());
 		lassoComponent.setRowHeight(trackHeight);
 		lassoComponent.setMargin(2);
 		lassoComponent.beginLasso(pixelPosition, modifiers, this);

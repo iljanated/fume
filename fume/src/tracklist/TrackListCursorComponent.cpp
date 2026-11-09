@@ -4,15 +4,15 @@
 #include "TrackListComponent.h"
 
 TrackListCursorComponent::TrackListCursorComponent(fumeUI::UIContext& uiContext, TrackListComponent& trackListComponent)
-	: uiContext(uiContext), trackListComponent(trackListComponent)
+	: uiContext(uiContext), editState(uiContext.extendedEdit.getState()), trackListComponent(trackListComponent)
 {
-	uiContext.extendedEdit.getState().addListener(this);
+	editState.addListener(this);
 	updateBounds();
 }
 
 TrackListCursorComponent::~TrackListCursorComponent()
 {
-	uiContext.extendedEdit.getState().removeListener(this);
+	editState.removeListener(this);
 }
 
 void TrackListCursorComponent::paint(juce::Graphics& g)
@@ -55,15 +55,9 @@ bool TrackListCursorComponent::keyPressed(const juce::KeyPress& key)
 	return false;
 }
 
-void TrackListCursorComponent::setCursorPosition(const juce::Point<double>& newPosition)
-{
-	cursorPosition = newPosition;
-	updateBounds();
-}
-
 void TrackListCursorComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
 {
-	if (property == FumeIDs::ZoomX || property == FumeIDs::ZoomY)
+	if (property == FumeIDs::ZoomX || property == FumeIDs::ZoomY || property == FumeIDs::CursorX || property == FumeIDs::CursorY)
 	{
 		updateBounds();
 	}
@@ -71,29 +65,33 @@ void TrackListCursorComponent::valueTreePropertyChanged(juce::ValueTree& treeWho
 
 void TrackListCursorComponent::moveCursorPosition(const juce::Point<int>& delta)
 {
+	auto& extendedEdit = uiContext.extendedEdit;
+
 	auto x = delta.getX();
 	if (x != 0)
 	{
-		auto timePosition = te::TimePosition::fromSeconds(cursorPosition.getX());
+		auto timePosition = te::TimePosition::fromSeconds(extendedEdit.getCursorX());
 		auto timeOffset = te::TimeDuration::fromSeconds(0.0001);
 
 		auto& snapType = trackListComponent.getSnapType();
 		auto& tempoSequence = uiContext.extendedEdit.getTempoSequence();
 
+		auto newX = extendedEdit.getCursorX();
+
 		if (x > 0)
 		{
 
-			cursorPosition.setX(snapType.roundTimeUp(timePosition + timeOffset, tempoSequence, false).inSeconds());
+			newX = snapType.roundTimeUp(timePosition + timeOffset, tempoSequence, false).inSeconds();
 		}
 		else
 		{
-			cursorPosition.setX(snapType.roundTimeDown(timePosition - timeOffset, tempoSequence, false).inSeconds());
+			newX = snapType.roundTimeDown(timePosition - timeOffset, tempoSequence, false).inSeconds();
 		}
 
-		cursorPosition.setX(std::clamp(cursorPosition.getX(), 0.0, uiContext.extendedEdit.getEdit().getMaximumEditEnd().inSeconds()));
+		extendedEdit.setCursorX(std::clamp(newX, 0.0, uiContext.extendedEdit.getEdit().getMaximumEditEnd().inSeconds()));
 	}
 
-	cursorPosition.setY(std::clamp(cursorPosition.getY() + delta.getY(), 0.0, (double)trackListComponent.getTrackCount() - 1));
+	extendedEdit.setCursorY(std::clamp(extendedEdit.getCursorY() + delta.getY(), 0.0, (double)trackListComponent.getTrackCount() - 1));
 	updateBounds();
 }
 
@@ -104,8 +102,8 @@ void TrackListCursorComponent::updateBounds()
 	int margin = 2;
 	
 	auto rect = juce::Rectangle<int>(
-		cursorPosition.getX() / extendedEdit.getSecondsPerPixel() - margin,
-		cursorPosition.getY() * extendedEdit.getTrackHeight() - margin,
+		extendedEdit.getCursorX() / extendedEdit.getSecondsPerPixel() - margin,
+		extendedEdit.getCursorY() * extendedEdit.getTrackHeight() - margin,
 		margin * 2,
 		extendedEdit.getTrackHeight() + margin * 2
 	);

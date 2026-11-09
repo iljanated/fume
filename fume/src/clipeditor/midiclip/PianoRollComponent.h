@@ -33,10 +33,10 @@ public:
 				g.setColour(juce::Colours::white);
 			}
 
-			g.fillRect(30, y, 20, fumeUI::midiEditorNoteHeight);
+			g.fillRect(30, y, 20, noteHeight);
 
 			g.setColour(juce::Colours::grey);
-			g.drawRect(30, y, 20, fumeUI::midiEditorNoteHeight);
+			g.drawRect(30, y, 20, noteHeight);
 
 			if (localNoteIndex == 0)
 			{

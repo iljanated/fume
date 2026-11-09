@@ -58,10 +58,9 @@ public:
 	void lassoSelectionChanged(SelectedItemSet<te::Clip*>& newSelection);
 
 	fumeUI::UIContext& getUIContext() { return uiContext; }
-	TrackListCursorComponent& getCursorComponent() { return cursorComponent; }
 	te::engine::TimecodeSnapType& getSnapType() { return snapType; }
 
-	void childBoundsChanged(juce::Component* child) override;
+	void showCursor(bool visible) { cursorComponent.setVisible(visible); }
 private:
     //==============================================================================
 	juce::Viewport& viewport;

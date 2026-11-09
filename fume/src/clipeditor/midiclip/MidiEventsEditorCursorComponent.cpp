@@ -1,18 +1,17 @@
 #pragma once
 
 #include "MidiEventsEditorCursorComponent.h"
-#include "MidiEventsEditorComponent.h"
 
-MidiEventsEditorCursorComponent::MidiEventsEditorCursorComponent(fumeUI::UIMidiClipContext& uiContext, MidiEventsEditorComponent& midiEventsEditorComponent)
-	: uiContext(uiContext), midiEventsEditorComponent(midiEventsEditorComponent)
+MidiEventsEditorCursorComponent::MidiEventsEditorCursorComponent(fumeUI::UIMidiClipContext& uiContext)
+	: uiContext(uiContext), midiClipState(uiContext.extendedMidiClip.getState())
 {
-	uiContext.extendedEdit.getState().addListener(this);
+	midiClipState.addListener(this);
 	updateBounds();
 }
 
 MidiEventsEditorCursorComponent::~MidiEventsEditorCursorComponent()
 {
-	uiContext.extendedEdit.getState().removeListener(this);
+	midiClipState.removeListener(this);
 }
 
 void MidiEventsEditorCursorComponent::paint(juce::Graphics& g)
@@ -55,15 +54,9 @@ bool MidiEventsEditorCursorComponent::keyPressed(const juce::KeyPress& key)
 	return false;
 }
 
-void MidiEventsEditorCursorComponent::setCursorPosition(const juce::Point<double>& newPosition)
-{
-	cursorPosition = newPosition;
-	updateBounds();
-}
-
 void MidiEventsEditorCursorComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
 {
-	if (property == FumeIDs::ZoomX || property == FumeIDs::ZoomY)
+	if (property == FumeIDs::ZoomX || property == FumeIDs::ZoomY || property == FumeIDs::CursorX || property == FumeIDs::CursorY)
 	{
 		updateBounds();
 	}
@@ -71,28 +64,27 @@ void MidiEventsEditorCursorComponent::valueTreePropertyChanged(juce::ValueTree& 
 
 void MidiEventsEditorCursorComponent::moveCursorPosition(const juce::Point<int>& delta)
 {
+	auto& extendedMidiClip = uiContext.extendedMidiClip;
+
 	auto x = delta.getX();
 	if (x != 0)
 	{
-		auto& extendedMidiClip = uiContext.extendedMidiClip;
-
-		auto beatPosition = te::BeatPosition::fromBeats(cursorPosition.getX());
+		auto beatPosition = te::BeatPosition::fromBeats(extendedMidiClip.getCursorX());
 		
 		if (x > 0)
 		{
 			auto beatOffset = te::BeatDuration::fromBeats(0.0001);
 			auto nextBeat = extendedMidiClip.getCursorQuantisation().roundBeatUp(beatPosition + beatOffset);
-			cursorPosition.setX(std::clamp(nextBeat.inBeats(), 0.0, 512.0));
+			extendedMidiClip.setCursorX(std::clamp(nextBeat.inBeats(), 0.0, 512.0));
 		}
 		else
 		{
 			auto previousBeat = extendedMidiClip.getCursorQuantisation().roundBeatDown(beatPosition);
-			cursorPosition.setX(std::clamp(previousBeat.inBeats(), 0.0, 512.0));
+			extendedMidiClip.setCursorX(std::clamp(previousBeat.inBeats(), 0.0, 512.0));
 		}
 	}
 
-	cursorPosition.setY(std::clamp(cursorPosition.getY() + delta.getY(), 0.0, 127.0));
-	updateBounds();
+	extendedMidiClip.setCursorY(std::clamp(extendedMidiClip.getCursorY() + delta.getY(), 0.0, 127.0));
 }
 
 void MidiEventsEditorCursorComponent::updateBounds()
@@ -102,8 +94,8 @@ void MidiEventsEditorCursorComponent::updateBounds()
 	int margin = 2;
 
 	auto rect = juce::Rectangle<int>(
-		cursorPosition.getX() / extendedMidiClip.getBeatsPerPixel() - margin,
-		cursorPosition.getY() * extendedMidiClip.getNoteHeight() - margin,
+		extendedMidiClip.getCursorX() / extendedMidiClip.getBeatsPerPixel() - margin,
+		extendedMidiClip.getCursorY() * extendedMidiClip.getNoteHeight() - margin,
 		margin * 2,
 		extendedMidiClip.getNoteHeight() + margin * 2
 	);

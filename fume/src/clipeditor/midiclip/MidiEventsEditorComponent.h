@@ -58,8 +58,6 @@ public:
 
 	fumeUI::UIMidiClipContext& getUIContext() { return uiContext; }
 	MidiEventsEditorCursorComponent& getCursorComponent() { return cursorComponent; }
-
-	void childBoundsChanged(juce::Component* child) override;
     
 private:
 	juce::Viewport& viewport;
@@ -68,7 +66,7 @@ private:
 	juce::ValueTree state;
 	ToolStateManager<MidiEventsEditorComponent> toolStateManager{ uiContext.inputManager, FumeIDs::MidiClipSelectToolState };
 	std::unique_ptr<te::SelectedMidiEvents> selectedEvents { std::make_unique<te::SelectedMidiEvents>(uiContext.extendedMidiClip.getClip()) };
-	MidiEventsEditorCursorComponent cursorComponent{ uiContext, *this };
+	MidiEventsEditorCursorComponent cursorComponent{ uiContext };
     
 	void activateToolState(ToolState* newState);
 

@@ -5,6 +5,7 @@
 #include "MidiClipSelectToolState.h"
 #include "MidiClipDeleteToolState.h"
 #include "MidiClipWriteToolState.h"
+#include "MidiClipZoomToolState.h"
 
 MidiEventsEditorComponent::MidiEventsEditorComponent(fumeUI::UIMidiClipContext& uiContext, juce::Viewport& v)
 	: state(uiContext.extendedMidiClip.getClip().state), uiContext(uiContext), viewport(v)
@@ -21,7 +22,8 @@ MidiEventsEditorComponent::MidiEventsEditorComponent(fumeUI::UIMidiClipContext& 
     toolStateManager.addToolState(std::make_unique<MidiClipSelectToolState>(this));
     //toolStateManager.addToolState(std::make_unique<MidiClipDeleteToolState>(this));
     //toolStateManager.addToolState(std::make_unique<MidiClipWriteToolState>(this));
-    
+    toolStateManager.addToolState(std::make_unique<MidiClipZoomToolState>(this));
+
     toolStateManager.activateToolStateByIdentifier(FumeIDs::MidiClipSelectToolState);
 }
 
@@ -107,7 +109,7 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
         auto noteNumber = (127 - static_cast<int>(y / noteHeight)) % 12;
         if (noteNumber == 1 || noteNumber == 3 || noteNumber == 6 || noteNumber == 8 || noteNumber == 10)
         {
-            g.fillRect(minX, (int)y, maxX - minX, (int)noteHeight);
+            g.fillRect(minX, static_cast<int>(y), maxX - minX, noteHeight);
         }
     }
 
@@ -115,8 +117,8 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
 
     for (auto y = minY + noteHeight - std::fmod(minY, noteHeight); y < maxY; y += noteHeight)
     {
-        gridPath.startNewSubPath(minX, y);
-        gridPath.lineTo(maxX, y);
+        gridPath.startNewSubPath(minX, static_cast<int>(y));
+        gridPath.lineTo(maxX, static_cast<int>(y));
     }
 
     g.setColour(juce::Colours::lightgrey.darker(0.2));
@@ -155,7 +157,7 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
 		{
 			g.setColour(juce::Colours::aqua);
 		}
-        g.fillRect(x, y, width, noteHeight);
+        g.fillRect(static_cast<int>(x), static_cast<int>(y), static_cast<int>(width), noteHeight);
     }
 
     // draw focusbox
@@ -172,14 +174,6 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
 
 }
 
-void MidiEventsEditorComponent::childBoundsChanged(juce::Component* child)
-{
-    if (child == &cursorComponent)
-    {
-        fumeUI::makeComponentVisibleInViewport(viewport, cursorComponent, fumeUI::scrollPadding);
-    }
-}
-
 void MidiEventsEditorComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
 {
     // Opt-out from updating on non-visual UI metadata tags to minimize performance overhead
@@ -187,6 +181,14 @@ void MidiEventsEditorComponent::valueTreePropertyChanged(juce::ValueTree& treeWh
     {
         return;
     }
+
+	if (property == FumeIDs::CursorX || property == FumeIDs::CursorY)
+	{
+        juce::MessageManager::callAsync([this]() {
+            fumeUI::makeComponentVisibleInViewport(viewport, cursorComponent, fumeUI::scrollPadding);
+            });
+        return;
+	}
 
     asyncResizer.resizeAsync();
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "InputManager.h"
+#include "BeatQuantisationType.h"
 
 #pragma once
 
@@ -14,6 +14,8 @@ namespace FumeIDs
 	static const juce::Identifier ZoomY("fume_zoomY");
 	static const juce::Identifier ScrollX("fume_scrollX");
 	static const juce::Identifier ScrollY("fume_scrollY");
+	static const juce::Identifier CursorX("fume_cursorX");
+	static const juce::Identifier CursorY("fume_cursorY");
 	static const juce::Identifier NoteLength("fume_noteLength");
 	static const juce::Identifier CursorQuantisation("CursorQuantisation");
 	static const juce::Identifier SongLength("fume_songLength");
@@ -25,6 +27,7 @@ namespace FumeIDs
 	static const juce::Identifier MidiClipMoveToolState("fume_midiclip_move_toolstate");
 	static const juce::Identifier MidiClipSelectToolState("fume_midiclip_select_toolstate");
 	static const juce::Identifier MidiClipWriteToolState("fume_midiclip_write_toolstate");
+	static const juce::Identifier MidiClipZoomToolState("fume_midiclip_zoom_toolstate");
 }
 
 namespace fumeUI
@@ -47,6 +50,8 @@ namespace fumeUI
 	extern const float zoomStepSize;
 
 	void makeComponentVisibleInViewport(juce::Viewport& viewport, juce::Component& component, int padding = fumeUI::scrollPadding);
+
+	juce::String beatToString(te::BeatPosition beat, int beatsPerBar, bool useTriplets);
 }
 
 namespace fumeHelpers
@@ -93,6 +98,27 @@ namespace fumeHelpers
 		}
 
 		return displayFormat.getSnapType(numSnapTypes - 1);
+	}
+
+	static inline BeatQuantisationType getBestBeatQuantisationTypeType(int minPixels, double beatsPerPixel)
+	{
+		double type = 1.0 / 16.0;
+
+		int maxIterations = 8;
+
+		for (int i = 0; i < maxIterations; ++i)
+		{
+			auto length = type / beatsPerPixel;
+
+			if (length >= minPixels)
+			{
+				return BeatQuantisationType(te::BeatDuration::fromBeats(type));
+			}
+
+			type *= 2.0;
+		}
+
+		return BeatQuantisationType(te::BeatDuration::fromBeats(type));
 	}
 }
 

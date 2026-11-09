@@ -6,6 +6,7 @@
 #include "ManualViewport.h"
 #include "MidiEventsEditorComponent.h"
 #include "PianoRollComponent.h"
+#include "MidiClipTimelineComponent.h"
 
 
 class MidiClipEditorComponent : public ClipEditorImplementationComponent, private juce::ComponentListener
@@ -15,12 +16,7 @@ public:
 	~MidiClipEditorComponent() override;
 	te::Clip* getClip() override;
 	void resized() override;
-	void focusGained(FocusChangeType cause) override {
-		if (midiEventsEditorComponent.getParentComponent() != nullptr && midiEventsEditorComponent.isShowing())
-		{
-			midiEventsEditorComponent.grabKeyboardFocus();
-		}
-	}
+	void focusGained(FocusChangeType cause) override;
 	void focusLost(FocusChangeType cause) override {}
 
 private:
@@ -29,6 +25,7 @@ private:
 	ManualViewport midiEventsViewport;
 	MidiEventsEditorComponent midiEventsEditorComponent;
 	PianoRollComponent pianoRollComponent;
+	MidiClipTimelineComponent midiClipTimelineComponent;
 
 	void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override;
 

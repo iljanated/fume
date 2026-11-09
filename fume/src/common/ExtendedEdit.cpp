@@ -8,4 +8,6 @@ ExtendedEdit::ExtendedEdit(te::Edit& e) : edit(e)
     zoomY.referTo(edit.state, FumeIDs::ZoomY, nullptr, 1.0f);
     scrollX.referTo(edit.state, FumeIDs::ScrollX, nullptr, 0);
     scrollY.referTo(edit.state, FumeIDs::ScrollY, nullptr, 0);
+	cursorX.referTo(edit.state, FumeIDs::CursorX, nullptr, 0);
+	cursorY.referTo(edit.state, FumeIDs::CursorY, nullptr, 0);
 }

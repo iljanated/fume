@@ -11,7 +11,7 @@ namespace fumeUI
     const int timelineTrackHeight = 30;
     const int timelineTrackHeadWidth = 100;
     const int timelineTimelineHeight = 20;
-    const double midiEditorBeatsPerPixel = 0.004;
+    const double midiEditorBeatsPerPixel = 0.003;
     const int midiEditorNoteHeight = 10;
     const int midiEditorTimelineHeight = 20;
     const int midiEditorPianoRollWidth = 50;
@@ -59,5 +59,27 @@ namespace fumeUI
         {
             viewport.setViewPosition(newX, newY);
         }
+    }
+
+    juce::String beatToString(te::BeatPosition beat, int beatsPerBar, bool useTriplets)
+    {
+        if (beatsPerBar <= 0)
+        {
+            return "1.1.1";
+        }
+
+        auto beatValue = std::max(0.0, beat.inBeats());
+        auto wholeBeats = static_cast<int>(std::floor(beatValue + 1.0e-10));
+        auto beatFraction = beatValue - wholeBeats;
+
+        auto subdivisions = useTriplets ? 3 : 4;
+        auto fractionIndex = static_cast<int>(std::floor((beatFraction * subdivisions) + 1.0e-10));
+        fractionIndex = juce::jlimit(0, subdivisions - 1, fractionIndex);
+
+        auto bar = (wholeBeats / beatsPerBar) + 1;
+        auto beatInBar = (wholeBeats % beatsPerBar) + 1;
+        auto fractionInBeat = fractionIndex + 1;
+
+        return juce::String::formatted("%d.%d.%d", bar, beatInBar, fractionInBeat);
     }
 }

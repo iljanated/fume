@@ -3,62 +3,96 @@
 #include <JuceHeader.h>
 #include "UIContext.h"
 
-class TrackListTimelineComponent : public juce::Component
+class TrackListTimelineComponent : public juce::Component, public juce::ValueTree::Listener
 {
 public:
 	TrackListTimelineComponent(fumeUI::UIContext& context) : uiContext(context)
 	{
+		context.extendedEdit.getState().addListener(this);
 	}
 
-	~TrackListTimelineComponent() override = default;
+	~TrackListTimelineComponent() override
+	{
+		uiContext.extendedEdit.getState().removeListener(this);
+	}
 
 	void paint(juce::Graphics& g) override
 	{
-		auto& edit = uiContext.extendedEdit.getEdit();
+		auto& extendedEdit = uiContext.extendedEdit;
 		auto localBounds = getLocalBounds();
 
 		g.fillAll(juce::Colours::lightgrey);
 
-		float zoomX = edit.state.getProperty(FumeIDs::ZoomX, 1.0f);
-		
-		auto secondsPerPixel = fumeUI::timelineSecondsPerPixel / zoomX;
+		auto secondsPerPixel = extendedEdit.getSecondsPerPixel();
 
 		auto leftSeconds = te::TimePosition::fromSeconds(offset * secondsPerPixel);
 
-		te::TempoSequence& tempoSequence = edit.tempoSequence;
-		bool isTripletOverride = false;
-		auto displayFormat = edit.getTimecodeFormat();
-		auto snapType = fumeHelpers::getBestSnapType(displayFormat, fumeUI::timelineHeaderMinimumPixelsPerSnap, tempoSequence.getTempoAt(leftSeconds), te::TimeDuration::fromSeconds(secondsPerPixel), isTripletOverride);
-
+		te::TempoSequence& tempoSequence = extendedEdit.getTempoSequence();
+		
 		auto startTime = snapType.roundTimeUp(leftSeconds, tempoSequence);
 		auto endTime = te::TimePosition::fromSeconds((offset + localBounds.getWidth()) * secondsPerPixel);
 
 		auto time = startTime;
 		
+		auto timeOffset = te::TimeDuration::fromSeconds(0.0001);
+
 		juce::Path gridPath;
 		
-		g.setColour(juce::Colours::darkgrey);
-		DBG("TimelineComponent::paint: offset = " << offset << ", leftSeconds = " << leftSeconds.inSeconds() << ", startTime = " << startTime.inSeconds() << ", endTime = " << endTime.inSeconds());
 		while (time < endTime)
 		{
 			auto x = time.inSeconds() / secondsPerPixel - offset;
 			
-			
 			gridPath.startNewSubPath(x, 0);
 			gridPath.lineTo(x, localBounds.getHeight());
 
-			//auto beatNumber = static_cast<int>((-offset + x) / unitX);
-			//g.drawText(std::to_string(beatNumber), x + 2, 2, 30, 20, juce::Justification::left);
+			auto barBeats = tempoSequence.timeToBarsBeats(time);
+			if (barBeats.beats.inBeats() == 0)
+			{
+				g.drawText(std::to_string(static_cast<int>(barBeats.getTotalBars())), x + 4, 0, 30, 20, juce::Justification::left);
+			}
 
-			time = snapType.roundTimeUp(time + te::TimeDuration::fromSeconds(0.0001), tempoSequence);
+			time = snapType.roundTimeUp(time + timeOffset, tempoSequence);
 		}
 
+		g.setColour(juce::Colours::darkgrey);
 		g.strokePath(gridPath, juce::PathStrokeType(1.0f));
 	}
 
-	void setOffset(int newOffset) { offset = newOffset; repaint(); }
+	void setOffset(int newOffset) { 
+		offset = newOffset;
+		updateSnapType();
+		repaint(); 
+	}
+
+	void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override
+	{
+		if (property == FumeIDs::ZoomX)
+		{
+			updateSnapType();
+			repaint();
+		}
+	}
 
 private:
 	fumeUI::UIContext& uiContext;
+	te::engine::TimecodeSnapType snapType{ te::engine::TimecodeType::barsBeats, 1 };
 	int offset = 0;
+
+	void updateSnapType()
+	{
+		auto& extendedEdit = uiContext.extendedEdit;
+		auto secondsPerPixel = extendedEdit.getSecondsPerPixel();
+		auto leftSeconds = te::TimePosition::fromSeconds(offset * secondsPerPixel);
+
+		bool isTripletOverride = false;
+		auto displayFormat = extendedEdit.getEdit().getTimecodeFormat();
+		snapType = fumeHelpers::getBestSnapType(
+			displayFormat, 
+			fumeUI::timelineHeaderMinimumPixelsPerSnap, 
+			extendedEdit.getTempoSequence().getTempoAt(leftSeconds), 
+			te::TimeDuration::fromSeconds(secondsPerPixel), isTripletOverride
+		);
+	}
+
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackListTimelineComponent)
 };

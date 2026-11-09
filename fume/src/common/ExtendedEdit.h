@@ -30,7 +30,7 @@ public:
 
 	float getZoomY() const { return zoomY; }
 	void setZoomY(float newZoomY) { 
-		trackHeight = fumeUI::timelineTrackHeight * newZoomY;
+		trackHeight = static_cast<int>(fumeUI::timelineTrackHeight * newZoomY);
 		zoomY.setValue(newZoomY, nullptr);
 	}
 
@@ -40,8 +40,14 @@ public:
 	float getScrollY() const { return scrollY; }
 	void setScrollY(float newScrollY) { scrollY.setValue(newScrollY, nullptr); }
 
+	double getCursorX() const { return cursorX; }
+	void setCursorX(double newCursorX) { cursorX.setValue(newCursorX, nullptr); }
+	
+	double getCursorY() const { return cursorY; }
+	void setCursorY(double newCursorY) { cursorY.setValue(newCursorY, nullptr); }
+
     double getSecondsPerPixel() const { return secondsPerPixel; }
-    double getTrackHeight() const { return trackHeight; }
+    int getTrackHeight() const { return trackHeight; }
 
 private:
     te::Edit& edit;
@@ -49,10 +55,12 @@ private:
     juce::CachedValue<float> zoomY;
     juce::CachedValue<float> scrollX;
     juce::CachedValue<float> scrollY;
+	juce::CachedValue<double> cursorX;
+	juce::CachedValue<double> cursorY;
 
 	// cached properties for performance
 	double secondsPerPixel = fumeUI::timelineSecondsPerPixel;
-	double trackHeight = fumeUI::timelineTrackHeight;
+	int trackHeight = static_cast<int>(fumeUI::timelineTrackHeight);
 	
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ExtendedEdit)
 };

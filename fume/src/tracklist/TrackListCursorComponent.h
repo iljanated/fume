@@ -19,21 +19,13 @@ public:
 	/* Handle key press events */
 	bool keyPressed(const juce::KeyPress& key) override;
 
-	/* Get the current cursor position */
-	juce::Point<double> getCursorPosition() const { return cursorPosition; }
-
-	/* Set the cursor position */
-	void setCursorPosition(const juce::Point<double>& newPosition);
-
 	void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
 
 	/* Update the bounds of the cursor component based on the current cursor position */
 	void updateBounds();
 private:
+	juce::ValueTree editState;
 	fumeUI::UIContext& uiContext;
-
-	/* The current cursor position in seconds and tracks */
-	juce::Point<double> cursorPosition{ 0.0, 0.0 };
 	TrackListComponent& trackListComponent;
 
 	/* Move the cursor by a delta relative to current snapping and visual trackHeight*/

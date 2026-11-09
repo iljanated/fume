@@ -30,24 +30,21 @@ bool TrackListWriteToolState::keyPressed(const juce::KeyPress& key)
 	if (inputManager.validate(keyCode, modifiers, inputAction) && !isWriting)
 	{
 		isWriting = true;
-		auto& cursorComponent = component->getCursorComponent();
-		cursorComponent.setVisible(false);
-		auto cursorPosition = cursorComponent.getCursorPosition();
-
+		component->showCursor(false);
+		
 		auto& extendedEdit = uiContext.extendedEdit;
 		auto& tempoSequence = extendedEdit.getTempoSequence();
 
-		auto startBeat = tempoSequence.timeToBeats(te::TimePosition::fromSeconds(cursorPosition.x));
+		auto startBeat = tempoSequence.timeToBeats(te::TimePosition::fromSeconds(extendedEdit.getCursorX()));
 		auto endBeat = te::BeatPosition::fromBeats(startBeat.inBeats() + 4.0);
 
-		auto trackIndex = (int)cursorPosition.y;
+		auto trackIndex = (int)extendedEdit.getCursorY();
 		auto track = component->getTrackAt(trackIndex);
 		auto& selectionManager = component->getUIContext().selectionManager;
 
 		auto midiClip = track->insertMIDIClip(tempoSequence.toTime({ startBeat, endBeat }), &selectionManager);
 
-		cursorPosition.setX(tempoSequence.beatsToTime(endBeat).inSeconds());
-		cursorComponent.setCursorPosition(cursorPosition);
+		extendedEdit.setCursorX(tempoSequence.beatsToTime(endBeat).inSeconds());
 		
 		return true;
 	}
@@ -76,10 +73,7 @@ bool TrackListWriteToolState::keyPressed(const juce::KeyPress& key)
 
 				midiClip->setEnd(newEndTime,false);
 
-				auto& cursorComponent = component->getCursorComponent();
-				auto cursorPosition = cursorComponent.getCursorPosition();
-				cursorPosition.setX(newEndTime.inSeconds());
-				cursorComponent.setCursorPosition(cursorPosition);
+				extendedEdit.setCursorX(newEndTime.inSeconds());
 			}
 		}
 	}
@@ -102,10 +96,7 @@ bool TrackListWriteToolState::keyPressed(const juce::KeyPress& key)
 
 				midiClip->setEnd(newEndTime, false);
 
-				auto& cursorComponent = component->getCursorComponent();
-				auto cursorPosition = cursorComponent.getCursorPosition();
-				cursorPosition.setX(newEndTime.inSeconds());
-				cursorComponent.setCursorPosition(cursorPosition);
+				extendedEdit.setCursorX(newEndTime.inSeconds());
 			}
 		}
 	}
@@ -138,8 +129,6 @@ bool TrackListWriteToolState::keyStateChanged(bool isKeyDown)
 			}
 		}
 
-		auto& cursorComponent = component->getCursorComponent();
-
 		if (endBeat >= 0.0)
 		{
 			auto uiContext = component->getUIContext();
@@ -150,11 +139,9 @@ bool TrackListWriteToolState::keyStateChanged(bool isKeyDown)
 			auto endTimePosition = tempoSequence.toTime(te::BeatPosition::fromBeats(endBeat));
 			auto nextTimePosition = snapType.roundTimeUp(endTimePosition, tempoSequence);
 
-			auto cursorPosition = cursorComponent.getCursorPosition();
-			cursorPosition.setX(nextTimePosition.inSeconds());
-			cursorComponent.setCursorPosition(cursorPosition);
+			extendedEdit.setCursorX(nextTimePosition.inSeconds());
 		}
-		cursorComponent.setVisible(true);
+		component->showCursor(true);
 		notifyToolFinished();
 		return true;
 	}

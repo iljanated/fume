@@ -49,6 +49,7 @@ target_sources(Fume PRIVATE
     src/clipeditor/midiclip/MidiClipEditorComponent.cpp
     src/clipeditor/midiclip/MidiClipEditorComponent.h
     src/clipeditor/midiclip/PianoRollComponent.h
+    src/clipeditor/midiclip/MidiClipTimelineComponent.h
     src/clipeditor/midiclip/toolstates/MidiClipDeleteToolState.cpp
     src/clipeditor/midiclip/toolstates/MidiClipDeleteToolState.h
     src/clipeditor/midiclip/toolstates/MidiClipMoveToolState.cpp
@@ -58,6 +59,9 @@ target_sources(Fume PRIVATE
     src/clipeditor/midiclip/toolstates/MidiClipToolState.h
     src/clipeditor/midiclip/toolstates/MidiClipWriteToolState.cpp
     src/clipeditor/midiclip/toolstates/MidiClipWriteToolState.h
+    src/clipeditor/midiclip/toolstates/MidiClipZoomToolState.cpp
+    src/clipeditor/midiclip/toolstates/MidiClipZoomToolState.h
+    src/common/BeatQuantisationType.h
     src/common/ExtendedEdit.cpp
     src/common/ExtendedEdit.h
     src/common/ExtendedMidiClip.cpp

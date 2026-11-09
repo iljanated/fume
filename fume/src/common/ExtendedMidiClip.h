@@ -25,7 +25,7 @@ public:
 
 	float getZoomY() const { return zoomY; }
 	void setZoomY(float newZoomY) {
-		noteHeight = fumeUI::midiEditorNoteHeight * newZoomY;
+		noteHeight = static_cast<int>(fumeUI::midiEditorNoteHeight * newZoomY);
 		zoomY.setValue(newZoomY, nullptr);
 	}
 
@@ -35,11 +35,17 @@ public:
 	float getScrollY() const { return scrollY; }
 	void setScrollY(float newScrollY) { scrollY.setValue(newScrollY, nullptr); }
 
+	double getCursorX() const { return cursorX; }
+	void setCursorX(double newCursorX) { cursorX.setValue(newCursorX, nullptr); }
+
+	double getCursorY() const { return cursorY; }
+	void setCursorY(double newCursorY) { cursorY.setValue(newCursorY, nullptr); }
+
 	te::QuantisationType& getCursorQuantisation() noexcept { return cursorQuantisation; }
 	const te::QuantisationType& getCursorQuantisation() const noexcept { return cursorQuantisation; }
 
 	double getBeatsPerPixel() const { return beatsPerPixel; }
-	double getNoteHeight() const { return noteHeight; }
+	int getNoteHeight() const { return noteHeight; }
 
 private:
 	te::MidiClip::Ptr clip;
@@ -48,11 +54,13 @@ private:
 	juce::CachedValue<float> zoomY;
 	juce::CachedValue<float> scrollX;
 	juce::CachedValue<float> scrollY;
+	juce::CachedValue<double> cursorX;
+	juce::CachedValue<double> cursorY;
 	juce::CachedValue<double> noteLength;
 	te::QuantisationType cursorQuantisation;
 
 	double beatsPerPixel = fumeUI::midiEditorBeatsPerPixel;
-	double noteHeight = fumeUI::midiEditorNoteHeight;
+	int noteHeight = static_cast<int>(fumeUI::midiEditorNoteHeight);
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ExtendedMidiClip)
 };
