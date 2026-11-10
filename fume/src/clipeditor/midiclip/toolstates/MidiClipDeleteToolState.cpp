@@ -2,7 +2,7 @@
 #include "MidiEventsEditorComponent.h"
 
 MidiClipDeleteToolState::MidiClipDeleteToolState(MidiEventsEditorComponent* component)
-	: MidiClipToolState(component, FumeIDs::MidiClipDeleteToolState, InputAction::Delete)
+	: MidiClipToolState(component, FumeIDs::MidiClipDeleteToolState)
 {
 }
 
@@ -17,9 +17,24 @@ void MidiClipDeleteToolState::onExitState()
 {
 }
 
+bool MidiClipDeleteToolState::canHandle(const juce::KeyPress& key)
+{
+	if (!component)
+	{
+		return false;
+	}
+	auto& inputManager = component->getUIContext().inputManager;
+	return inputManager.validate(key.getKeyCode(), key.getModifiers(), InputAction::Delete);
+}
+
 bool MidiClipDeleteToolState::keyPressed(const juce::KeyPress& key)
 {
-	return false;
+	if (!component)
+	{
+		return false;
+	}
+	auto& inputManager = component->getUIContext().inputManager;
+	return inputManager.validate(key.getKeyCode(), key.getModifiers(), InputAction::Delete);
 }
 
 bool MidiClipDeleteToolState::keyStateChanged(bool isKeyDown)
@@ -28,26 +43,31 @@ bool MidiClipDeleteToolState::keyStateChanged(bool isKeyDown)
 	{
 		return false;
 	}
-	/*
+	
 	auto& inputManager = component->getUIContext().inputManager;
 
-	if (!isKeyDown && !inputManager.isCurrentlyPressed(inputAction))
+	if (!isKeyDown && !inputManager.isCurrentlyPressed(InputAction::Delete))
 	{
 		auto& selectedEvents = component->getSelectedEvents(true);
 
-		auto& undoManager = component->getUIContext().extendedEdit.getUndoManager();
-		auto& clip = component->getMidiClip().getClip();
+		auto& uiContext = component->getUIContext();
+		auto& undoManager = uiContext.extendedEdit.getUndoManager();
+		
+		auto& clip = uiContext.extendedMidiClip.getClip();
 
-		for (auto* note : selectedEvents.getSelectedNotes())
+		auto notesToDelete = selectedEvents.getSelectedNotes();
+
+		for (auto* note : notesToDelete)
 		{
 			clip.getSequence().removeNote(*note, &undoManager);
-			selectedEvents.removeSelectedEvent(note);
 		}
 
+		component->clearSelectedEvents();
+		
 		notifyToolFinished();
 		
 		return true;
 	}
-	*/
+	
 	return false;
 }

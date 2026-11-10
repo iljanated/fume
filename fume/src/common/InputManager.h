@@ -23,8 +23,6 @@ enum class InputAction : uint32_t
 	Write,
 	Delete,
 	Select,
-	MultiSelect,
-	Deselect,
 	Undo,
 	Redo,
 	Zoom

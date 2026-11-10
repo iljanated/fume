@@ -2,7 +2,7 @@
 #include "TrackListComponent.h"
 
 TrackListDeleteToolState::TrackListDeleteToolState(TrackListComponent* component)
-	: TrackListToolState(component, FumeIDs::TrackListDeleteToolState, InputAction::Delete)
+	: TrackListToolState(component, FumeIDs::TrackListDeleteToolState)
 {
 }
 
@@ -14,9 +14,24 @@ void TrackListDeleteToolState::onExitState()
 {
 }
 
+bool TrackListDeleteToolState::canHandle(const juce::KeyPress& key)
+{
+	if(!component)
+	{
+		return false;
+	}
+	auto& inputManager = component->getUIContext().inputManager;
+	return inputManager.validate(key.getKeyCode(), key.getModifiers(), InputAction::Delete);
+}
+
 bool TrackListDeleteToolState::keyPressed(const juce::KeyPress& key)
 {
-	return false;
+	if (!component)
+	{
+		return false;
+	}
+	auto& inputManager = component->getUIContext().inputManager;
+	return inputManager.validate(key.getKeyCode(), key.getModifiers(), InputAction::Delete);
 }
 
 bool TrackListDeleteToolState::keyStateChanged(bool isKeyDown)
@@ -27,7 +42,7 @@ bool TrackListDeleteToolState::keyStateChanged(bool isKeyDown)
 	}
 	auto& inputManager = component->getUIContext().inputManager;
 
-	if (!isKeyDown && !inputManager.isCurrentlyPressed(inputAction))
+	if (!isKeyDown && !inputManager.isCurrentlyPressed(InputAction::Delete))
 	{
 		auto& uiContext = component->getUIContext();
 		auto& selectionManager = uiContext.selectionManager;

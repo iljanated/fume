@@ -7,8 +7,8 @@ class TrackListComponent;
 class TrackListToolState : public ToolState
 {
 public:
-	TrackListToolState(TrackListComponent* component, const juce::Identifier identifier, InputAction inputAction)
-		: ToolState(identifier, inputAction), component(component) {
+	TrackListToolState(TrackListComponent* component, const juce::Identifier identifier)
+		: ToolState(identifier), component(component) {
 	}
 
 	~TrackListToolState() override = default;

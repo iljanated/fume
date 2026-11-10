@@ -95,6 +95,7 @@ target_sources(Fume PRIVATE
     src/tracklist/TrackListTimelineComponent.h
     src/tracklist/toolstates/TrackListDeleteToolState.cpp
     src/tracklist/toolstates/TrackListDeleteToolState.h
+    src/tracklist/toolstates/TrackListSelectToolState.cpp
     src/tracklist/toolstates/TrackListSelectToolState.h
     src/tracklist/toolstates/TrackListToolState.h
     src/tracklist/toolstates/TrackListWriteToolState.cpp

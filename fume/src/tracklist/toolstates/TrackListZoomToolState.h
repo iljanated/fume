@@ -18,6 +18,8 @@ public:
 
 	void onExitState() override;
 
+	bool canHandle(const juce::KeyPress& key) override;
+
 	bool keyPressed(const juce::KeyPress& key) override;
 
 	bool keyStateChanged(bool isKeyDown) override;

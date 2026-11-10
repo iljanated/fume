@@ -18,12 +18,15 @@ public:
 
 	void onExitState() override;
 
+	bool canHandle(const juce::KeyPress& key) override;
+
 	bool keyPressed(const juce::KeyPress& key) override;
 
 	bool keyStateChanged(bool isKeyDown) override;
 
 private:
 	bool isWriting = false;
+	double lengthSnappingInterval = 0.0625;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiClipWriteToolState)
 };

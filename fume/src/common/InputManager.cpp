@@ -28,8 +28,6 @@ InputManager::InputManager()
 	// actions
 
 	actionBindings.set(InputAction::Select, ActionBinding{ 'S', juce::ModifierKeys::noModifiers});
-	actionBindings.set(InputAction::MultiSelect, ActionBinding{ 'S', juce::ModifierKeys::shiftModifier });
-	actionBindings.set(InputAction::Deselect, ActionBinding{ 'S', juce::ModifierKeys::ctrlModifier });
 	actionBindings.set(InputAction::Write, ActionBinding{ 'D', juce::ModifierKeys::noModifiers});
 	actionBindings.set(InputAction::Delete, ActionBinding{ 'D', juce::ModifierKeys::shiftModifier });
 	actionBindings.set(InputAction::Zoom, ActionBinding{ 'A', juce::ModifierKeys::noModifiers });

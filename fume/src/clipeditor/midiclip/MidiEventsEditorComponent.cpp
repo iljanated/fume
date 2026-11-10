@@ -10,18 +10,20 @@
 MidiEventsEditorComponent::MidiEventsEditorComponent(fumeUI::UIMidiClipContext& uiContext, juce::Viewport& v)
 	: state(uiContext.extendedMidiClip.getClip().state), uiContext(uiContext), viewport(v)
 {
-    setWantsKeyboardFocus(true);
+	setWantsKeyboardFocus(true);
 
-    state.addListener(this);
+	selectedEvents = std::make_unique<te::SelectedMidiEvents>(uiContext.extendedMidiClip.getClip());
+
+	state.addListener(this);
 	selectedEvents->addChangeListener(this);
 
 	addAndMakeVisible(cursorComponent);
 	cursorComponent.setAlwaysOnTop(true);
 
-    //toolStateManager.addToolState(std::make_unique<MidiClipMoveToolState>(this));
+    toolStateManager.addToolState(std::make_unique<MidiClipMoveToolState>(this));
     toolStateManager.addToolState(std::make_unique<MidiClipSelectToolState>(this));
-    //toolStateManager.addToolState(std::make_unique<MidiClipDeleteToolState>(this));
-    //toolStateManager.addToolState(std::make_unique<MidiClipWriteToolState>(this));
+    toolStateManager.addToolState(std::make_unique<MidiClipDeleteToolState>(this));
+    toolStateManager.addToolState(std::make_unique<MidiClipWriteToolState>(this));
     toolStateManager.addToolState(std::make_unique<MidiClipZoomToolState>(this));
 
     toolStateManager.activateToolStateByIdentifier(FumeIDs::MidiClipSelectToolState);
@@ -29,7 +31,11 @@ MidiEventsEditorComponent::MidiEventsEditorComponent(fumeUI::UIMidiClipContext& 
 
 MidiEventsEditorComponent::~MidiEventsEditorComponent()
 {
-    selectedEvents->removeChangeListener(this);
+    if (selectedEvents)
+    {
+        selectedEvents->removeChangeListener(this);
+    }
+
     state.removeListener(this);
 }
 
@@ -174,6 +180,55 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
 
 }
 
+void MidiEventsEditorComponent::findLassoItemsInArea(Array<te::MidiNote*>& itemsFound, const Rectangle<int>& area)
+{
+    auto& extendedMidiClip = uiContext.extendedMidiClip;
+    auto beatsPerPixel = extendedMidiClip.getBeatsPerPixel();
+    auto noteHeight = extendedMidiClip.getNoteHeight();
+
+    auto xMin = area.getX() * beatsPerPixel;
+    auto xMax = area.getRight() * beatsPerPixel;
+    auto yMin = 127 - static_cast<int>(area.getBottom() / noteHeight);
+    auto yMax = 127 - static_cast<int>(area.getY() / noteHeight);
+
+    auto& clip = extendedMidiClip.getClip();
+    auto& sequence = clip.getSequence();
+
+    for (auto* note : sequence.getNotes())
+    {
+		if (note->getStartBeat().inBeats() < xMax && note->getEndBeat().inBeats() > xMin && note->getNoteNumber() >= yMin && note->getNoteNumber() <= yMax)
+		{
+			itemsFound.add(note);
+		}
+    }
+}
+
+void MidiEventsEditorComponent::lassoSelectionChanged(SelectedItemSet<te::MidiNote*>& newSelection)
+{
+    clearSelectedEvents();
+
+    auto newNotes = newSelection.getItemArray();
+
+	for (auto* note : newNotes)
+	{
+		selectedEvents->addSelectedEvent(note, true);
+	}
+
+	uiContext.selectionManager.selectOnly(selectedEvents.get());
+}
+
+te::SelectedMidiEvents& MidiEventsEditorComponent::clearSelectedEvents()
+{
+	if (selectedEvents)
+	{
+		selectedEvents->removeAllChangeListeners();
+	}
+    
+    selectedEvents = std::make_unique<te::SelectedMidiEvents>(uiContext.extendedMidiClip.getClip());
+    selectedEvents.get()->addChangeListener(this);
+    return *selectedEvents;
+}
+
 void MidiEventsEditorComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
 {
     // Opt-out from updating on non-visual UI metadata tags to minimize performance overhead
@@ -190,22 +245,22 @@ void MidiEventsEditorComponent::valueTreePropertyChanged(juce::ValueTree& treeWh
         return;
 	}
 
-    asyncResizer.resizeAsync();
+    repaint();
 }
 
 void MidiEventsEditorComponent::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded)
 {
-    asyncResizer.resizeAsync();
+    repaint();
 }
 
 void MidiEventsEditorComponent::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int index)
 {
-    asyncResizer.resizeAsync();
+    repaint();
 }
 
 void MidiEventsEditorComponent::valueTreeChildOrderChanged(juce::ValueTree& parentTree, int oldIndex, int newIndex)
 {
-    asyncResizer.resizeAsync();
+    repaint();
 }
 
 void MidiEventsEditorComponent::valueTreeParentChanged(juce::ValueTree& treeWhoseParentHasChanged)

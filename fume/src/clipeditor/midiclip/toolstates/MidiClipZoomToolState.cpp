@@ -3,7 +3,7 @@
 #include "Utilities.h"
 
 MidiClipZoomToolState::MidiClipZoomToolState(MidiEventsEditorComponent* component)
-	: MidiClipToolState(component, FumeIDs::MidiClipZoomToolState, InputAction::Zoom)
+	: MidiClipToolState(component, FumeIDs::MidiClipZoomToolState)
 {
 }
 
@@ -16,6 +16,16 @@ void MidiClipZoomToolState::onEnterState()
 
 void MidiClipZoomToolState::onExitState()
 {
+}
+
+bool MidiClipZoomToolState::canHandle(const juce::KeyPress& key)
+{
+	if (!component)
+	{
+		return false;
+	}
+	auto& inputManager = component->getUIContext().inputManager;
+	return inputManager.validate(key.getKeyCode(), key.getModifiers(), InputAction::Zoom);
 }
 
 bool MidiClipZoomToolState::keyPressed(const juce::KeyPress& key)
@@ -67,7 +77,7 @@ bool MidiClipZoomToolState::keyStateChanged(bool isKeyDown)
 	}
 	auto& inputManager = component->getUIContext().inputManager;
 
-	if (!isKeyDown && !inputManager.isCurrentlyPressed(inputAction))
+	if (!isKeyDown && !inputManager.isCurrentlyPressed(InputAction::Zoom))
 	{
 		isZooming = false;
 		notifyToolFinished();

@@ -17,6 +17,7 @@ namespace FumeIDs
 	static const juce::Identifier CursorX("fume_cursorX");
 	static const juce::Identifier CursorY("fume_cursorY");
 	static const juce::Identifier NoteLength("fume_noteLength");
+	static const juce::Identifier NoteVelocity("fume_noteVelocity");
 	static const juce::Identifier CursorQuantisation("CursorQuantisation");
 	static const juce::Identifier SongLength("fume_songLength");
 	static const juce::Identifier TrackListDeleteToolState("fume_tracklist_delete_toolstate");

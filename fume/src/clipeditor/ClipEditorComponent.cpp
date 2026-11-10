@@ -73,8 +73,8 @@ void ClipEditorComponent::changeListenerCallback(juce::ChangeBroadcaster* source
 		}
 
 		// If no clip is selected, reset the implementation component
-		currentClipState.removeListener(this);
-		removeChildComponent(implementationComponent.get());
-		implementationComponent.reset();
+		//currentClipState.removeListener(this);
+		//removeChildComponent(implementationComponent.get());
+		//implementationComponent.reset();
 	}
 }

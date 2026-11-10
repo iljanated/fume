@@ -53,11 +53,13 @@ public:
 		return getSelectedEvents();
 	}
 
-	void findLassoItemsInArea(Array<te::Clip*>& itemsFound, const Rectangle<int>& area);
-	void lassoSelectionChanged(SelectedItemSet<te::Clip*>& newSelection);
+	void findLassoItemsInArea(Array<te::MidiNote*>& itemsFound, const Rectangle<int>& area);
+	void lassoSelectionChanged(SelectedItemSet<te::MidiNote*>& newSelection);
 
 	fumeUI::UIMidiClipContext& getUIContext() { return uiContext; }
-	MidiEventsEditorCursorComponent& getCursorComponent() { return cursorComponent; }
+	void showCursor(bool visible) { cursorComponent.setVisible(visible); }
+
+	te::SelectedMidiEvents& clearSelectedEvents();
     
 private:
 	juce::Viewport& viewport;
@@ -65,7 +67,7 @@ private:
 	fumeUI::UIMidiClipContext& uiContext;
 	juce::ValueTree state;
 	ToolStateManager<MidiEventsEditorComponent> toolStateManager{ uiContext.inputManager, FumeIDs::MidiClipSelectToolState };
-	std::unique_ptr<te::SelectedMidiEvents> selectedEvents { std::make_unique<te::SelectedMidiEvents>(uiContext.extendedMidiClip.getClip()) };
+	std::unique_ptr<te::SelectedMidiEvents> selectedEvents;
 	MidiEventsEditorCursorComponent cursorComponent{ uiContext };
     
 	void activateToolState(ToolState* newState);

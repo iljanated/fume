@@ -3,7 +3,7 @@
 #include "Utilities.h"
 
 TrackListZoomToolState::TrackListZoomToolState(TrackListComponent* component)
-	: TrackListToolState(component, FumeIDs::TrackListZoomToolState, InputAction::Zoom)
+	: TrackListToolState(component, FumeIDs::TrackListZoomToolState)
 {
 }
 
@@ -16,6 +16,16 @@ void TrackListZoomToolState::onEnterState()
 
 void TrackListZoomToolState::onExitState()
 {
+}
+
+bool TrackListZoomToolState::canHandle(const juce::KeyPress& key)
+{
+	if (!component)
+	{
+		return false;
+	}
+	auto& inputManager = component->getUIContext().inputManager;
+	return inputManager.validate(key.getKeyCode(), key.getModifiers(), InputAction::Zoom);
 }
 
 bool TrackListZoomToolState::keyPressed(const juce::KeyPress& key)
@@ -67,7 +77,7 @@ bool TrackListZoomToolState::keyStateChanged(bool isKeyDown)
 	}
 	auto& inputManager = component->getUIContext().inputManager;
 
-	if (!isKeyDown && !inputManager.isCurrentlyPressed(inputAction))
+	if (!isKeyDown && !inputManager.isCurrentlyPressed(InputAction::Zoom))
 	{
 		isZooming = false;
 		notifyToolFinished();

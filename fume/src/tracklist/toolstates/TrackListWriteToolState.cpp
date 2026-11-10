@@ -2,7 +2,7 @@
 #include "TrackListComponent.h"
 
 TrackListWriteToolState::TrackListWriteToolState(TrackListComponent* component)
-	: TrackListToolState(component, FumeIDs::TrackListWriteToolState, InputAction::Write)
+	: TrackListToolState(component, FumeIDs::TrackListWriteToolState)
 {
 }
 
@@ -12,6 +12,16 @@ void TrackListWriteToolState::onEnterState()
 
 void TrackListWriteToolState::onExitState()
 {
+}
+
+bool TrackListWriteToolState::canHandle(const juce::KeyPress& key)
+{
+	if (!component)
+	{
+		return false;
+	}
+	auto& inputManager = component->getUIContext().inputManager;
+	return inputManager.validate(key.getKeyCode(), key.getModifiers(), InputAction::Write);
 }
 
 bool TrackListWriteToolState::keyPressed(const juce::KeyPress& key)
@@ -27,7 +37,7 @@ bool TrackListWriteToolState::keyPressed(const juce::KeyPress& key)
 	auto modifiers = key.getModifiers();
 	auto keyCode = key.getKeyCode();
 
-	if (inputManager.validate(keyCode, modifiers, inputAction) && !isWriting)
+	if (inputManager.validate(keyCode, modifiers, InputAction::Write) && !isWriting)
 	{
 		isWriting = true;
 		component->showCursor(false);
@@ -113,7 +123,7 @@ bool TrackListWriteToolState::keyStateChanged(bool isKeyDown)
 	
 	auto& inputManager = component->getUIContext().inputManager;
 
-	if (!isKeyDown && isWriting && !inputManager.isCurrentlyPressed(inputAction))
+	if (!isKeyDown && isWriting && !inputManager.isCurrentlyPressed(InputAction::Write))
 	{
 		isWriting = false;
 

@@ -6,8 +6,8 @@
 class ToolState
 {
 public:
-	ToolState(const juce::Identifier identifier, InputAction inputAction) :
-		identifier(identifier), inputAction(inputAction) {
+	ToolState(const juce::Identifier identifier) :
+		identifier(identifier) {
 	}
 	virtual ~ToolState() = default;
 
@@ -21,19 +21,19 @@ public:
 	virtual void onEnterState() = 0;
 	virtual void onExitState() = 0;
 
+
+
+	virtual bool canHandle(const juce::KeyPress& key) = 0;
 	virtual bool keyPressed(const juce::KeyPress& key) = 0;
 	virtual bool keyStateChanged(bool isKeyDown) = 0;
 
 	juce::Identifier getIdentifier() const { return identifier; }
-
-	InputAction getInputAction() const { return inputAction; }
 
 	void addListener(ToolStateListener* newListener) { listeners.add(newListener); }
 	void removeListener(ToolStateListener* listenerToRemove) { listeners.remove(listenerToRemove); }
 
 protected:
 	juce::Identifier identifier;
-	InputAction inputAction;
 	juce::ListenerList<ToolStateListener> listeners;
 
 	void notifyToolFinished()
@@ -71,16 +71,15 @@ public:
 	{
 		auto modifiers = key.getModifiers();
 		auto keyCode = key.getKeyCode();
-		
+
 		for (auto& toolState : toolStates)
 		{
-			if (toolState.get() != currentToolState && inputManager.validate(keyCode, modifiers, toolState.get()->getInputAction()))
+			if (toolState.get() != currentToolState && toolState->canHandle(key))
 			{
 				activateToolState(toolState.get());
-				break;
 			}
 		}
-		
+
 		if (currentToolState && currentToolState->keyPressed(key))
 		{
 			DBG("ToolState handled it");

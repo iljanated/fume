@@ -2,7 +2,7 @@
 #include "MidiEventsEditorComponent.h"
 
 MidiClipWriteToolState::MidiClipWriteToolState(MidiEventsEditorComponent* component)
-	: MidiClipToolState(component, FumeIDs::MidiClipWriteToolState, InputAction::Write)
+	: MidiClipToolState(component, FumeIDs::MidiClipWriteToolState)
 {
 }
 
@@ -14,6 +14,16 @@ void MidiClipWriteToolState::onExitState()
 {
 }
 
+bool MidiClipWriteToolState::canHandle(const juce::KeyPress& key)
+{
+	if(!component)
+	{
+		return false;
+	}
+	auto& inputManager = component->getUIContext().inputManager;
+	return inputManager.validate(key.getKeyCode(), key.getModifiers(), InputAction::Write);
+}
+
 bool MidiClipWriteToolState::keyPressed(const juce::KeyPress& key)
 {
 	if (!component)
@@ -21,32 +31,32 @@ bool MidiClipWriteToolState::keyPressed(const juce::KeyPress& key)
 		return false;
 	}
 
-	/*
-
 	auto& uiContext = component->getUIContext();
-	auto& edit = uiContext.extendedEdit.getEdit();
 	auto& inputManager = uiContext.inputManager;
-
 	auto modifiers = key.getModifiers();
 	auto keyCode = key.getKeyCode();
 
 	auto& selectedEvents = component->getSelectedEvents();
+	auto& extendedMidiClip = uiContext.extendedMidiClip;
 
-	if (inputManager.validate(keyCode, modifiers, inputAction) && !isWriting)
+	auto& undoManager = uiContext.extendedEdit.getEdit().getUndoManager();
+
+	if (inputManager.validate(keyCode, modifiers, InputAction::Write) && !isWriting)
 	{
 		isWriting = true;
-		auto& cursorComponent = component->getCursorComponent();
-		cursorComponent.setVisible(false);
-		auto cursorPosition = cursorComponent.getCursorPosition();
+		
+		component->showCursor(false);
+		
+		auto startBeat = te::BeatPosition::fromBeats(extendedMidiClip.getCursorX());
+		auto duration = te::BeatDuration::fromBeats(extendedMidiClip.getNoteLength());
+		auto noteNumber = 127 - static_cast<int>(extendedMidiClip.getCursorY());
+		int velocity = extendedMidiClip.getNoteVelocity();
 
-		auto startBeat = te::BeatPosition::fromBeats(cursorPosition.x);
-		auto duration = te::BeatDuration::fromBeats(0.125);
-		auto noteNumber = 127 - (int)cursorPosition.y;
-		int velocity = 127;
+		auto& sequence = extendedMidiClip.getClip().getSequence();
 
-		auto& sequence = component->getMidiClip().getClip().getSequence();
+		undoManager.beginNewTransaction("Add Note");
 
-		auto* note = sequence.addNote(noteNumber, startBeat, duration, velocity, 0, &edit.getUndoManager());
+		auto* note = sequence.addNote(noteNumber, startBeat, duration, velocity, 0, &undoManager);
 
 		auto& selectedEvents = component->clearSelectedEvents();
 		selectedEvents.addSelectedEvent(note, true);
@@ -55,43 +65,41 @@ bool MidiClipWriteToolState::keyPressed(const juce::KeyPress& key)
 	}
 	else if (isWriting && inputManager.validate(keyCode, modifiers, InputAction::Left))
 	{
-		auto snappingInterval = component->getSnappingInterval();
 		auto selectedNotes = component->getSelectedEvents().getSelectedNotes();
-
-		auto& undoManager = edit.getUndoManager();
-
+		
 		for (auto* note : selectedNotes)
 		{
-			if (note->getLengthBeats().inBeats() <= snappingInterval)
+			auto startBeat = note->getStartBeat();
+			auto endBeat = note->getEndBeat();
+			if (note->getLengthBeats().inBeats() <= lengthSnappingInterval)
 			{
 				DBG("Cannot shrink note below snapping interval");
 				continue;
 			}
-			auto startBeat = note->getStartBeat();
-			auto duration = note->getLengthBeats();
-			duration = duration - te::BeatDuration::fromBeats(snappingInterval);
-			note->setStartAndLength(startBeat, duration, &undoManager);
-			return true;
+			auto newEndBeat = te::BeatPosition::fromBeats(endBeat.inBeats() - lengthSnappingInterval);
+			auto newLength = newEndBeat - startBeat;
+			note->setStartAndLength(startBeat, newLength, &undoManager);
+			extendedMidiClip.setNoteLength(newLength.inBeats());
+			
 		}
+		return true;
 	}
 	else if (isWriting && inputManager.validate(keyCode, modifiers, InputAction::Right))
 	{
-		auto snappingInterval = component->getSnappingInterval();
 		auto selectedNotes = component->getSelectedEvents().getSelectedNotes();
-
-		auto& undoManager = edit.getUndoManager();
 
 		for (auto* note : selectedNotes)
 		{
 			auto startBeat = note->getStartBeat();
-			auto duration = note->getLengthBeats();
-			duration = duration + te::BeatDuration::fromBeats(snappingInterval);
-			note->setStartAndLength(startBeat, duration, &undoManager);
+			auto endBeat = note->getEndBeat();
+			auto newEndBeat = te::BeatPosition::fromBeats(endBeat.inBeats() + lengthSnappingInterval);
+			auto newLength = newEndBeat - startBeat;
+			note->setStartAndLength(startBeat, newLength, &undoManager);
+			extendedMidiClip.setNoteLength(newLength.inBeats());
 		}
 		return true;
 	}
 
-	*/
 	return false;
 }
 
@@ -102,25 +110,24 @@ bool MidiClipWriteToolState::keyStateChanged(bool isKeyDown)
 		return false;
 	}
 
-	/*
 	auto& inputManager = component->getUIContext().inputManager;
 
-	if (!isKeyDown && isWriting && !inputManager.isCurrentlyPressed(inputAction))
+	if (!isKeyDown && isWriting && !inputManager.isCurrentlyPressed(InputAction::Write))
 	{
 		isWriting = false;
-		auto& cursorComponent = component->getCursorComponent();
 		auto selectedNotes = component->getSelectedEvents().getSelectedNotes();
 		if (selectedNotes.size() > 0)
 		{
+			auto& uiContext = component->getUIContext();
+			auto& extendedMidiClip = uiContext.extendedMidiClip;
+
 			auto* note = selectedNotes.getFirst();
-			auto endBeat = note->getEndBeat().inBeats() + component->getSnappingInterval();
-			endBeat = endBeat - std::fmod(endBeat, component->getSnappingInterval());
-			cursorComponent.setCursorPosition({ endBeat, cursorComponent.getCursorPosition().y });
+			auto endBeat = extendedMidiClip.getCursorQuantisation().roundBeatUp(note->getEndBeat());
+			extendedMidiClip.setCursorX(endBeat.inBeats());
 		}
-		cursorComponent.setVisible(true);
+		component->showCursor(true);
 		notifyToolFinished();
 		return true;
 	}
-	*/
 	return false;
 }

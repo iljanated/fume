@@ -41,6 +41,12 @@ public:
 	double getCursorY() const { return cursorY; }
 	void setCursorY(double newCursorY) { cursorY.setValue(newCursorY, nullptr); }
 
+	double getNoteLength() const { return noteLength; }
+	void setNoteLength(double newNoteLength) { noteLength.setValue(newNoteLength, nullptr); }
+
+	int getNoteVelocity() const { return noteVelocity; }
+	void setNoteVelocity(int newNoteVelocity) { noteVelocity.setValue(newNoteVelocity, nullptr); }
+
 	te::QuantisationType& getCursorQuantisation() noexcept { return cursorQuantisation; }
 	const te::QuantisationType& getCursorQuantisation() const noexcept { return cursorQuantisation; }
 
@@ -57,6 +63,7 @@ private:
 	juce::CachedValue<double> cursorX;
 	juce::CachedValue<double> cursorY;
 	juce::CachedValue<double> noteLength;
+	juce::CachedValue<int> noteVelocity;
 	te::QuantisationType cursorQuantisation;
 
 	double beatsPerPixel = fumeUI::midiEditorBeatsPerPixel;

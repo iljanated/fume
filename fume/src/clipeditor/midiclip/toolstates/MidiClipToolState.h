@@ -7,8 +7,8 @@ class MidiEventsEditorComponent;
 class MidiClipToolState : public ToolState
 {
 public:
-	MidiClipToolState(MidiEventsEditorComponent* component, const juce::Identifier identifier, InputAction inputAction)
-		: ToolState(identifier, inputAction), component(component) {
+	MidiClipToolState(MidiEventsEditorComponent* component, const juce::Identifier identifier)
+		: ToolState(identifier), component(component) {
 	}
 
 	~MidiClipToolState() override = default;
