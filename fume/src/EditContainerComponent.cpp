@@ -8,12 +8,13 @@ using namespace tracktion::literals;
 EditContainerComponent::EditContainerComponent(te::Engine& engine, te::Edit& edit, te::SelectionManager& selectionManager, InputManager& inputManager)
 	: extendedEdit{ edit },  uiContext {engine, extendedEdit, selectionManager, inputManager }
 {
-	addAndMakeVisible(trackListContainerComponent);
-
 	addAndMakeVisible(transportComponent);
-
-	addAndMakeVisible(clipEditorComponent);
 	
+	addAndMakeVisible(carrouselComponent);
+	carrouselComponent.addComponent(&trackListContainerComponent);
+	carrouselComponent.addComponent(&clipEditorComponent);
+	carrouselComponent.showComponent(0);
+
 	edit.state.setProperty(FumeIDs::SongLength, 1024, &edit.getUndoManager());
 
 	EngineHelpers::getOrInsertAudioTrackAt(edit, 16);
@@ -66,9 +67,8 @@ void EditContainerComponent::visibilityChanged()
 void EditContainerComponent::resized()
 {
 	auto localBounds = getLocalBounds();
-	transportComponent.setBounds(localBounds.removeFromTop(30));
-	trackListContainerComponent.setBounds(localBounds.removeFromTop(400));
-	clipEditorComponent.setBounds(localBounds);
+	transportComponent.setBounds(localBounds.removeFromBottom(30));
+	carrouselComponent.setBounds(localBounds);
 }
 
 bool EditContainerComponent::keyPressed(const juce::KeyPress& key)
@@ -106,12 +106,22 @@ bool EditContainerComponent::keyPressed(const juce::KeyPress& key)
 	}
 	else if (inputManager.validate(keyCode, modifiers, InputAction::NextLeft))
 	{
-		clipEditorComponent.grabKeyboardFocus();
+		carrouselComponent.showPreviousComponent();
 		return true;
 	}
 	else if (inputManager.validate(keyCode, modifiers, InputAction::NextRight))
 	{
-		trackListContainerComponent.grabKeyboardFocus();
+		carrouselComponent.showNextComponent();
+		return true;
+	}
+	else if (inputManager.validate(keyCode, modifiers, InputAction::NextUp))
+	{
+		carrouselComponent.grabKeyboardFocus();
+		return true;
+	}
+	else if (inputManager.validate(keyCode, modifiers, InputAction::NextDown))
+	{
+		transportComponent.grabKeyboardFocus();
 		return true;
 	}
 	DBG("HOME");

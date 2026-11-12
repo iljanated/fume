@@ -118,7 +118,6 @@ void MidiClipSelectToolState::beginLasso(juce::ModifierKeys modifiers)
 	auto noteHeight = extendedMidiClip.getNoteHeight();
 
 	auto pixelPosition = juce::Point<int>(static_cast<int>(dragPosition.getX() / beatsPerPixel), static_cast<int>(dragPosition.getY() * noteHeight));
-	DBG("pixelPosition: " << pixelPosition.getX() << ", " << pixelPosition.getY());
 	lassoComponent.setRowHeight(noteHeight);
 	lassoComponent.setMargin(2);
 	lassoComponent.beginLasso(pixelPosition, modifiers, this);
@@ -151,7 +150,7 @@ void MidiClipSelectToolState::dragLasso(juce::Point<int> delta, juce::ModifierKe
 			newX = quantisationType.roundBeatDown(beatPosition).inBeats();
 		}
 
-		dragPosition.setX(std::clamp(newX, 0.0, 512.0));
+		dragPosition.setX(newX);
 
 	}
 

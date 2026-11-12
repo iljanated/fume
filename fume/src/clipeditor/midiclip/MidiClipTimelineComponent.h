@@ -9,12 +9,13 @@ class MidiClipTimelineComponent : public juce::Component, public juce::ValueTree
 public:
 	MidiClipTimelineComponent(fumeUI::UIMidiClipContext& context) : uiContext(context)
 	{
-		context.extendedMidiClip.getState().addListener(this);
+		state = uiContext.extendedMidiClip.getState();
+		state.addListener(this);
 	}
 
 	~MidiClipTimelineComponent() override
 	{
-		uiContext.extendedMidiClip.getState().removeListener(this);
+		state.removeListener(this);
 	}
 
 	void paint(juce::Graphics& g) override
@@ -29,7 +30,7 @@ public:
 		auto leftBeat = te::BeatPosition::fromBeats(offset * beatsPerPixel);
 
 		auto startBeat = quantisationType.roundBeatUp(leftBeat);
-		auto endBeat = te::BeatPosition::fromBeats((offset + localBounds.getWidth()) * beatsPerPixel);
+		auto endBeat = leftBeat + te::BeatDuration::fromBeats(localBounds.getWidth() * beatsPerPixel);
 
 		auto beat = startBeat;
 
@@ -39,7 +40,7 @@ public:
 
 		while (beat < endBeat)
 		{
-			auto x = beat.inBeats() / beatsPerPixel - offset;
+			auto x = (beat.inBeats()) / beatsPerPixel - offset;
 
 			gridPath.startNewSubPath(x, 0);
 			gridPath.lineTo(x, localBounds.getHeight());
@@ -71,6 +72,7 @@ public:
 	}
 
 private:
+	juce::ValueTree state;
 	fumeUI::UIMidiClipContext& uiContext;
 	BeatQuantisationType quantisationType{ te::BeatDuration::fromBeats(0.125) };
 	int offset = 0;

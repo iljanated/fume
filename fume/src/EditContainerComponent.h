@@ -5,6 +5,7 @@
 #include "UIContext.h"
 #include "TrackListContainerComponent.h"
 #include "TransportComponent.h"
+#include "CarrouselComponent.h"
 
 namespace te = tracktion;
 
@@ -32,6 +33,7 @@ private:
 	TrackListContainerComponent trackListContainerComponent{ uiContext };
     ClipEditorComponent clipEditorComponent{ uiContext };
     TransportComponent transportComponent{ uiContext };
-
+	CarrouselComponent carrouselComponent;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EditContainerComponent)
 };

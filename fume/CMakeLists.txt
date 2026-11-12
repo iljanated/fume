@@ -39,6 +39,7 @@ target_include_directories(Fume PRIVATE
 
 # Bronbestanden koppelen
 target_sources(Fume PRIVATE
+    src/CarrouselComponent.h
     src/clipeditor/ClipEditorComponent.cpp
     src/clipeditor/ClipEditorComponent.h
     src/clipeditor/ClipEditorImplementationComponent.h

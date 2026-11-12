@@ -75,12 +75,12 @@ void MidiEventsEditorCursorComponent::moveCursorPosition(const juce::Point<int>&
 		{
 			auto beatOffset = te::BeatDuration::fromBeats(0.0001);
 			auto nextBeat = extendedMidiClip.getCursorQuantisation().roundBeatUp(beatPosition + beatOffset);
-			extendedMidiClip.setCursorX(std::clamp(nextBeat.inBeats(), 0.0, 512.0));
+			extendedMidiClip.setCursorX(nextBeat.inBeats());
 		}
 		else
 		{
 			auto previousBeat = extendedMidiClip.getCursorQuantisation().roundBeatDown(beatPosition);
-			extendedMidiClip.setCursorX(std::clamp(previousBeat.inBeats(), 0.0, 512.0));
+			extendedMidiClip.setCursorX(previousBeat.inBeats());
 		}
 	}
 

@@ -12,6 +12,14 @@ MidiEventsEditorComponent::MidiEventsEditorComponent(fumeUI::UIMidiClipContext& 
 {
 	setWantsKeyboardFocus(true);
 
+    // default colours
+    setColour(gridColourId, juce::Colours::lightgrey);
+    setColour(blackNoteGridColourId, juce::Colours::lightgrey.darker(0.1));
+    setColour(outsideGridColourId, juce::Colours::darkgrey.withAlpha(0.2f));
+    setColour(gridlineColourId, juce::Colours::lightgrey.darker(0.2));
+    setColour(whiteNoteColourId, juce::Colours::white);
+    setColour(blackNoteColourId, juce::Colours::black);
+
 	selectedEvents = std::make_unique<te::SelectedMidiEvents>(uiContext.extendedMidiClip.getClip());
 
 	state.addListener(this);
@@ -42,12 +50,9 @@ MidiEventsEditorComponent::~MidiEventsEditorComponent()
 void MidiEventsEditorComponent::resized()
 {
 	auto& clip = uiContext.extendedMidiClip.getClip();
-    setSize((int)(clip.getLengthInBeats().inBeats() / uiContext.extendedMidiClip.getBeatsPerPixel()), 128 * uiContext.extendedMidiClip.getNoteHeight());
+    setSize((int)(512.0 / uiContext.extendedMidiClip.getBeatsPerPixel()), 128 * uiContext.extendedMidiClip.getNoteHeight());
 
-    if (cursorComponent.isVisible())
-    {
-        cursorComponent.updateBounds();
-    }
+    cursorComponent.updateBounds();
 }
 
 void MidiEventsEditorComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
@@ -69,30 +74,31 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
         return;
     }
     
-    const auto clipLength = clip.getLengthInBeats().inBeats();
-    if (clipLength <= 0.0)
-    {
-        return;
-    }
-
-    // draw grid
     
-	auto beatsPerPixel = extendedMidiClip.getBeatsPerPixel();
-
-	auto noteHeight = extendedMidiClip.getNoteHeight();
-
-    g.fillAll(juce::Colours::lightgrey);
-
-    juce::Path gridPath;
+    // boundaries
+    auto beatsPerPixel = extendedMidiClip.getBeatsPerPixel();
 
     auto minX = clipBounds.getX();
     auto maxX = clipBounds.getRight();
     auto minY = clipBounds.getY();
     auto maxY = clipBounds.getBottom();
 
-	auto& quantisationType = extendedMidiClip.getCursorQuantisation();
+	// draw background
 
-    auto gridStartBeat = quantisationType.roundBeatUp(te::BeatPosition::fromBeats(minX) * beatsPerPixel);
+	g.fillAll(findColour(gridColourId));
+
+    const auto clipLength = clip.getLengthInBeats().inBeats();
+
+    // draw grid
+    
+	
+	auto noteHeight = extendedMidiClip.getNoteHeight();
+
+    juce::Path gridPath;
+
+    auto& quantisationType = extendedMidiClip.getCursorQuantisation();
+
+    auto gridStartBeat =  quantisationType.roundBeatUp(te::BeatPosition::fromBeats(minX) * beatsPerPixel);
     auto gridEndBeat = te::BeatPosition::fromBeats(maxX * beatsPerPixel);
 
     auto beat = gridStartBeat;
@@ -143,6 +149,8 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
     {
         if (note == nullptr) continue;
 
+		DBG("Rendering note: " << note->getNoteNumber() << " at start beat: " << note->getStartBeat().inBeats() << " with length: " << note->getLengthBeats().inBeats());
+
         // Map time ranges to component X dimensions
         const float noteStart = (float)note->getStartBeat().inBeats();
         const float noteLength = (float)note->getLengthBeats().inBeats();
@@ -178,6 +186,13 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
     }
     g.drawRect(viewport.getViewArea());
 
+    auto clipEndPixels = clipLength / beatsPerPixel;
+
+    if (clipEndPixels < maxX)
+    {
+        g.setColour(findColour(outsideGridColourId));
+        g.fillRect(clipEndPixels, minY, maxX - clipEndPixels, maxY - minY);
+    }
 }
 
 void MidiEventsEditorComponent::findLassoItemsInArea(Array<te::MidiNote*>& itemsFound, const Rectangle<int>& area)
@@ -245,12 +260,18 @@ void MidiEventsEditorComponent::valueTreePropertyChanged(juce::ValueTree& treeWh
         return;
 	}
 
+    if (property == FumeIDs::ZoomX || property == FumeIDs::ZoomY)
+    {
+        asyncResizer.resizeAsync();
+        repaint();
+        return;
+    }
     repaint();
 }
 
 void MidiEventsEditorComponent::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded)
 {
-    repaint();
+	repaint();
 }
 
 void MidiEventsEditorComponent::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int index)

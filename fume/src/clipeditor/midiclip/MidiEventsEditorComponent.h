@@ -14,6 +14,17 @@ class MidiEventsEditorComponent
 public:
     MidiEventsEditorComponent(fumeUI::UIMidiClipContext& context, juce::Viewport& v);
     ~MidiEventsEditorComponent();
+
+	enum ColourIds
+	{
+		gridColourId = 0x2001001,
+		blackNoteGridColourId = 0x2001002,
+		outsideGridColourId = 0x2001003,
+		gridlineColourId = 0x2001004,
+		whiteNoteColourId = 0x2001005,
+		blackNoteColourId = 0x2001006
+	};
+
     void paint(juce::Graphics& g) override;
     void resized() override;
 
@@ -69,6 +80,7 @@ private:
 	ToolStateManager<MidiEventsEditorComponent> toolStateManager{ uiContext.inputManager, FumeIDs::MidiClipSelectToolState };
 	std::unique_ptr<te::SelectedMidiEvents> selectedEvents;
 	MidiEventsEditorCursorComponent cursorComponent{ uiContext };
+	double centerBeatOffset = 256.0; // default offset for the cursor position
     
 	void activateToolState(ToolState* newState);
 

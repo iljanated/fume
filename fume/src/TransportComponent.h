@@ -18,10 +18,15 @@ public:
 
     void resized() override;
 
+	void focusGained(FocusChangeType cause) override;
+    bool keyPressed(const juce::KeyPress& key) override;
+
 private:
     //==============================================================================
     fumeUI::UIContext& uiContext;
-	juce::TextButton playButton{ "Play" };
+    juce::TextButton recordButton{ "Record" };
+    juce::TextButton playButton{ "Play" };
+	juce::Slider tempoSlider;
 
     void buttonClicked(juce::Button* button) override;
 

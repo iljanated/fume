@@ -57,34 +57,22 @@ bool MidiClipMoveToolState::keyPressed(const juce::KeyPress& key)
 
 	if (inputManager.validate(keyCode, modifiers, InputAction::MoveLeft))
 	{
-		for (auto* note : selectedNotes)
-		{
-			moveNote(note, juce::Point<int>(-1, 0));
-		}
+		moveNotes(juce::Point<int>(-1, 0));
 		return true;
 	}
 	else if (inputManager.validate(keyCode, modifiers, InputAction::MoveRight))
 	{
-		for (auto* note : selectedNotes)
-		{
-			moveNote(note, juce::Point<int>(1, 0));
-		}
+		moveNotes(juce::Point<int>(1, 0));
 		return true;
 	}
 	else if (inputManager.validate(keyCode, modifiers, InputAction::MoveUp))
 	{
-		for (auto* note : selectedNotes)
-		{
-			moveNote(note, juce::Point<int>(0, 1));
-		}
+		moveNotes(juce::Point<int>(0, 1));
 		return true;
 	}
 	else if (inputManager.validate(keyCode, modifiers, InputAction::MoveDown))
 	{
-		for (auto* note : selectedNotes)
-		{
-			moveNote(note, juce::Point<int>(0, -1));
-		}
+		moveNotes(juce::Point<int>(0, -1));
 		return true;
 	}
 	
@@ -106,28 +94,32 @@ bool MidiClipMoveToolState::keyStateChanged(bool isKeyDown)
 	return false;
 }
 
-void MidiClipMoveToolState::moveNote(te::MidiNote* note, juce::Point<int> delta)
+void MidiClipMoveToolState::moveNotes(juce::Point<int> delta)
 {
 	auto uiContext = component->getUIContext();
 	auto& undoManager = uiContext.extendedEdit.getUndoManager();
-	if (delta.x != 0)
+	auto& selectedNotes = component->getSelectedEvents().getSelectedNotes();
+	for (auto* note : selectedNotes)
 	{
-		auto length = note->getLengthBeats();
-		auto newStart = note->getStartBeat() + te::BeatDuration::fromBeats(delta.getX() * 0.125);
+		if (delta.x != 0)
+		{
+			auto length = note->getLengthBeats();
+			auto newStart = note->getStartBeat() + te::BeatDuration::fromBeats(delta.getX() * 0.125);
 
-		auto& clip = uiContext.extendedMidiClip.getClip();
-		if(newStart.inBeats() >= 0 && newStart.inBeats() < clip.getLengthInBeats().inBeats())
-		{
-			note->setStartAndLength(newStart, length, &undoManager);
+			auto& clip = uiContext.extendedMidiClip.getClip();
+			if (newStart.inBeats() >= 0)
+			{
+				note->setStartAndLength(newStart, length, &undoManager);
+			}
 		}
-	}
-	
-	if (delta.getY() != 0)
-	{
-		auto newPitch = note->getNoteNumber() + delta.getY();
-		if (newPitch >= 0 && newPitch <= 127)
+
+		if (delta.getY() != 0)
 		{
-			note->setNoteNumber(newPitch, &undoManager);
+			auto newPitch = note->getNoteNumber() + delta.getY();
+			if (newPitch >= 0 && newPitch <= 127)
+			{
+				note->setNoteNumber(newPitch, &undoManager);
+			}
 		}
 	}
 }
