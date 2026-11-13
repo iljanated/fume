@@ -11,6 +11,8 @@ public:
 	{
 		state = uiContext.extendedMidiClip.getState();
 		state.addListener(this);
+
+		updateSnapType();
 	}
 
 	~MidiClipTimelineComponent() override
@@ -25,31 +27,34 @@ public:
 
 		g.fillAll(juce::Colours::lightgrey);
 
-		auto beatsPerPixel = extendedMidiClip.getBeatsPerPixel();
+		auto secondsPerPixel = extendedMidiClip.getSecondsPerPixel();
+		auto& tempoSequence = uiContext.extendedEdit.getTempoSequence();
+		
+		auto leftTime = te::TimePosition::fromSeconds(offset * secondsPerPixel);
 
-		auto leftBeat = te::BeatPosition::fromBeats(offset * beatsPerPixel);
+		auto startTime = snapType.roundTimeUp(leftTime, tempoSequence);
+		auto endTime = leftTime + te::TimeDuration::fromSeconds(localBounds.getWidth() * secondsPerPixel);
 
-		auto startBeat = quantisationType.roundBeatUp(leftBeat);
-		auto endBeat = leftBeat + te::BeatDuration::fromBeats(localBounds.getWidth() * beatsPerPixel);
+		auto time = startTime;
 
-		auto beat = startBeat;
-
-		auto beatOffset = te::BeatDuration::fromBeats(0.0001);
+		auto timeOffset = te::TimeDuration::fromSeconds(0.0001);
 
 		juce::Path gridPath;
 
-		while (beat < endBeat)
+		while (time < endTime)
 		{
-			auto x = (beat.inBeats()) / beatsPerPixel - offset;
+			auto x = (time.inSeconds()) / secondsPerPixel - offset;
 
 			gridPath.startNewSubPath(x, 0);
 			gridPath.lineTo(x, localBounds.getHeight());
 
-			auto text = fumeUI::beatToString(beat, 4, false);
+			auto barBeats = tempoSequence.timeToBarsBeats(time);
+
+			auto text = fumeUI::beatToString(barBeats, false);
 
 			g.drawText(text, x + 4, 0, 40, 20, juce::Justification::left, false);
 			
-			beat = quantisationType.roundBeatUp(beat + beatOffset);
+			time = snapType.roundTimeUp(time + timeOffset, tempoSequence);
 		}
 
 		g.setColour(juce::Colours::darkgrey);
@@ -58,7 +63,6 @@ public:
 
 	void setOffset(int newOffset) {
 		offset = newOffset;
-		updateSnapType();
 		repaint();
 	}
 
@@ -74,12 +78,19 @@ public:
 private:
 	juce::ValueTree state;
 	fumeUI::UIMidiClipContext& uiContext;
-	BeatQuantisationType quantisationType{ te::BeatDuration::fromBeats(0.125) };
 	int offset = 0;
+	te::TimecodeSnapType snapType{ te::TimecodeType::barsBeats, 1 }; 
 
 	void updateSnapType()
 	{
-		quantisationType = fumeHelpers::getBestBeatQuantisationTypeType(fumeUI::timelineHeaderMinimumPixelsPerSnap, uiContext.extendedMidiClip.getBeatsPerPixel());
+		auto& extendedMidiClip = uiContext.extendedMidiClip;
+		auto secondsPerPixel = extendedMidiClip.getSecondsPerPixel();
+		auto leftSeconds = te::TimePosition::fromSeconds(offset * secondsPerPixel);
+		te::TempoSequence& tempoSequence = uiContext.extendedEdit.getEdit().tempoSequence;
+		bool isTripletOverride = false;
+		auto displayFormat = uiContext.extendedEdit.getEdit().getTimecodeFormat();
+		snapType = fumeHelpers::getBestSnapType(displayFormat, fumeUI::midiEditorHeaderMinimumPixelsPerSnap, tempoSequence.getTempoAt(leftSeconds), te::TimeDuration::fromSeconds(secondsPerPixel), isTripletOverride);
+
 	}
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiClipTimelineComponent)

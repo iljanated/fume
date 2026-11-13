@@ -43,11 +43,21 @@ bool MidiClipWriteToolState::keyPressed(const juce::KeyPress& key)
 
 	if (inputManager.validate(keyCode, modifiers, InputAction::Write) && !isWriting)
 	{
+		auto clipStartBeat = extendedMidiClip.getClip().getStartBeat();
+		auto& tempoSequence = uiContext.extendedEdit.getTempoSequence();
+
+		auto startBeat = te::BeatPosition::fromBeats(tempoSequence.timeToBeats(te::TimePosition::fromSeconds(extendedMidiClip.getCursorX())).inBeats() - clipStartBeat.inBeats());
+
+		if (startBeat.inBeats() < 0 || startBeat.inBeats() > extendedMidiClip.getClip().getLengthInBeats().inBeats())
+		{
+			DBG("Cannot write note before start of clip");
+			return false;
+		}
+
 		isWriting = true;
 		
 		component->showCursor(false);
 		
-		auto startBeat = te::BeatPosition::fromBeats(extendedMidiClip.getCursorX());
 		auto duration = te::BeatDuration::fromBeats(extendedMidiClip.getNoteLength());
 		auto noteNumber = 127 - static_cast<int>(extendedMidiClip.getCursorY());
 		int velocity = extendedMidiClip.getNoteVelocity();
@@ -122,8 +132,7 @@ bool MidiClipWriteToolState::keyStateChanged(bool isKeyDown)
 			auto& extendedMidiClip = uiContext.extendedMidiClip;
 
 			auto* note = selectedNotes.getFirst();
-			auto endBeat = extendedMidiClip.getCursorQuantisation().roundBeatUp(note->getEndBeat());
-			extendedMidiClip.setCursorX(endBeat.inBeats());
+			// move cursor to end of note
 		}
 		component->showCursor(true);
 		notifyToolFinished();

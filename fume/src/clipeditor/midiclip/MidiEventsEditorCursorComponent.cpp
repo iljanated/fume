@@ -69,18 +69,21 @@ void MidiEventsEditorCursorComponent::moveCursorPosition(const juce::Point<int>&
 	auto x = delta.getX();
 	if (x != 0)
 	{
-		auto beatPosition = te::BeatPosition::fromBeats(extendedMidiClip.getCursorX());
+		auto& tempoSequence = uiContext.extendedEdit.getTempoSequence();
+		auto snapType = te::TimecodeSnapType(te::TimecodeType::barsBeats, extendedMidiClip.getCursorSnapLevel());
+		auto timePosition = te::TimePosition::fromSeconds(extendedMidiClip.getCursorX());
+		
+		auto timeOffset = te::TimeDuration::fromSeconds(0.0001);
 		
 		if (x > 0)
 		{
-			auto beatOffset = te::BeatDuration::fromBeats(0.0001);
-			auto nextBeat = extendedMidiClip.getCursorQuantisation().roundBeatUp(beatPosition + beatOffset);
-			extendedMidiClip.setCursorX(nextBeat.inBeats());
+			auto nextTime = snapType.roundTimeUp(timePosition + timeOffset, tempoSequence);
+			extendedMidiClip.setCursorX(nextTime.inSeconds());
 		}
 		else
 		{
-			auto previousBeat = extendedMidiClip.getCursorQuantisation().roundBeatDown(beatPosition);
-			extendedMidiClip.setCursorX(previousBeat.inBeats());
+			auto previousTime = snapType.roundTimeDown(timePosition - timeOffset, tempoSequence);
+			extendedMidiClip.setCursorX(previousTime.inSeconds());
 		}
 	}
 
@@ -94,7 +97,7 @@ void MidiEventsEditorCursorComponent::updateBounds()
 	int margin = 2;
 
 	auto rect = juce::Rectangle<int>(
-		extendedMidiClip.getCursorX() / extendedMidiClip.getBeatsPerPixel() - margin,
+		extendedMidiClip.getCursorX() / extendedMidiClip.getSecondsPerPixel() - margin,
 		extendedMidiClip.getCursorY() * extendedMidiClip.getNoteHeight() - margin,
 		margin * 2,
 		extendedMidiClip.getNoteHeight() + margin * 2

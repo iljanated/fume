@@ -19,7 +19,7 @@ public:
     void resized() override;
 
 	void focusGained(FocusChangeType cause) override;
-    bool keyPressed(const juce::KeyPress& key) override;
+	bool keyPressed(const juce::KeyPress& key) override;
 
 private:
     //==============================================================================
@@ -27,6 +27,7 @@ private:
     juce::TextButton recordButton{ "Record" };
     juce::TextButton playButton{ "Play" };
 	juce::Slider tempoSlider;
+	juce::Component* currentlyFocusedComponent = nullptr;
 
     void buttonClicked(juce::Button* button) override;
 

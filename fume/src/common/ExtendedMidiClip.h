@@ -19,7 +19,7 @@ public:
 
 	float getZoomX() const { return zoomX; }
 	void setZoomX(float newZoomX) {
-		beatsPerPixel = fumeUI::midiEditorBeatsPerPixel / newZoomX;
+		secondsPerPixel = fumeUI::midiEditorSecondsPerPixel / newZoomX;
 		zoomX.setValue(newZoomX, nullptr);
 	}
 
@@ -47,10 +47,10 @@ public:
 	int getNoteVelocity() const { return noteVelocity; }
 	void setNoteVelocity(int newNoteVelocity) { noteVelocity.setValue(newNoteVelocity, nullptr); }
 
-	te::QuantisationType& getCursorQuantisation() noexcept { return cursorQuantisation; }
-	const te::QuantisationType& getCursorQuantisation() const noexcept { return cursorQuantisation; }
+	int getCursorSnapLevel() const { return cursorSnapLevel; }
+	void setCursorSnapLevel(int newCursorSnapLevel) { cursorSnapLevel.setValue(newCursorSnapLevel, nullptr); }
 
-	double getBeatsPerPixel() const { return beatsPerPixel; }
+	double getSecondsPerPixel() const { return secondsPerPixel; }
 	int getNoteHeight() const { return noteHeight; }
 
 private:
@@ -64,9 +64,9 @@ private:
 	juce::CachedValue<double> cursorY;
 	juce::CachedValue<double> noteLength;
 	juce::CachedValue<int> noteVelocity;
-	te::QuantisationType cursorQuantisation;
+	juce::CachedValue<int> cursorSnapLevel;
 
-	double beatsPerPixel = fumeUI::midiEditorBeatsPerPixel;
+	double secondsPerPixel = fumeUI::midiEditorSecondsPerPixel;
 	int noteHeight = static_cast<int>(fumeUI::midiEditorNoteHeight);
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ExtendedMidiClip)

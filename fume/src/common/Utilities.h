@@ -1,7 +1,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "BeatQuantisationType.h"
 
 #pragma once
 
@@ -18,7 +17,7 @@ namespace FumeIDs
 	static const juce::Identifier CursorY("fume_cursorY");
 	static const juce::Identifier NoteLength("fume_noteLength");
 	static const juce::Identifier NoteVelocity("fume_noteVelocity");
-	static const juce::Identifier CursorQuantisation("CursorQuantisation");
+	static const juce::Identifier CursorSnapLevel("fume_cursorSnapLevel");
 	static const juce::Identifier SongLength("fume_songLength");
 	static const juce::Identifier TrackListDeleteToolState("fume_tracklist_delete_toolstate");
 	static const juce::Identifier TrackListWriteToolState("fume_tracklist_write_toolstate");
@@ -40,7 +39,9 @@ namespace fumeUI
 	extern const int timelineTrackHeight;
 	extern const int timelineTrackHeadWidth;
 	extern const int timelineTimelineHeight;
-	extern const double midiEditorBeatsPerPixel;
+	extern const double midiEditorSecondsPerPixel;
+	extern const int midiEditorMinimumPixelsPerSnap;
+	extern const int midiEditorHeaderMinimumPixelsPerSnap;
 	extern const int midiEditorNoteHeight;
 	extern const int midiEditorTimelineHeight;
 	extern const int midiEditorPianoRollWidth;
@@ -52,7 +53,7 @@ namespace fumeUI
 
 	void makeComponentVisibleInViewport(juce::Viewport& viewport, juce::Component& component, int padding = fumeUI::scrollPadding);
 
-	juce::String beatToString(te::BeatPosition beat, int beatsPerBar, bool useTriplets);
+	juce::String beatToString(te::core::tempo::BarsAndBeats barsAndBeats, bool useTriplets);
 }
 
 namespace fumeHelpers
@@ -99,27 +100,6 @@ namespace fumeHelpers
 		}
 
 		return displayFormat.getSnapType(numSnapTypes - 1);
-	}
-
-	static inline BeatQuantisationType getBestBeatQuantisationTypeType(int minPixels, double beatsPerPixel)
-	{
-		double type = 1.0 / 16.0;
-
-		int maxIterations = 8;
-
-		for (int i = 0; i < maxIterations; ++i)
-		{
-			auto length = type / beatsPerPixel;
-
-			if (length >= minPixels)
-			{
-				return BeatQuantisationType(te::BeatDuration::fromBeats(type));
-			}
-
-			type *= 2.0;
-		}
-
-		return BeatQuantisationType(te::BeatDuration::fromBeats(type));
 	}
 }
 

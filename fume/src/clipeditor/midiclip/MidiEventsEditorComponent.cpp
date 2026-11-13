@@ -11,6 +11,10 @@ MidiEventsEditorComponent::MidiEventsEditorComponent(fumeUI::UIMidiClipContext& 
 	: state(uiContext.extendedMidiClip.getClip().state), uiContext(uiContext), viewport(v)
 {
 	setWantsKeyboardFocus(true);
+	auto maxClipLength = uiContext.extendedEdit.getEdit().getMaximumLength().inSeconds();
+	setSize(static_cast<int>(maxClipLength / uiContext.extendedMidiClip.getSecondsPerPixel()), 128 * uiContext.extendedMidiClip.getNoteHeight());
+
+	updateGridSnapType();
 
     // default colours
     setColour(gridColourId, juce::Colours::lightgrey);
@@ -49,9 +53,8 @@ MidiEventsEditorComponent::~MidiEventsEditorComponent()
 
 void MidiEventsEditorComponent::resized()
 {
-	auto& clip = uiContext.extendedMidiClip.getClip();
-    setSize((int)(512.0 / uiContext.extendedMidiClip.getBeatsPerPixel()), 128 * uiContext.extendedMidiClip.getNoteHeight());
-
+    auto maxClipLength = uiContext.extendedEdit.getEdit().getMaximumLength().inSeconds();
+    setSize(static_cast<int>(maxClipLength / uiContext.extendedMidiClip.getSecondsPerPixel()), 128 * uiContext.extendedMidiClip.getNoteHeight());
     cursorComponent.updateBounds();
 }
 
@@ -73,11 +76,16 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
     {
         return;
     }
-    
+
+    auto secondsPerPixel = extendedMidiClip.getSecondsPerPixel();
+    auto noteHeight = extendedMidiClip.getNoteHeight();
+
+    auto clipTimeRange = clip.getEditTimeRange();
+    auto clipStart = clipTimeRange.getStart().inSeconds();
+    auto clipEnd = clipTimeRange.getEnd().inSeconds();
     
     // boundaries
-    auto beatsPerPixel = extendedMidiClip.getBeatsPerPixel();
-
+	
     auto minX = clipBounds.getX();
     auto maxX = clipBounds.getRight();
     auto minY = clipBounds.getY();
@@ -87,29 +95,44 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
 
 	g.fillAll(findColour(gridColourId));
 
-    const auto clipLength = clip.getLengthInBeats().inBeats();
-
     // draw grid
     
-	
-	auto noteHeight = extendedMidiClip.getNoteHeight();
+	juce::Path gridPath;
+	juce::Path beatGridPath;
+    juce::Path barPath;
 
-    juce::Path gridPath;
+    auto snapType = te::TimecodeSnapType(te::TimecodeType::barsBeats, extendedMidiClip.getCursorSnapLevel());
+	auto& tempoSequence = uiContext.extendedEdit.getTempoSequence();
+    bool useTriplets = false;
 
-    auto& quantisationType = extendedMidiClip.getCursorQuantisation();
+    auto gridStartTime =  gridSnapType.roundTimeUp(te::TimePosition::fromSeconds(minX * secondsPerPixel), tempoSequence);
+    auto gridEndTime = te::TimePosition::fromSeconds(maxX * secondsPerPixel);
 
-    auto gridStartBeat =  quantisationType.roundBeatUp(te::BeatPosition::fromBeats(minX) * beatsPerPixel);
-    auto gridEndBeat = te::BeatPosition::fromBeats(maxX * beatsPerPixel);
-
-    auto beat = gridStartBeat;
-	
-    while (beat < gridEndBeat)
+    auto time = gridStartTime;
+	auto timeOffset = te::TimeDuration::fromSeconds(0.0001);
+	auto fractionalMargin = 0.001;
+    while (time < gridEndTime)
     {
-		auto x = beat.inBeats() / beatsPerPixel;
+		auto x = time.inSeconds() / secondsPerPixel;
         gridPath.startNewSubPath(x, minY);
         gridPath.lineTo(x, maxY);
 
-        beat = quantisationType.roundBeatUp(beat + te::BeatDuration::fromBeats(0.0001));
+        auto barsAndBeats = tempoSequence.timeToBarsBeats(time);
+		auto fractionalBeats = barsAndBeats.getFractionalBeats().inBeats();
+
+		if (fractionalBeats < fractionalMargin || fractionalBeats > 1.0 - fractionalMargin)
+		{
+			beatGridPath.startNewSubPath(x, minY);
+			beatGridPath.lineTo(x, maxY);
+
+            if(barsAndBeats.getWholeBeats() == 0)
+            {
+                barPath.startNewSubPath(x, minY);
+                barPath.lineTo(x, maxY);
+            }
+		}
+
+        time = gridSnapType.roundTimeUp(time + timeOffset, tempoSequence);
     }
 
     // black notes
@@ -134,10 +157,14 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
     }
 
     g.setColour(juce::Colours::lightgrey.darker(0.2));
-
     g.strokePath(gridPath, juce::PathStrokeType(1.0f));
 
-    
+    g.setColour(juce::Colours::lightgrey.darker(0.3));
+    g.strokePath(beatGridPath, juce::PathStrokeType(1.0f));
+
+    g.setColour(juce::Colours::lightgrey.darker(0.6));
+    g.strokePath(barPath, juce::PathStrokeType(1.0f));
+
 
     // draw notes
 
@@ -149,14 +176,12 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
     {
         if (note == nullptr) continue;
 
-		DBG("Rendering note: " << note->getNoteNumber() << " at start beat: " << note->getStartBeat().inBeats() << " with length: " << note->getLengthBeats().inBeats());
+		auto noteStart = static_cast<float>(clipStart + tempoSequence.beatsToTime(note->getStartBeat()).inSeconds());
+        auto noteEnd = static_cast<float>(clipStart + tempoSequence.beatsToTime(note->getEndBeat()).inSeconds());
+        auto noteLength = noteEnd - noteStart;
 
-        // Map time ranges to component X dimensions
-        const float noteStart = (float)note->getStartBeat().inBeats();
-        const float noteLength = (float)note->getLengthBeats().inBeats();
-
-        const float x = noteStart / beatsPerPixel;
-        const float width = noteLength / beatsPerPixel;
+        const float x = noteStart / secondsPerPixel;
+        const float width = noteLength / secondsPerPixel;
         const float y = (127.0f - (float)note->getNoteNumber()) * noteHeight;
         
         if (x >= clipBounds.getX() + clipBounds.getWidth() || x + width <= clipBounds.getX() || y >= clipBounds.getY() + clipBounds.getHeight() || y + noteHeight <= clipBounds.getY())
@@ -186,23 +211,34 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
     }
     g.drawRect(viewport.getViewArea());
 
-    auto clipEndPixels = clipLength / beatsPerPixel;
+	auto clipPixelStart = clipStart / secondsPerPixel;
+	auto clipPixelEnd = clipEnd / secondsPerPixel;
 
-    if (clipEndPixels < maxX)
+    if (clipPixelStart > minX)
+	{
+		g.setColour(findColour(outsideGridColourId));
+		g.fillRect(minX, minY, clipPixelStart - minX, maxY - minY);
+	}
+
+    if (clipPixelEnd < maxX)
     {
         g.setColour(findColour(outsideGridColourId));
-        g.fillRect(clipEndPixels, minY, maxX - clipEndPixels, maxY - minY);
+        g.fillRect(clipPixelEnd, minY, maxX - clipPixelEnd, maxY - minY);
     }
 }
 
 void MidiEventsEditorComponent::findLassoItemsInArea(Array<te::MidiNote*>& itemsFound, const Rectangle<int>& area)
 {
     auto& extendedMidiClip = uiContext.extendedMidiClip;
-    auto beatsPerPixel = extendedMidiClip.getBeatsPerPixel();
+    auto secondsPerPixel = extendedMidiClip.getSecondsPerPixel();
     auto noteHeight = extendedMidiClip.getNoteHeight();
 
-    auto xMin = area.getX() * beatsPerPixel;
-    auto xMax = area.getRight() * beatsPerPixel;
+	auto& tempoSequence = uiContext.extendedEdit.getTempoSequence();
+
+	auto clipStartBeat = extendedMidiClip.getClip().getStartBeat();
+
+    auto xMin = (tempoSequence.timeToBeats(te::TimePosition::fromSeconds(area.getX() * secondsPerPixel)) - clipStartBeat).inBeats();
+    auto xMax = (tempoSequence.timeToBeats(te::TimePosition::fromSeconds(area.getRight() * secondsPerPixel)) - clipStartBeat).inBeats();
     auto yMin = 127 - static_cast<int>(area.getBottom() / noteHeight);
     auto yMax = 127 - static_cast<int>(area.getY() / noteHeight);
 
@@ -211,7 +247,10 @@ void MidiEventsEditorComponent::findLassoItemsInArea(Array<te::MidiNote*>& items
 
     for (auto* note : sequence.getNotes())
     {
-		if (note->getStartBeat().inBeats() < xMax && note->getEndBeat().inBeats() > xMin && note->getNoteNumber() >= yMin && note->getNoteNumber() <= yMax)
+		auto startBeat = note->getStartBeat().inBeats();
+		auto endBeat = note->getEndBeat().inBeats();
+		auto isOnXMin = std::abs(startBeat - xMin) < 0.001;
+        if ((isOnXMin || (startBeat < xMax && endBeat > xMin)) && note->getNoteNumber() >= yMin && note->getNoteNumber() <= yMax)
 		{
 			itemsFound.add(note);
 		}
@@ -262,6 +301,7 @@ void MidiEventsEditorComponent::valueTreePropertyChanged(juce::ValueTree& treeWh
 
     if (property == FumeIDs::ZoomX || property == FumeIDs::ZoomY)
     {
+		updateGridSnapType();
         asyncResizer.resizeAsync();
         repaint();
         return;
@@ -287,4 +327,16 @@ void MidiEventsEditorComponent::valueTreeChildOrderChanged(juce::ValueTree& pare
 void MidiEventsEditorComponent::valueTreeParentChanged(juce::ValueTree& treeWhoseParentHasChanged)
 {
     asyncResizer.resizeAsync();
+}
+
+void MidiEventsEditorComponent::updateGridSnapType()
+{
+    auto& extendedMidiClip = uiContext.extendedMidiClip;
+    auto secondsPerPixel = extendedMidiClip.getSecondsPerPixel();
+    auto leftSeconds = te::TimePosition::fromSeconds(viewport.getViewPositionX() * secondsPerPixel);
+    te::TempoSequence& tempoSequence = uiContext.extendedEdit.getEdit().tempoSequence;
+    bool isTripletOverride = false;
+    auto displayFormat = uiContext.extendedEdit.getEdit().getTimecodeFormat();
+    gridSnapType = fumeHelpers::getBestSnapType(displayFormat, fumeUI::midiEditorMinimumPixelsPerSnap, tempoSequence.getTempoAt(leftSeconds), te::TimeDuration::fromSeconds(secondsPerPixel), isTripletOverride);
+
 }

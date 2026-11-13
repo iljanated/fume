@@ -80,15 +80,15 @@ private:
 	ToolStateManager<MidiEventsEditorComponent> toolStateManager{ uiContext.inputManager, FumeIDs::MidiClipSelectToolState };
 	std::unique_ptr<te::SelectedMidiEvents> selectedEvents;
 	MidiEventsEditorCursorComponent cursorComponent{ uiContext };
-	double centerBeatOffset = 256.0; // default offset for the cursor position
-    
-	void activateToolState(ToolState* newState);
+	te::TimecodeSnapType gridSnapType{ te::TimecodeType::barsBeats, 1 };
 
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
     void valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded) override;
     void valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int index) override;
     void valueTreeChildOrderChanged(juce::ValueTree& parentTree, int oldIndex, int newIndex) override;
     void valueTreeParentChanged(juce::ValueTree& treeWhoseParentHasChanged) override;
+
+	void updateGridSnapType();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiEventsEditorComponent)
 };

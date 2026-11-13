@@ -62,7 +62,6 @@ target_sources(Fume PRIVATE
     src/clipeditor/midiclip/toolstates/MidiClipWriteToolState.h
     src/clipeditor/midiclip/toolstates/MidiClipZoomToolState.cpp
     src/clipeditor/midiclip/toolstates/MidiClipZoomToolState.h
-    src/common/BeatQuantisationType.h
     src/common/ExtendedEdit.cpp
     src/common/ExtendedEdit.h
     src/common/ExtendedMidiClip.cpp

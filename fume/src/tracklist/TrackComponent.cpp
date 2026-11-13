@@ -44,9 +44,10 @@ void TrackComponent::resized()
 			
             if (auto* midiClip = dynamic_cast<tracktion_engine::MidiClip*> (&clip))
             {
-                auto start = tempoSequence.beatsToTime(clip.getStartBeat()).inSeconds() / secondsPerPixel;
-                auto end = tempoSequence.beatsToTime(clip.getEndBeat()).inSeconds() / secondsPerPixel;
-				object->setBounds(static_cast<int>(start), 0, static_cast<int>(end - start), localBounds.getHeight());
+                auto timeRange = clip.getEditTimeRange();
+                auto start = timeRange.getStart().inSeconds() / secondsPerPixel;
+                auto length = timeRange.getLength().inSeconds() / secondsPerPixel;
+				object->setBounds(static_cast<int>(start), 0, static_cast<int>(length), localBounds.getHeight());
 
             }
         }

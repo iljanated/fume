@@ -4,8 +4,10 @@
 namespace te = tracktion;
 
 TransportComponent::TransportComponent(fumeUI::UIContext& c)
-    : uiContext(c)
+	: uiContext(c)
 {
+	setWantsKeyboardFocus(true);
+
 	addAndMakeVisible(recordButton);
 	recordButton.addListener(this); 
 	recordButton.setHasFocusOutline(true);
@@ -17,6 +19,8 @@ TransportComponent::TransportComponent(fumeUI::UIContext& c)
 	tempoSlider.setSliderStyle(juce::Slider::SliderStyle::LinearBarVertical);
 	tempoSlider.setRange(20.0, 300.0, 1.0);
 	tempoSlider.setHasFocusOutline(true);
+
+	currentlyFocusedComponent = &playButton;
 }
 
 TransportComponent::~TransportComponent()
@@ -37,8 +41,15 @@ void TransportComponent::resized()
 
 void TransportComponent::focusGained(FocusChangeType cause)
 {
-	tempoSlider.grabKeyboardFocus();
+	juce::ignoreUnused(cause);
 
+	juce::MessageManager::callAsync([safeThis = juce::Component::SafePointer<TransportComponent>(this)]
+	{
+		if (safeThis == nullptr || safeThis->currentlyFocusedComponent == nullptr)
+			return;
+
+		safeThis->currentlyFocusedComponent->grabKeyboardFocus();
+	});
 }
 
 bool TransportComponent::keyPressed(const juce::KeyPress& key)
@@ -51,6 +62,11 @@ bool TransportComponent::keyPressed(const juce::KeyPress& key)
 	if (inputManager.validate(keyCode, modifiers, InputAction::Write))
 	{
 		playButton.triggerClick();
+		return true;
+	}
+	if (inputManager.validate(keyCode, modifiers, InputAction::MoveRight))
+	{
+		tempoSlider.grabKeyboardFocus();
 		return true;
 	}
 	return false;

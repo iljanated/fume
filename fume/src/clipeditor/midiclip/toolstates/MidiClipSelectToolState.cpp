@@ -114,10 +114,10 @@ void MidiClipSelectToolState::beginLasso(juce::ModifierKeys modifiers)
 	auto& uiContext = component->getUIContext();
 	auto& extendedMidiClip = uiContext.extendedMidiClip;
 
-	auto beatsPerPixel = extendedMidiClip.getBeatsPerPixel();
+	auto secondsPerPixel = extendedMidiClip.getSecondsPerPixel();
 	auto noteHeight = extendedMidiClip.getNoteHeight();
 
-	auto pixelPosition = juce::Point<int>(static_cast<int>(dragPosition.getX() / beatsPerPixel), static_cast<int>(dragPosition.getY() * noteHeight));
+	auto pixelPosition = juce::Point<int>(static_cast<int>(dragPosition.getX() / secondsPerPixel), static_cast<int>(dragPosition.getY() * noteHeight));
 	lassoComponent.setRowHeight(noteHeight);
 	lassoComponent.setMargin(2);
 	lassoComponent.beginLasso(pixelPosition, modifiers, this);
@@ -128,26 +128,28 @@ void MidiClipSelectToolState::dragLasso(juce::Point<int> delta, juce::ModifierKe
 	auto& uiContext = component->getUIContext();
 	auto& extendedMidiClip = uiContext.extendedMidiClip;
 
-	auto beatsPerPixel = extendedMidiClip.getBeatsPerPixel();
+	auto secondsPerPixel = extendedMidiClip.getSecondsPerPixel();
 	auto noteHeight = extendedMidiClip.getNoteHeight();
 
 	auto deltaX = delta.getX();
 
 	if (deltaX != 0)
 	{
-		auto beatPosition = te::BeatPosition::fromBeats(dragPosition.getX());
-		auto quantisationType = extendedMidiClip.getCursorQuantisation();
+		auto& tempoSequence = uiContext.extendedEdit.getTempoSequence();
+		auto snapType = te::TimecodeSnapType(te::TimecodeType::barsBeats, extendedMidiClip.getCursorSnapLevel());
+		auto timePosition = te::TimePosition::fromSeconds(dragPosition.getX());
+		
+		auto timeOffset = te::TimeDuration::fromSeconds(0.0001);
 
 		auto newX = dragPosition.getX();
 
 		if (deltaX > 0)
 		{
-			auto beatOffset = te::BeatDuration::fromBeats(0.0001);
-			newX = quantisationType.roundBeatUp(beatPosition + beatOffset).inBeats();
+			newX = snapType.roundTimeUp(timePosition + timeOffset, tempoSequence).inSeconds();
 		}
 		else
 		{
-			newX = quantisationType.roundBeatDown(beatPosition).inBeats();
+			newX = snapType.roundTimeDown(timePosition - timeOffset, tempoSequence).inSeconds();
 		}
 
 		dragPosition.setX(newX);
@@ -156,6 +158,6 @@ void MidiClipSelectToolState::dragLasso(juce::Point<int> delta, juce::ModifierKe
 
 	dragPosition.setY(std::clamp(dragPosition.getY() + delta.getY(), 0.0, 127.0));
 
-	auto pixelPosition = juce::Point<int>(static_cast<int>(dragPosition.getX() / beatsPerPixel), static_cast<int>(dragPosition.getY() * noteHeight));
+	auto pixelPosition = juce::Point<int>(static_cast<int>(dragPosition.getX() / secondsPerPixel), static_cast<int>(dragPosition.getY() * noteHeight));
 	lassoComponent.dragLasso(pixelPosition, modifiers);
 }

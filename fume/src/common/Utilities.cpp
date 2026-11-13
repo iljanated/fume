@@ -11,8 +11,10 @@ namespace fumeUI
     const int timelineTrackHeight = 30;
     const int timelineTrackHeadWidth = 100;
     const int timelineTimelineHeight = 20;
-    const double midiEditorBeatsPerPixel = 0.003;
-	const int midiEditorNoteHeight = 10;
+    const double midiEditorSecondsPerPixel = 0.002;
+    const int midiEditorMinimumPixelsPerSnap = 24;
+    const int midiEditorHeaderMinimumPixelsPerSnap = 96;
+    const int midiEditorNoteHeight = 10;
     const int midiEditorTimelineHeight = 20;
     const int midiEditorPianoRollWidth = 50;
     const int scrollPadding = 10;
@@ -61,20 +63,19 @@ namespace fumeUI
         }
     }
 
-    juce::String beatToString(te::BeatPosition beat, int beatsPerBar, bool useTriplets)
+    juce::String beatToString(te::core::tempo::BarsAndBeats barsAndBeats, bool useTriplets)
     {
-        auto beatValue = beat.inBeats();
-        auto wholeBeats = static_cast<int>(std::floor(beatValue + 1.0e-10));
-        auto beatFraction = beatValue - wholeBeats;
+        int bar = barsAndBeats.bars + 1;
+        int beat = barsAndBeats.getWholeBeats() + 1;
+
+        auto beatFraction = barsAndBeats.getFractionalBeats().inBeats();
 
         auto subdivisions = useTriplets ? 3 : 4;
         auto fractionIndex = static_cast<int>(std::floor((beatFraction * subdivisions) + 1.0e-10));
         fractionIndex = juce::jlimit(0, subdivisions - 1, fractionIndex);
 
-        auto bar = wholeBeats >= 0 ? (wholeBeats / beatsPerBar) + 1 : (wholeBeats / beatsPerBar) - 1;
-        auto beatInBar = wholeBeats >= 0 ? (std::abs(wholeBeats) % beatsPerBar) + 1 : (beatsPerBar - std::abs(wholeBeats) % beatsPerBar) + 1;
         auto fractionInBeat = fractionIndex + 1;
 
-        return juce::String::formatted("%d.%d.%d", bar, beatInBar, fractionInBeat);
+        return juce::String::formatted("%d.%d.%d", bar, beat, fractionInBeat);
     }
 }
