@@ -1,6 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "UIContext.h"
+#include "Utilities.h"
 
 namespace te = tracktion;
 
@@ -20,6 +21,11 @@ public:
 
 	void focusGained(FocusChangeType cause) override;
 	bool keyPressed(const juce::KeyPress& key) override;
+
+    std::unique_ptr<juce::ComponentTraverser> createKeyboardFocusTraverser() override
+    {
+        return std::make_unique<fumeUI::WrappingFocusTraverser>();
+    }
 
 private:
     //==============================================================================

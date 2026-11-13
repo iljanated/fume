@@ -54,6 +54,54 @@ namespace fumeUI
 	void makeComponentVisibleInViewport(juce::Viewport& viewport, juce::Component& component, int padding = fumeUI::scrollPadding);
 
 	juce::String beatToString(te::core::tempo::BarsAndBeats barsAndBeats, bool useTriplets);
+
+
+	class WrappingFocusTraverser : public juce::KeyboardFocusTraverser
+	{
+	public:
+		juce::Component* getNextComponent(juce::Component* current) override
+		{
+			// Try normal forward traversal first
+			if (auto* next = juce::KeyboardFocusTraverser::getNextComponent(current))
+			{
+				return next;
+			}
+			// If nullptr (reached the end), wrap around to the first component in the container
+			if (auto* container = current->findFocusContainer())
+			{
+				return getDefaultComponent(container);
+			}
+			return nullptr;
+		}
+
+		juce::Component* getPreviousComponent(juce::Component* current) override
+		{
+			if (auto* container = current->findFocusContainer())
+			{
+				auto* first = getDefaultComponent(container);
+				if (first == nullptr)
+					return nullptr;
+
+				auto* last = first;
+				auto* next = first;
+
+				while ((next = juce::KeyboardFocusTraverser::getNextComponent(next)) != nullptr && next != first)
+					last = next;
+
+				// Force wrap when moving backwards from the first traversable component.
+				if (current == first)
+					return last;
+
+				// Otherwise use normal backward traversal.
+				if (auto* prev = juce::KeyboardFocusTraverser::getPreviousComponent(current))
+					return prev;
+
+				return last;
+			}
+
+			return juce::KeyboardFocusTraverser::getPreviousComponent(current);
+		}
+	};
 }
 
 namespace fumeHelpers

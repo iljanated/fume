@@ -6,6 +6,7 @@ namespace te = tracktion;
 TransportComponent::TransportComponent(fumeUI::UIContext& c)
 	: uiContext(c)
 {
+	setFocusContainerType(FocusContainerType::focusContainer);
 	setWantsKeyboardFocus(true);
 
 	addAndMakeVisible(recordButton);
@@ -17,6 +18,8 @@ TransportComponent::TransportComponent(fumeUI::UIContext& c)
 
 	addAndMakeVisible(tempoSlider);
 	tempoSlider.setSliderStyle(juce::Slider::SliderStyle::LinearBarVertical);
+	tempoSlider.setTextBoxIsEditable(false);
+	tempoSlider.setWantsKeyboardFocus(true);
 	tempoSlider.setRange(20.0, 300.0, 1.0);
 	tempoSlider.setHasFocusOutline(true);
 
@@ -64,9 +67,22 @@ bool TransportComponent::keyPressed(const juce::KeyPress& key)
 		playButton.triggerClick();
 		return true;
 	}
+	if (inputManager.validate(keyCode, modifiers, InputAction::MoveLeft))
+	{
+		auto* focused = getCurrentlyFocusedComponent();
+		if (focused)
+		{
+			focused->moveKeyboardFocusToSibling(false);
+		}
+		return true;
+	}
 	if (inputManager.validate(keyCode, modifiers, InputAction::MoveRight))
 	{
-		tempoSlider.grabKeyboardFocus();
+		auto* focused = getCurrentlyFocusedComponent();
+		if (focused)
+		{
+			focused->moveKeyboardFocusToSibling(true);
+		}
 		return true;
 	}
 	return false;
