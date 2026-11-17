@@ -6,7 +6,10 @@ namespace te = tracktion;
 TransportComponent::TransportComponent(fumeUI::UIContext& c)
 	: uiContext(c)
 {
-	setFocusContainerType(FocusContainerType::focusContainer);
+	auto& extendedEdit = uiContext.extendedEdit;
+	auto& edit = extendedEdit.getEdit();
+	auto& transport = edit.getTransport();
+
 	setWantsKeyboardFocus(true);
 
 	addAndMakeVisible(recordButton);
@@ -17,13 +20,20 @@ TransportComponent::TransportComponent(fumeUI::UIContext& c)
 	playButton.setHasFocusOutline(true);
 
 	addAndMakeVisible(tempoSlider);
-	tempoSlider.setSliderStyle(juce::Slider::SliderStyle::LinearBarVertical);
-	tempoSlider.setTextBoxIsEditable(false);
-	tempoSlider.setWantsKeyboardFocus(true);
-	tempoSlider.setRange(20.0, 300.0, 1.0);
-	tempoSlider.setHasFocusOutline(true);
+	if (auto* tempo = extendedEdit.getTempoSequence().getTempo(0))
+	{
+		tempoSlider.getValueObject().referTo(tempo->state.getPropertyAsValue(te::IDs::bpm, &extendedEdit.getUndoManager()));
+		tempoSlider.setRange(20.0, 300.0, 0.1);
+	}
 
-	currentlyFocusedComponent = &playButton;
+	addAndMakeVisible(loopPoint1Slider);
+	loopPoint1Slider.getValueObject().referTo(transport.state.getPropertyAsValue(te::IDs::loopPoint1, nullptr));
+	loopPoint1Slider.setRange(0.0, edit.maximumLength, 0.01);
+
+	addAndMakeVisible(loopPoint2Slider);
+	loopPoint2Slider.getValueObject().referTo(transport.state.getPropertyAsValue(te::IDs::loopPoint2, nullptr));
+	loopPoint2Slider.setRange(0.0, edit.maximumLength, 0.01);
+
 }
 
 TransportComponent::~TransportComponent()
@@ -40,6 +50,8 @@ void TransportComponent::resized()
 	recordButton.setBounds(bounds.removeFromLeft(100));
 	playButton.setBounds(bounds.removeFromLeft(100));
 	tempoSlider.setBounds(bounds.removeFromLeft(100));
+	loopPoint1Slider.setBounds(bounds.removeFromLeft(100));
+	loopPoint2Slider.setBounds(bounds.removeFromLeft(100));
 }
 
 void TransportComponent::focusGained(FocusChangeType cause)
@@ -48,10 +60,11 @@ void TransportComponent::focusGained(FocusChangeType cause)
 
 	juce::MessageManager::callAsync([safeThis = juce::Component::SafePointer<TransportComponent>(this)]
 	{
-		if (safeThis == nullptr || safeThis->currentlyFocusedComponent == nullptr)
+		if (safeThis == nullptr)
 			return;
 
-		safeThis->currentlyFocusedComponent->grabKeyboardFocus();
+		if (auto* defaultComponent = safeThis->focusTraverser.getDefaultComponent(safeThis.getComponent()))
+			defaultComponent->grabKeyboardFocus();
 	});
 }
 
@@ -69,20 +82,22 @@ bool TransportComponent::keyPressed(const juce::KeyPress& key)
 	}
 	if (inputManager.validate(keyCode, modifiers, InputAction::MoveLeft))
 	{
-		auto* focused = getCurrentlyFocusedComponent();
-		if (focused)
-		{
-			focused->moveKeyboardFocusToSibling(false);
-		}
+		focusComponent({ -1, 0 });
 		return true;
 	}
 	if (inputManager.validate(keyCode, modifiers, InputAction::MoveRight))
 	{
-		auto* focused = getCurrentlyFocusedComponent();
-		if (focused)
-		{
-			focused->moveKeyboardFocusToSibling(true);
-		}
+		focusComponent({ 1, 0 });
+		return true;
+	}
+	if (inputManager.validate(keyCode, modifiers, InputAction::MoveUp))
+	{
+		focusComponent({ 0, -1 });
+		return true;
+	}
+	if (inputManager.validate(keyCode, modifiers, InputAction::MoveDown))
+	{
+		focusComponent({ 0, 1 });
 		return true;
 	}
 	return false;
@@ -108,4 +123,23 @@ void TransportComponent::togglePlay()
 	{
 		transport.play(false);
 	}
+}
+
+void TransportComponent::focusComponent(juce::Point<int> delta)
+{
+	auto* current = juce::Component::getCurrentlyFocusedComponent();
+
+	if (current == nullptr || (!isParentOf(current) && current != this))
+		current = focusTraverser.getDefaultComponent(this);
+
+	if (current == nullptr)
+		return;
+
+	auto* next = focusTraverser.getNextComponent(current, delta);
+
+	if (next == nullptr)
+		next = focusTraverser.getDefaultComponent(this);
+
+	if (next != nullptr)
+		next->grabKeyboardFocus();
 }

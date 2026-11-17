@@ -62,10 +62,14 @@ target_sources(Fume PRIVATE
     src/clipeditor/midiclip/toolstates/MidiClipWriteToolState.h
     src/clipeditor/midiclip/toolstates/MidiClipZoomToolState.cpp
     src/clipeditor/midiclip/toolstates/MidiClipZoomToolState.h
+    src/common/CardinalFocusTraverser.cpp
+    src/common/CardinalFocusTraverser.h
     src/common/ExtendedEdit.cpp
     src/common/ExtendedEdit.h
     src/common/ExtendedMidiClip.cpp
     src/common/ExtendedMidiClip.h
+    src/common/InputComponents.cpp
+    src/common/InputComponents.h
     src/common/InputManager.cpp
     src/common/InputManager.h
     src/common/ManualLassoComponent.h

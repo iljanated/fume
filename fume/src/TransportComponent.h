@@ -1,7 +1,8 @@
 #pragma once
 #include <JuceHeader.h>
 #include "UIContext.h"
-#include "Utilities.h"
+#include "InputComponents.h"
+#include "common/CardinalFocusTraverser.h"
 
 namespace te = tracktion;
 
@@ -22,22 +23,21 @@ public:
 	void focusGained(FocusChangeType cause) override;
 	bool keyPressed(const juce::KeyPress& key) override;
 
-    std::unique_ptr<juce::ComponentTraverser> createKeyboardFocusTraverser() override
-    {
-        return std::make_unique<fumeUI::WrappingFocusTraverser>();
-    }
-
 private:
     //==============================================================================
     fumeUI::UIContext& uiContext;
     juce::TextButton recordButton{ "Record" };
     juce::TextButton playButton{ "Play" };
-	juce::Slider tempoSlider;
-	juce::Component* currentlyFocusedComponent = nullptr;
+	fumeUI::KeyboardSlider tempoSlider{ "Change Tempo", &uiContext.extendedEdit.getUndoManager() };
+    fumeUI::TimePositionSlider loopPoint1Slider{ uiContext, "Change LoopStart", nullptr };
+    fumeUI::TimePositionSlider loopPoint2Slider{ uiContext, "Change LoopEnd", nullptr };
 
+    fumeUI::CardinalFocusTraverser focusTraverser { fumeUI::CardinalFocusTraverser::WrappingType::Wrapping };
+    
     void buttonClicked(juce::Button* button) override;
 
-    void togglePlay();
+	void togglePlay();
+	void focusComponent(juce::Point<int> delta);
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportComponent)
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportComponent)
 };
