@@ -5,13 +5,13 @@
 namespace fumeUI
 {
     const double timelineBeatWidth = 20;
-    const double timelineSecondsPerPixel = 0.1;
+    const double timelineSecondsPerPixel = 0.2;
     const int timelineMinimumPixelsPerSnap = 12;
     const int timelineHeaderMinimumPixelsPerSnap = 48;
     const int timelineTrackHeight = 30;
     const int timelineTrackHeadWidth = 100;
     const int timelineTimelineHeight = 20;
-    const double midiEditorSecondsPerPixel = 0.002;
+    const double midiEditorSecondsPerPixel = 0.015;
     const int midiEditorMinimumPixelsPerSnap = 24;
     const int midiEditorHeaderMinimumPixelsPerSnap = 96;
     const int midiEditorNoteHeight = 10;

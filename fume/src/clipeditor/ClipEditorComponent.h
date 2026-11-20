@@ -12,13 +12,7 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
 
-    void focusGained(FocusChangeType cause) override { 
-        if(implementationComponent && implementationComponent->getParentComponent() != nullptr && implementationComponent->isShowing())
-        {
-            implementationComponent->grabKeyboardFocus(); 
-        }
-    }
-    void focusLost(FocusChangeType cause) override {}
+    void focusGained(FocusChangeType cause) override;
 
     void valueTreeParentChanged(juce::ValueTree& treeWhoseParentHasChanged) override;
 

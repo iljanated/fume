@@ -1,6 +1,5 @@
 #pragma once
 #include "TrackComponent.h"
-#include "MainComponent.h"
 #include "MidiClipComponent.h"
 #include "AudioClipComponent.h"
 
@@ -12,11 +11,14 @@ TrackComponent::TrackComponent(te::AudioTrack& t, fumeUI::UIContext& context)
     track(t),
     uiContext(context)
 {
+	tempoSequenceState = uiContext.extendedEdit.getTempoSequence().getState();
+	tempoSequenceState.addListener(this);
 	rebuildObjects();
 }
 
 TrackComponent::~TrackComponent()
 {
+	tempoSequenceState.removeListener(this);
 	freeObjects();
 }
 
@@ -27,15 +29,20 @@ te::AudioTrack& TrackComponent::getTrack()
 
 void TrackComponent::paint(juce::Graphics& g)
 {
+    bool isSelected = uiContext.selectionManager.isSelected(track);
+
+    if (isSelected)
+    {
+		g.fillAll(track.getColour().withMultipliedAlpha(0.1f));
+    }
 }
 
 void TrackComponent::resized()
 {
-    auto localBounds = getLocalBounds();
+	auto localBounds = getLocalBounds();
 	auto& extendedEdit = uiContext.extendedEdit;
 	auto secondsPerPixel = extendedEdit.getSecondsPerPixel();
-	auto& tempoSequence = extendedEdit.getTempoSequence();
-
+	
     for (auto objectWrapper : objects)
     {
         if (auto object = objectWrapper->getObject())
@@ -120,4 +127,9 @@ void TrackComponent::valueTreePropertyChanged(juce::ValueTree& treeWhoseProperty
     {
 		asyncResizer.resizeAsync();
     }
+
+	if (property == te::IDs::bpm)
+	{
+		asyncResizer.resizeAsync();
+	}
 }

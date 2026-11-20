@@ -21,6 +21,7 @@ public:
 	}
 
 	te::TempoSequence& getTempoSequence() { return edit.tempoSequence; }   
+	te::TransportControl& getTransport() { return edit.getTransport(); }
 
 	float getZoomX() const { return zoomX; }
 	void setZoomX(float newZoomX) { 

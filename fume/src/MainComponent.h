@@ -2,10 +2,12 @@
 #include <JuceHeader.h>
 #include "InputManager.h"
 #include "EditContainerComponent.h"
+#include "OptionsComponent.h"
+#include "EditManager.h"
 
 namespace te = tracktion;
 
-class MainComponent : public juce::Component
+class MainComponent : public juce::Component, public EditManager::Listener
 {
 public:
     //==============================================================================
@@ -18,16 +20,24 @@ public:
 
 	void resized() override;
 
-	void loadFile();
+	bool keyPressed(const juce::KeyPress& key) override;
+
+    void onEditUnloaded() override;
+
+	void onEditLoaded(te::Edit* newEdit) override;
+
+    void systemRequestedToQuit();
 
 private:
     //==============================================================================
     // JUCE en Tracktion objecten (volgorde van declaratie bepaalt de destructie-volgorde)
     te::Engine engine;
 	te::SelectionManager selectionManager{ engine };
-    std::unique_ptr<te::Edit> edit;
+    te::Edit* edit = nullptr;
     InputManager inputManager;
+	EditManager editManager{ engine };
     std::unique_ptr<EditContainerComponent> editContainerComponent;
+    OptionsComponent optionsComponent{ engine, inputManager, editManager };
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

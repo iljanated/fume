@@ -9,7 +9,8 @@
 class MidiEventsEditorComponent
     : public juce::Component,
     private juce::ValueTree::Listener,
-    public juce::ChangeListener
+    public juce::ChangeListener,
+	private juce::Timer
 {
 public:
     MidiEventsEditorComponent(fumeUI::UIMidiClipContext& context, juce::Viewport& v);
@@ -77,6 +78,7 @@ private:
 	Helpers::AsyncResizer asyncResizer{ *this };
 	fumeUI::UIMidiClipContext& uiContext;
 	juce::ValueTree state;
+	te::TimePosition transportPosition;
 	ToolStateManager<MidiEventsEditorComponent> toolStateManager{ uiContext.inputManager, FumeIDs::MidiClipSelectToolState };
 	std::unique_ptr<te::SelectedMidiEvents> selectedEvents;
 	MidiEventsEditorCursorComponent cursorComponent{ uiContext };
@@ -88,6 +90,8 @@ private:
     void valueTreeChildOrderChanged(juce::ValueTree& parentTree, int oldIndex, int newIndex) override;
     void valueTreeParentChanged(juce::ValueTree& treeWhoseParentHasChanged) override;
 
+	void timerCallback() override;
+	void updateCurrentPositionMarker();
 	void updateGridSnapType();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiEventsEditorComponent)

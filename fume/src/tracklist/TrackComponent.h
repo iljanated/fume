@@ -27,6 +27,7 @@ private:
     //==============================================================================
 	fumeUI::UIContext& uiContext;
     te::AudioTrack& track;
+	juce::ValueTree tempoSequenceState;
 
     Helpers::AsyncResizer asyncResizer{ *this };
 

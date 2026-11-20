@@ -1,5 +1,6 @@
 #pragma once
 #include "TransportComponent.h"
+#include "Utilities.h"
 
 namespace te = tracktion;
 
@@ -22,7 +23,7 @@ TransportComponent::TransportComponent(fumeUI::UIContext& c)
 	addAndMakeVisible(tempoSlider);
 	if (auto* tempo = extendedEdit.getTempoSequence().getTempo(0))
 	{
-		tempoSlider.getValueObject().referTo(tempo->state.getPropertyAsValue(te::IDs::bpm, &extendedEdit.getUndoManager()));
+		tempoSlider.getValueObject().referTo(juce::Value(new fumeHelpers::BpmRemapValueSource(edit, *tempo)));
 		tempoSlider.setRange(20.0, 300.0, 0.1);
 	}
 

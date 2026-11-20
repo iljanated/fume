@@ -106,6 +106,52 @@ namespace fumeUI
 
 namespace fumeHelpers
 {
+	// BpmRemapValueSource is a ValueSource that wraps a TempoSetting and remaps the edit when the bpm is changed.
+	struct BpmRemapValueSource : public juce::Value::ValueSource,
+		private juce::ValueTree::Listener
+	{
+		BpmRemapValueSource(te::Edit& e, te::TempoSetting& t)
+			: edit(e), tempo(t), state(t.state)
+		{
+			state.addListener(this);
+		}
+
+		~BpmRemapValueSource() override { state.removeListener(this); }
+
+		juce::var getValue() const override
+		{
+			return tempo.getBpm();
+		}
+
+		void setValue(const juce::var& newValue) override
+		{
+			double newBpm = static_cast<double> (newValue);
+			if (juce::approximatelyEqual(newBpm, tempo.getBpm()))
+			{
+				return;
+			}
+
+			te::EditTimecodeRemapperSnapshot snap;
+			snap.savePreChangeState(edit);
+
+			tempo.setBpm(newBpm);
+
+			snap.remapEdit(edit);
+		}
+
+		void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier& prop) override
+		{
+			if (prop == te::IDs::bpm)
+			{
+				sendChangeMessage(true);
+			}
+		}
+
+		te::Edit& edit;
+		te::TempoSetting& tempo;
+		juce::ValueTree state;
+	};
+
 	static inline int getTrackIndex(te::Edit& edit, te::Track* track)
 	{
 		int audioTrackIndex = 0;

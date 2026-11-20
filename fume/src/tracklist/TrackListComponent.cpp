@@ -9,13 +9,12 @@ namespace te = tracktion;
 TrackListComponent::TrackListComponent(fumeUI::UIContext& context, juce::Viewport& v)
 	: viewport(v), uiContext(context), te::ValueTreeObjectList<Helpers::AsyncValueTreeItem<TrackComponent>>(context.extendedEdit.getState())
 {
-	//addAndMakeVisible(currentPositionMarker);
+	tempoSequenceState = uiContext.extendedEdit.getTempoSequence().getState();
+	tempoSequenceState.addListener(this);
+
 	addAndMakeVisible(cursorComponent);
 	cursorComponent.setAlwaysOnTop(true);
-
-	currentPositionMarker.setFill(Colours::white.withAlpha(0.85f));
-	//currentPositionMarker.setAlwaysOnTop(true);
-
+	
 	setWantsKeyboardFocus(true);
 
 	uiContext.selectionManager.addChangeListener(this);
@@ -36,6 +35,7 @@ TrackListComponent::TrackListComponent(fumeUI::UIContext& context, juce::Viewpor
 
 TrackListComponent::~TrackListComponent()
 {
+	tempoSequenceState.removeListener(this);
 	uiContext.selectionManager.removeChangeListener(this);
 	freeObjects();
 }
@@ -101,6 +101,16 @@ void TrackListComponent::paint(juce::Graphics& g)
 
 	g.strokePath(gridPath, juce::PathStrokeType(1.0f));
 
+	// draw transport position
+
+
+	g.setColour(juce::Colours::darkgrey);
+	auto transportPositionPixels = transportPosition.inSeconds() / secondsPerPixel;
+
+	g.drawLine(transportPositionPixels, 0.0f, transportPositionPixels, (float)getHeight(), 1.0f);
+
+	// draw border around viewport
+
 	if (hasKeyboardFocus(true))
 	{
 		g.setColour(juce::Colours::red);
@@ -110,6 +120,7 @@ void TrackListComponent::paint(juce::Graphics& g)
 		g.setColour(juce::Colours::white);
 	}
 	g.drawRect(viewport.getViewArea());
+
 
 }
 
@@ -208,6 +219,11 @@ void TrackListComponent::valueTreePropertyChanged(juce::ValueTree& treeWhoseProp
 			});
 		return;
 	}
+
+	if (property == te::IDs::bpm)
+	{
+		repaint();
+	}
 }
 
 void TrackListComponent::timerCallback()
@@ -217,10 +233,14 @@ void TrackListComponent::timerCallback()
 
 void TrackListComponent::updateCurrentPositionMarker()
 {
-	auto position = uiContext.extendedEdit.getEdit().getTransport().getPosition();
-	auto pixelsPerSecond = uiContext.extendedEdit.getSecondsPerPixel();
-	auto offset = static_cast<float>(position.inSeconds() * pixelsPerSecond);
-	currentPositionMarker.setRectangle(Rectangle<float>(offset, 0, 1.5f, (float)(getHeight())));
+	auto secondsPerPixel = uiContext.extendedEdit.getSecondsPerPixel();
+	auto oldOffset = static_cast<float>(transportPosition.inSeconds() / secondsPerPixel);
+	transportPosition = uiContext.extendedEdit.getEdit().getTransport().getPosition();
+	auto offset = static_cast<float>(transportPosition.inSeconds() / secondsPerPixel);
+	
+	auto min = std::min(oldOffset, offset) - 2;
+	auto width = std::abs(oldOffset - offset) + 4;
+	repaint(juce::Rectangle<int>(min, 0, width, getHeight()));
 }
 
 void TrackListComponent::changeListenerCallback(juce::ChangeBroadcaster* source)

@@ -25,7 +25,9 @@ enum class InputAction : uint32_t
 	Select,
 	Undo,
 	Redo,
-	Zoom
+	Zoom,
+	Options,
+	Save
 };
 
 struct InputActionHashGenerator

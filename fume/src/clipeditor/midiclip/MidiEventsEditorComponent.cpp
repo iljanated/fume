@@ -39,6 +39,8 @@ MidiEventsEditorComponent::MidiEventsEditorComponent(fumeUI::UIMidiClipContext& 
     toolStateManager.addToolState(std::make_unique<MidiClipZoomToolState>(this));
 
     toolStateManager.activateToolStateByIdentifier(FumeIDs::MidiClipSelectToolState);
+
+    startTimerHz(30);
 }
 
 MidiEventsEditorComponent::~MidiEventsEditorComponent()
@@ -199,6 +201,13 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
         g.fillRect(static_cast<int>(x), static_cast<int>(y), static_cast<int>(width), noteHeight);
     }
 
+	// draw transport position
+
+    g.setColour(juce::Colours::darkgrey);
+    auto transportPositionPixels = transportPosition.inSeconds() / secondsPerPixel;
+
+    g.drawLine(transportPositionPixels, 0.0f, transportPositionPixels, (float)getHeight(), 1.0f);
+
     // draw focusbox
 
     if (hasKeyboardFocus(true))
@@ -210,6 +219,8 @@ void MidiEventsEditorComponent::paint(juce::Graphics& g)
         g.setColour(juce::Colours::white);
     }
     g.drawRect(viewport.getViewArea());
+
+	// shade outside of clip bounds
 
 	auto clipPixelStart = clipStart / secondsPerPixel;
 	auto clipPixelEnd = clipEnd / secondsPerPixel;
@@ -327,6 +338,23 @@ void MidiEventsEditorComponent::valueTreeChildOrderChanged(juce::ValueTree& pare
 void MidiEventsEditorComponent::valueTreeParentChanged(juce::ValueTree& treeWhoseParentHasChanged)
 {
     asyncResizer.resizeAsync();
+}
+
+void MidiEventsEditorComponent::timerCallback()
+{
+    updateCurrentPositionMarker();
+}
+
+void MidiEventsEditorComponent::updateCurrentPositionMarker()
+{
+    auto secondsPerPixel = uiContext.extendedMidiClip.getSecondsPerPixel();
+    auto oldOffset = static_cast<float>(transportPosition.inSeconds() / secondsPerPixel);
+    transportPosition = uiContext.extendedEdit.getEdit().getTransport().getPosition();
+    auto offset = static_cast<float>(transportPosition.inSeconds() / secondsPerPixel);
+
+    auto min = std::min(oldOffset, offset) - 2;
+    auto width = std::abs(oldOffset - offset) + 4;
+    repaint(juce::Rectangle<int>(min, 0, width, getHeight()));
 }
 
 void MidiEventsEditorComponent::updateGridSnapType()

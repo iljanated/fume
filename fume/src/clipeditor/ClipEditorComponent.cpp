@@ -14,6 +14,7 @@ ClipEditorComponent::ClipEditorComponent(fumeUI::UIContext& context)
 
 ClipEditorComponent::~ClipEditorComponent()
 {
+	currentClipState.removeListener(this);
 	uiContext.selectionManager.removeChangeListener(this);
 }
 
@@ -33,6 +34,13 @@ void ClipEditorComponent::resized()
 	if (implementationComponent)
 	{
 		implementationComponent->setBounds(bounds);
+	}
+}
+
+void ClipEditorComponent::focusGained(FocusChangeType cause) {
+	if (implementationComponent && implementationComponent->getParentComponent() != nullptr && implementationComponent->isShowing())
+	{
+		implementationComponent->grabKeyboardFocus();
 	}
 }
 
@@ -71,10 +79,5 @@ void ClipEditorComponent::changeListenerCallback(juce::ChangeBroadcaster* source
 					return;
 			}
 		}
-
-		// If no clip is selected, reset the implementation component
-		//currentClipState.removeListener(this);
-		//removeChildComponent(implementationComponent.get());
-		//implementationComponent.reset();
 	}
 }

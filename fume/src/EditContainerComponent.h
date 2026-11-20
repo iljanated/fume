@@ -5,6 +5,7 @@
 #include "UIContext.h"
 #include "TrackListContainerComponent.h"
 #include "TransportComponent.h"
+#include "PluginChainComponent.h"
 #include "CarrouselComponent.h"
 
 namespace te = tracktion;
@@ -32,6 +33,7 @@ private:
 
 	TrackListContainerComponent trackListContainerComponent{ uiContext };
     ClipEditorComponent clipEditorComponent{ uiContext };
+	PluginChainComponent pluginChainComponent{ uiContext };
     TransportComponent transportComponent{ uiContext };
 	CarrouselComponent carrouselComponent;
     

@@ -4,6 +4,8 @@
 
 InputManager::InputManager()
 {
+	juce::ModifierKeys::Flags shiftControl  = static_cast<juce::ModifierKeys::Flags>(juce::ModifierKeys::shiftModifier | juce::ModifierKeys::ctrlModifier);
+
 	// cursor
 
 	actionBindings.set(InputAction::Left, ActionBinding{ juce::KeyPress::leftKey, juce::ModifierKeys::noModifiers });
@@ -41,6 +43,10 @@ InputManager::InputManager()
 
 	actionBindings.set(InputAction::Play, ActionBinding{ juce::KeyPress::spaceKey, juce::ModifierKeys::noModifiers });
 	actionBindings.set(InputAction::PlayFromStart, ActionBinding{ juce::KeyPress::spaceKey, juce::ModifierKeys::shiftModifier });
+
+	// globals
+	actionBindings.set(InputAction::Options, ActionBinding{ 'S', shiftControl });
+	actionBindings.set(InputAction::Save, ActionBinding{ 'D', shiftControl });
 
 	initSDL();
 	startTimerHz(60);

@@ -19,7 +19,7 @@ te::Clip& MidiClipComponent::getClip()
 
 void MidiClipComponent::paint(juce::Graphics& g)
 {
-    bool isSelected = uiContext.selectionManager.isSelected(clip);
+	bool isSelected = uiContext.selectionManager.isSelected(clip);
 
     auto localBounds = getLocalBounds();
 

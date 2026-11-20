@@ -32,6 +32,7 @@ target_include_directories(Fume PRIVATE
     src/clipeditor
     src/clipeditor/midiclip
     src/clipeditor/midiclip/toolstates
+    src/pluginchain
     src/selectables
     src/tracklist
     src/tracklist/toolstates
@@ -81,11 +82,17 @@ target_sources(Fume PRIVATE
     src/common/VarConverters.h
     src/EditContainerComponent.cpp
     src/EditContainerComponent.h
+    src/EditManager.cpp
+    src/EditManager.h
     src/FumeLookAndFeel.h
     src/Main.cpp
     src/MainComponent.cpp
     src/MainComponent.h
     src/ManualViewport.h
+    src/OptionsComponent.cpp
+    src/OptionsComponent.h
+    src/pluginchain/PluginChainComponent.cpp
+    src/pluginchain/PluginChainComponent.h
     src/selectables/SelectableClipClass.cpp
     src/selectables/SelectableClipClass.h
     src/tracklist/AudioClipComponent.cpp

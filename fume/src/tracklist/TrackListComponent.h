@@ -65,11 +65,12 @@ private:
     //==============================================================================
 	juce::Viewport& viewport;
     fumeUI::UIContext& uiContext;
-	DrawableRectangle currentPositionMarker;
+	te::TimePosition transportPosition;
 	Helpers::AsyncResizer asyncResizer{ *this };
 	te::engine::TimecodeSnapType snapType{ te::engine::TimecodeType::barsBeats, 1 };
 	ToolStateManager<TrackListComponent> toolStateManager{ uiContext.inputManager, FumeIDs::TrackListSelectToolState};
 	TrackListCursorComponent cursorComponent{ uiContext, *this };
+	juce::ValueTree tempoSequenceState;
 
 	void activateToolState(ToolState* newState);
 

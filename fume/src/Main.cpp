@@ -27,6 +27,10 @@ public:
 
     void systemRequestedQuit() override
     {
+		if (mainWindow != nullptr)
+		{
+			mainWindow->systemRequestedToQuit();
+		}
         quit();
     }
 
@@ -59,6 +63,15 @@ public:
         void closeButtonPressed() override
         {
             JUCEApplication::getInstance()->systemRequestedQuit();
+        }
+
+        void systemRequestedToQuit()
+        {
+			auto* mainComponent = dynamic_cast<MainComponent*>(getContentComponent());
+			if (mainComponent != nullptr)
+			{
+				mainComponent->systemRequestedToQuit();
+			}
         }
 
         static juce::PropertySet* getGlobalSettings()
