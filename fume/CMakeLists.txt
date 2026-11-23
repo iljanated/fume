@@ -91,8 +91,11 @@ target_sources(Fume PRIVATE
     src/ManualViewport.h
     src/OptionsComponent.cpp
     src/OptionsComponent.h
+    src/pluginchain/FourOscPluginComponent.h
+    src/pluginchain/LevelMeterPluginComponent.h
     src/pluginchain/PluginChainComponent.cpp
     src/pluginchain/PluginChainComponent.h
+    src/pluginchain/VolumeAndPanPluginComponent.h
     src/selectables/SelectableClipClass.cpp
     src/selectables/SelectableClipClass.h
     src/tracklist/AudioClipComponent.cpp

@@ -20,17 +20,20 @@ TransportComponent::TransportComponent(fumeUI::UIContext& c)
 	playButton.addListener(this);
 	playButton.setHasFocusOutline(true);
 
+	tempoSlider.setSliderStyle(juce::Slider::SliderStyle::LinearBarVertical);
 	addAndMakeVisible(tempoSlider);
 	if (auto* tempo = extendedEdit.getTempoSequence().getTempo(0))
 	{
+		tempoSlider.setRange(20.0, 300.0, 0.1); 
 		tempoSlider.getValueObject().referTo(juce::Value(new fumeHelpers::BpmRemapValueSource(edit, *tempo)));
-		tempoSlider.setRange(20.0, 300.0, 0.1);
 	}
 
+	loopPoint1Slider.setSliderStyle(juce::Slider::SliderStyle::LinearBarVertical);
 	addAndMakeVisible(loopPoint1Slider);
 	loopPoint1Slider.getValueObject().referTo(transport.state.getPropertyAsValue(te::IDs::loopPoint1, nullptr));
 	loopPoint1Slider.setRange(0.0, edit.maximumLength, 0.01);
 
+	loopPoint2Slider.setSliderStyle(juce::Slider::SliderStyle::LinearBarVertical);
 	addAndMakeVisible(loopPoint2Slider);
 	loopPoint2Slider.getValueObject().referTo(transport.state.getPropertyAsValue(te::IDs::loopPoint2, nullptr));
 	loopPoint2Slider.setRange(0.0, edit.maximumLength, 0.01);

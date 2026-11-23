@@ -21,6 +21,7 @@ public:
 private:
 	fumeUI::UIContext& uiContext;
 	juce::ValueTree currentTrackState;
+	std::vector<std::unique_ptr<juce::Component>> pluginComponents;
 
 	void clearPluginComponents();
 

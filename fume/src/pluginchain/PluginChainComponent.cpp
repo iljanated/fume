@@ -1,4 +1,7 @@
 #include "PluginChainComponent.h"
+#include "FourOscPluginComponent.h"
+#include "VolumeAndPanPluginComponent.h"
+#include "LevelMeterPluginComponent.h"
 
 PluginChainComponent::PluginChainComponent(fumeUI::UIContext& uiContext)
 	: uiContext{ uiContext }
@@ -21,6 +24,15 @@ void PluginChainComponent::paint(juce::Graphics& g)
 
 void PluginChainComponent::resized()
 {
+	auto localBounds = getLocalBounds();
+	
+	for (auto& comp : pluginComponents)
+	{
+		if (comp != nullptr)
+		{
+			comp->setBounds(localBounds.removeFromLeft(300));
+		}
+	}
 }
 
 void PluginChainComponent::focusGained(FocusChangeType cause)
@@ -65,10 +77,39 @@ void PluginChainComponent::clearPluginComponents()
 
 void PluginChainComponent::populatePluginComponentsForTrack(te::Track& track)
 {
+	pluginComponents.clear();
+
 	auto plugins = track.getAllPlugins();
 
 	for (auto plugin : plugins)
 	{
 		DBG("Plugin: " << plugin->getName());
+		auto pluginName = plugin->getName();
+
+		if (pluginName == "4OSC")
+		{
+			auto fourOscPlugin = dynamic_cast<te::FourOscPlugin*>(plugin);
+			auto component = std::make_unique<FourOscPluginComponent>(fourOscPlugin);
+			addAndMakeVisible(*component);
+			pluginComponents.push_back(std::move(component));
+		}
+		else if (pluginName == "Volume & Pan Plugin")
+		{
+			auto component = std::make_unique<VolumeAndPanPluginComponent>();
+			addAndMakeVisible(*component);
+			pluginComponents.push_back(std::move(component));
+		}
+		else if (pluginName == "Level Meter")
+		{
+			auto levelMeterPlugin = dynamic_cast<te::LevelMeterPlugin*>(plugin);
+			auto component = std::make_unique<LevelMeterPluginComponent>(levelMeterPlugin);
+			addAndMakeVisible(*component);
+			pluginComponents.push_back(std::move(component));
+		}
+		else
+		{
+			DBG("Unknown plugin: " << pluginName);
+			continue;
+		}
 	}
 }

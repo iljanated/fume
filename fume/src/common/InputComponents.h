@@ -8,6 +8,72 @@ namespace te = tracktion;
 
 namespace fumeUI
 {
+    class ParameterSliderAttachment : private te::AutomatableParameter::Listener,
+        private juce::Slider::Listener,
+        private juce::AsyncUpdater
+    {
+    public:
+        ParameterSliderAttachment(te::AutomatableParameter::Ptr param, juce::Slider& s);
+
+        ~ParameterSliderAttachment() override;
+
+    private:
+        te::AutomatableParameter::Ptr parameter;
+        juce::Slider& slider;
+        bool isUpdatingFromSlider = false;
+        bool isUpdatingFromParameter = false;
+        bool isDragging = false;
+
+        // 1. UI -> Engine: User moves the slider
+        void sliderValueChanged(juce::Slider*) override;
+
+        // 2. Touch / Latch Gesture Handling
+        void sliderDragStarted(juce::Slider*) override;
+
+        void sliderDragEnded(juce::Slider*) override;
+
+        void startAutomationGesture();
+
+        void endAutomationGesture();
+
+        // 3. Engine -> UI: Automation playback or external control changes the parameter
+        void curveHasChanged(te::AutomatableParameter&) override;
+
+        void currentValueChanged(te::AutomatableParameter&) override;
+
+        void handleAsyncUpdate() override;
+    };
+
+    class BorderedFlexContainer : public juce::Component
+    {
+    public:
+        BorderedFlexContainer(juce::Colour borderCol = juce::Colours::grey, float thickness = 1.5f)
+            : borderColour(borderCol), borderThickness(thickness)
+        {
+            // Allows mouse clicks to pass through to underlying components if needed
+            setInterceptsMouseClicks(false, true);
+        }
+
+        void paint(juce::Graphics& g) override
+        {
+            g.setColour(borderColour);
+            g.drawRect(getLocalBounds().toFloat(), borderThickness);
+        }
+
+        void resized() override
+        {
+            // Shrink the layout area slightly so children don't cover the border
+            auto innerBounds = getLocalBounds().reduced(static_cast<int> (borderThickness) + 4);
+            flexBox.performLayout(innerBounds);
+        }
+
+        juce::FlexBox flexBox;
+
+    private:
+        juce::Colour borderColour;
+        float borderThickness;
+    };
+
     class KeyboardSlider : public juce::Slider,
         private juce::Timer
     {
