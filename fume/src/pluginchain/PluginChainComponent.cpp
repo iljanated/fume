@@ -25,12 +25,19 @@ void PluginChainComponent::paint(juce::Graphics& g)
 void PluginChainComponent::resized()
 {
 	auto localBounds = getLocalBounds();
+	auto height = localBounds.getHeight();
+
+	auto gridSize = localBounds.getHeight() / 4.0f;
+
+	int x = 0;
 	
 	for (auto& comp : pluginComponents)
 	{
 		if (comp != nullptr)
 		{
-			comp->setBounds(localBounds.removeFromLeft(300));
+			auto width = comp->getWidth();
+			comp->setBounds(juce::Rectangle(x, 0, width, height));
+			x += width;
 		}
 	}
 }
@@ -89,20 +96,20 @@ void PluginChainComponent::populatePluginComponentsForTrack(te::Track& track)
 		if (pluginName == "4OSC")
 		{
 			auto fourOscPlugin = dynamic_cast<te::FourOscPlugin*>(plugin);
-			auto component = std::make_unique<FourOscPluginComponent>(fourOscPlugin);
+			auto component = std::make_unique<FourOscPluginComponent>(uiContext, fourOscPlugin);
 			addAndMakeVisible(*component);
 			pluginComponents.push_back(std::move(component));
 		}
 		else if (pluginName == "Volume & Pan Plugin")
 		{
-			auto component = std::make_unique<VolumeAndPanPluginComponent>();
+			auto volumeAndPanPlugin = dynamic_cast<te::VolumeAndPanPlugin*>(plugin);
+			auto component = std::make_unique<VolumeAndPanPluginComponent>(uiContext, volumeAndPanPlugin);
 			addAndMakeVisible(*component);
 			pluginComponents.push_back(std::move(component));
 		}
 		else if (pluginName == "Level Meter")
-		{
-			auto levelMeterPlugin = dynamic_cast<te::LevelMeterPlugin*>(plugin);
-			auto component = std::make_unique<LevelMeterPluginComponent>(levelMeterPlugin);
+		{	auto levelMeterPlugin = dynamic_cast<te::LevelMeterPlugin*>(plugin);
+			auto component = std::make_unique<LevelMeterPluginComponent>(uiContext, levelMeterPlugin);
 			addAndMakeVisible(*component);
 			pluginComponents.push_back(std::move(component));
 		}

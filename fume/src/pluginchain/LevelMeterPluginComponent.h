@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "UIContext.h"
 
 namespace te = tracktion;
 
@@ -75,8 +76,8 @@ private:
 class LevelMeterPluginComponent : public juce::Component
 {
 public:
-	LevelMeterPluginComponent(te::LevelMeterPlugin* plugin)
-		: levelMeterComponent(plugin->measurer)
+	LevelMeterPluginComponent(fumeUI::UIContext& context, te::LevelMeterPlugin* plugin)
+		: uiContext(context), plugin(plugin), levelMeterComponent(plugin->measurer)
 	{
 		addAndMakeVisible(levelMeterComponent);
 	}
@@ -98,6 +99,8 @@ public:
 		levelMeterComponent.setBounds(juce::Rectangle<int>(20, 20, 30, 100));
 	}
 private:
+	fumeUI::UIContext& uiContext;
+	te::LevelMeterPlugin* plugin;
 	LevelMeterComponent levelMeterComponent;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LevelMeterPluginComponent)

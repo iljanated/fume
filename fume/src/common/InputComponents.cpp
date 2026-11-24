@@ -171,4 +171,57 @@ namespace fumeUI
             }
         }
     }
+    
+    ADSRComponent::ADSRComponent(UIContext& context)
+        : uiContext(context)
+    {
+        attackSlider.setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
+        attackSlider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+        addAndMakeVisible(attackSlider);
+        attackLabel.setJustificationType(juce::Justification::centred);
+        addAndMakeVisible(attackLabel);
+
+        decaySlider.setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
+        decaySlider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+        addAndMakeVisible(decaySlider);
+        decayLabel.setJustificationType(juce::Justification::centred);
+        addAndMakeVisible(decayLabel);
+
+        sustainSlider.setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
+        sustainSlider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+        addAndMakeVisible(sustainSlider);
+        sustainLabel.setJustificationType(juce::Justification::centred);
+        addAndMakeVisible(sustainLabel);
+
+        releaseSlider.setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
+        releaseSlider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+        addAndMakeVisible(releaseSlider);
+        releaseLabel.setJustificationType(juce::Justification::centred);
+        addAndMakeVisible(releaseLabel);
+    }
+    
+    void ADSRComponent::resized()
+    {
+        auto localBounds = getLocalBounds();
+        auto width = localBounds.getWidth() / 4;
+
+        auto labelHeight = 24;
+        auto sliderHeight = localBounds.getHeight() - labelHeight;
+
+        auto attackRect = localBounds.removeFromLeft(width);
+        attackSlider.setBounds(attackRect.removeFromTop(sliderHeight));
+        attackLabel.setBounds(attackRect);
+
+        auto decayRect = localBounds.removeFromLeft(width);
+        decaySlider.setBounds(decayRect.removeFromTop(sliderHeight));
+        decayLabel.setBounds(decayRect);
+
+        auto sustainRect = localBounds.removeFromLeft(width);
+        sustainSlider.setBounds(sustainRect.removeFromTop(sliderHeight));
+        sustainLabel.setBounds(sustainRect);
+
+        auto releaseRect = localBounds.removeFromLeft(width);
+        releaseSlider.setBounds(releaseRect.removeFromTop(sliderHeight));
+        releaseLabel.setBounds(releaseRect);
+    }
 }

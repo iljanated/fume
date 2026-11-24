@@ -55,7 +55,6 @@ namespace fumeUI
 
 	juce::String beatToString(te::core::tempo::BarsAndBeats barsAndBeats, bool useTriplets);
 
-
 	class WrappingFocusTraverser : public juce::KeyboardFocusTraverser
 	{
 	public:
