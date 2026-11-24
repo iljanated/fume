@@ -181,14 +181,14 @@ public:
 	{
 		auto localBounds = juce::Rectangle(0, 0, getWidth(), getHeight());
 
-		auto oscHeight = localBounds.getHeight() / 4;
-		auto oscRect = localBounds.removeFromLeft(300);
+		auto oscHeight = 74;
+		auto oscRect = localBounds.removeFromLeft(450);
 		osc1Component.setBounds(oscRect.removeFromTop(oscHeight));
 		osc2Component.setBounds(oscRect.removeFromTop(oscHeight));
 		osc3Component.setBounds(oscRect.removeFromTop(oscHeight));
 		osc4Component.setBounds(oscRect.removeFromTop(oscHeight));
 
-		ampADSRComponent.setBounds(localBounds.removeFromTop(200));
+		ampADSRComponent.setBounds(localBounds.removeFromLeft(150).removeFromTop(296));
 	}
 
 private:

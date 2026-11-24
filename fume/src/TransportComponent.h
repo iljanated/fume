@@ -32,7 +32,7 @@ private:
     fumeUI::TimePositionSlider loopPoint1Slider{ uiContext, "Change LoopStart", nullptr };
     fumeUI::TimePositionSlider loopPoint2Slider{ uiContext, "Change LoopEnd", nullptr };
 
-    fumeUI::CardinalFocusTraverser focusTraverser { fumeUI::CardinalFocusTraverser::WrappingType::Wrapping };
+    fumeUI::CardinalFocusTraverser focusTraverser;
     
     void buttonClicked(juce::Button* button) override;
 

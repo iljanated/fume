@@ -5,7 +5,7 @@
 namespace te = tracktion;
 
 TransportComponent::TransportComponent(fumeUI::UIContext& c)
-	: uiContext(c)
+	: uiContext(c), focusTraverser{ this }
 {
 	auto& extendedEdit = uiContext.extendedEdit;
 	auto& edit = extendedEdit.getEdit();
