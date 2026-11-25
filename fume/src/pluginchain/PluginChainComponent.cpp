@@ -4,7 +4,7 @@
 #include "LevelMeterPluginComponent.h"
 
 PluginChainComponent::PluginChainComponent(fumeUI::UIContext& uiContext)
-	: uiContext{ uiContext }, focusTraverser{ this }
+	: uiContext{ uiContext }, focusTraverser{ uiContext, this }
 {
 	uiContext.selectionManager.addChangeListener(this);
 }
@@ -60,24 +60,8 @@ bool PluginChainComponent::keyPressed(const juce::KeyPress& key)
 	auto modifiers = key.getModifiers();
 	auto& inputManager = uiContext.inputManager;
 
-	if (inputManager.validate(keyCode, modifiers, InputAction::MoveLeft))
+	if (focusTraverser.keyPressed(key))
 	{
-		focusComponent({ -1, 0 });
-		return true;
-	}
-	if (inputManager.validate(keyCode, modifiers, InputAction::MoveRight))
-	{
-		focusComponent({ 1, 0 });
-		return true;
-	}
-	if (inputManager.validate(keyCode, modifiers, InputAction::MoveUp))
-	{
-		focusComponent({ 0, -1 });
-		return true;
-	}
-	if (inputManager.validate(keyCode, modifiers, InputAction::MoveDown))
-	{
-		focusComponent({ 0, 1 });
 		return true;
 	}
 	return false;
@@ -155,23 +139,4 @@ void PluginChainComponent::populatePluginComponentsForTrack(te::Track& track)
 			continue;
 		}
 	}
-}
-
-void PluginChainComponent::focusComponent(juce::Point<int> delta)
-{
-	auto* current = juce::Component::getCurrentlyFocusedComponent();
-
-	if (current == nullptr || (!isParentOf(current) && current != this))
-		current = focusTraverser.getDefaultComponent(this);
-
-	if (current == nullptr)
-		return;
-
-	auto* next = focusTraverser.getNextComponent(current, delta);
-
-	if (next == nullptr)
-		next = focusTraverser.getDefaultComponent(this);
-
-	if (next != nullptr)
-		next->grabKeyboardFocus();
 }

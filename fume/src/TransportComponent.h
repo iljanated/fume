@@ -37,7 +37,6 @@ private:
     void buttonClicked(juce::Button* button) override;
 
 	void togglePlay();
-	void focusComponent(juce::Point<int> delta);
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportComponent)
 };

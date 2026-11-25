@@ -30,7 +30,5 @@ private:
 
 	void populatePluginComponentsForTrack(te::Track& track);
 
-	void focusComponent(juce::Point<int> delta);
-
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginChainComponent)
 };

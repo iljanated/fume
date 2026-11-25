@@ -7,8 +7,9 @@ namespace fumeUI
     {
         jassert(parameter != nullptr);
 
-        auto range = parameter->getValueRange();
-        slider.setRange(range.getStart(), range.getEnd(), 0.0);
+        auto range = parameter->valueRange;
+        
+        slider.setRange(range.start, range.end, range.interval);
         slider.setValue(parameter->getCurrentValue(), juce::dontSendNotification);
 
         parameter->addListener(this);
@@ -41,6 +42,9 @@ namespace fumeUI
 
         const juce::ScopedValueSetter<bool> svs(isUpdatingFromSlider, true);
         const float newValue = static_cast<float>(slider.getValue());
+
+        // DBG("range " << slider.getRange().getStart() << " " << slider.getRange().getEnd() << " " << newValue);
+		// DBG("parameter range " << parameter->getValueRange().getStart() << " " << parameter->getValueRange().getEnd() << " " << parameter->getCurrentValue());
 
         // setParameter triggers automation point writing when automation record is enabled
         parameter->setParameter(newValue, juce::sendNotification);
@@ -223,5 +227,54 @@ namespace fumeUI
         auto releaseRect = localBounds.removeFromLeft(width);
         releaseSlider.setBounds(releaseRect.removeFromTop(sliderHeight));
         releaseLabel.setBounds(releaseRect);
+    }
+    
+    bool TimePositionSlider::keyPressed(const juce::KeyPress& key)
+    {
+        if (key == juce::KeyPress::upKey || key == juce::KeyPress::rightKey)
+        {
+            double nextVal = calculateStep(getValue(), 0.001);
+            setValue(nextVal, juce::sendNotificationSync);
+            return true; // Consume the keypress
+        }
+
+        if (key == juce::KeyPress::downKey || key == juce::KeyPress::leftKey)
+        {
+            double prevVal = calculateStep(getValue(), -0.001);
+            setValue(prevVal, juce::sendNotificationSync);
+            return true; // Consume the keypress
+        }
+
+        return juce::Slider::keyPressed(key);
+    }
+    
+    double TimePositionSlider::snapValue(double attemptedValue, DragMode dragMode)
+    {
+        auto currentValue = getValue();
+        return calculateStep(currentValue, attemptedValue - currentValue);
+    }
+    
+    juce::String TimePositionSlider::getTextFromValue(double value)
+    {
+        auto& tempoSequence = uiContext.extendedEdit.getTempoSequence();
+        auto barsAndBeats = tempoSequence.timeToBarsBeats(te::TimePosition::fromSeconds(value));
+
+        return fumeUI::beatToString(barsAndBeats, false);
+    }
+    
+    double TimePositionSlider::calculateStep(double currentValue, double offset)
+    {
+        auto& tempoSequence = uiContext.extendedEdit.getTempoSequence();
+
+        if (offset > 0)
+        {
+            auto nextValue = snapType.roundTimeUp(te::TimePosition::fromSeconds(currentValue + offset), tempoSequence);
+            return nextValue.inSeconds();
+        }
+        else
+        {
+            auto prevValue = snapType.roundTimeDown(te::TimePosition::fromSeconds(currentValue + offset), tempoSequence);
+            return prevValue.inSeconds();
+        }
     }
 }

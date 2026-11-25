@@ -5,7 +5,7 @@
 namespace te = tracktion;
 
 TransportComponent::TransportComponent(fumeUI::UIContext& c)
-	: uiContext(c), focusTraverser{ this }
+	: uiContext(c), focusTraverser{ uiContext, this }
 {
 	auto& extendedEdit = uiContext.extendedEdit;
 	auto& edit = extendedEdit.getEdit();
@@ -84,24 +84,8 @@ bool TransportComponent::keyPressed(const juce::KeyPress& key)
 		playButton.triggerClick();
 		return true;
 	}
-	if (inputManager.validate(keyCode, modifiers, InputAction::MoveLeft))
+	if (focusTraverser.keyPressed(key))
 	{
-		focusComponent({ -1, 0 });
-		return true;
-	}
-	if (inputManager.validate(keyCode, modifiers, InputAction::MoveRight))
-	{
-		focusComponent({ 1, 0 });
-		return true;
-	}
-	if (inputManager.validate(keyCode, modifiers, InputAction::MoveUp))
-	{
-		focusComponent({ 0, -1 });
-		return true;
-	}
-	if (inputManager.validate(keyCode, modifiers, InputAction::MoveDown))
-	{
-		focusComponent({ 0, 1 });
 		return true;
 	}
 	return false;
@@ -127,23 +111,4 @@ void TransportComponent::togglePlay()
 	{
 		transport.play(false);
 	}
-}
-
-void TransportComponent::focusComponent(juce::Point<int> delta)
-{
-	auto* current = juce::Component::getCurrentlyFocusedComponent();
-
-	if (current == nullptr || (!isParentOf(current) && current != this))
-		current = focusTraverser.getDefaultComponent(this);
-
-	if (current == nullptr)
-		return;
-
-	auto* next = focusTraverser.getNextComponent(current, delta);
-
-	if (next == nullptr)
-		next = focusTraverser.getDefaultComponent(this);
-
-	if (next != nullptr)
-		next->grabKeyboardFocus();
 }

@@ -5,8 +5,8 @@
 
 namespace fumeUI
 {
-	CardinalFocusTraverser::CardinalFocusTraverser(juce::Component* rootComponent)
-		: rootComponent(rootComponent)
+	CardinalFocusTraverser::CardinalFocusTraverser(fumeUI::UIContext& uiContext, juce::Component* rootComponent)
+		: uiContext(uiContext), rootComponent(rootComponent)
 	{
 	}
 
@@ -32,6 +32,7 @@ namespace fumeUI
 
 	juce::Component* CardinalFocusTraverser::getNextComponent(juce::Component* current, juce::Point<int> delta)
 	{
+
 		// return default component if current is nullptr
 		if (current == nullptr)
 		{
@@ -103,5 +104,75 @@ namespace fumeUI
 		}
 
 		return  bestCandidate;
+	}
+
+	bool CardinalFocusTraverser::keyPressed(const juce::KeyPress& key)
+	{
+		auto keyCode = key.getKeyCode();
+		auto modifiers = key.getModifiers();
+		auto& inputManager = uiContext.inputManager;
+		
+		if (inputManager.validate(keyCode, modifiers, InputAction::MoveLeft))
+		{
+			auto current = getCurrentComponent();
+			auto next = getNextComponent(current, { -1, 0 });
+
+			if (next != nullptr)
+			{
+				next->grabKeyboardFocus();
+			}
+			return true;
+		}
+		if (inputManager.validate(keyCode, modifiers, InputAction::MoveRight))
+		{
+			auto current = getCurrentComponent();
+			auto next = getNextComponent(current, { 1, 0 });
+
+			if (next != nullptr)
+			{
+				next->grabKeyboardFocus();
+			}
+			return true;
+		}
+		if (inputManager.validate(keyCode, modifiers, InputAction::MoveUp))
+		{
+			auto current = getCurrentComponent();
+			auto next = getNextComponent(current, { 0, -1 });
+
+			if (next != nullptr)
+			{
+				next->grabKeyboardFocus();
+			}
+			return true;
+		}
+		if (inputManager.validate(keyCode, modifiers, InputAction::MoveDown))
+		{
+			auto current = getCurrentComponent();
+			auto next = getNextComponent(current, { 0, 1 });
+
+			if (next != nullptr)
+			{
+				next->grabKeyboardFocus();
+			}
+			return true;
+		}
+		return false;
+	}
+
+	juce::Component* CardinalFocusTraverser::getCurrentComponent()
+	{
+		auto* current = juce::Component::getCurrentlyFocusedComponent();
+
+		if (current == nullptr || (!rootComponent->isParentOf(current) && current != rootComponent))
+		{
+			current = getDefaultComponent(rootComponent);
+		}
+		return current;
+	}
+
+	juce::Point<int> CardinalFocusTraverser::getCenter(juce::Component* component, juce::Component* parentComponent) const
+	{
+		auto localCentre = component->getLocalBounds().getCentre();
+		return parentComponent->getLocalPoint(component, localCentre);
 	}
 }

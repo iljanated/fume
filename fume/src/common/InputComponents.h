@@ -42,36 +42,35 @@ namespace fumeUI
 		void currentValueChanged(te::AutomatableParameter&) override;
 
 		void handleAsyncUpdate() override;
+
+		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParameterSliderAttachment)
 	};
 
-	class BorderedFlexContainer : public juce::Component
+	class LabeledSliderContainer : public juce::Component
 	{
 	public:
-		BorderedFlexContainer(juce::Colour borderCol = juce::Colours::grey, float thickness = 1.5f)
-			: borderColour(borderCol), borderThickness(thickness)
+		LabeledSliderContainer(juce::Slider& slider, juce::String text)
+			: slider(slider), label({}, text)
 		{
-			// Allows mouse clicks to pass through to underlying components if needed
-			setInterceptsMouseClicks(false, true);
+			label.setJustificationType(juce::Justification::centred);
+			addAndMakeVisible(slider);
+			addAndMakeVisible(label);
 		}
-
-		void paint(juce::Graphics& g) override
-		{
-			g.setColour(borderColour);
-			g.drawRect(getLocalBounds().toFloat(), borderThickness);
-		}
-
 		void resized() override
 		{
-			// Shrink the layout area slightly so children don't cover the border
-			auto innerBounds = getLocalBounds().reduced(static_cast<int> (borderThickness) + 4);
-			flexBox.performLayout(innerBounds);
+			auto bounds = getLocalBounds();
+			slider.setBounds(bounds.removeFromTop(bounds.getHeight() - 20));
+			label.setBounds(bounds);
 		}
 
-		juce::FlexBox flexBox;
+		juce::Slider& getSlider() { return slider; }
+		juce::Label& getLabel() { return label; }
 
 	private:
-		juce::Colour borderColour;
-		float borderThickness;
+		juce::Slider& slider;
+		juce::Label label;
+
+		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LabeledSliderContainer)
 	};
 
 	class KeyboardSlider : public juce::Slider,
@@ -110,60 +109,48 @@ namespace fumeUI
 		{
 		}
 
-		bool keyPressed(const juce::KeyPress& key) override
-		{
-			if (key == juce::KeyPress::upKey || key == juce::KeyPress::rightKey)
-			{
-				double nextVal = calculateStep(getValue(), 0.001);
-				setValue(nextVal, juce::sendNotificationSync);
-				return true; // Consume the keypress
-			}
+		~TimePositionSlider() override = default;
 
-			if (key == juce::KeyPress::downKey || key == juce::KeyPress::leftKey)
-			{
-				double prevVal = calculateStep(getValue(), -0.001);
-				setValue(prevVal, juce::sendNotificationSync);
-				return true; // Consume the keypress
-			}
+		bool keyPressed(const juce::KeyPress& key) override;
 
-			return juce::Slider::keyPressed(key);
-		}
+		double snapValue(double attemptedValue, DragMode dragMode) override;
 
-		double snapValue(double attemptedValue, DragMode dragMode) override
-		{
-			auto currentValue = getValue();
-			return calculateStep(currentValue, attemptedValue - currentValue);
-		}
-
-		juce::String getTextFromValue(double value) override
-		{
-			auto& tempoSequence = uiContext.extendedEdit.getTempoSequence();
-			auto barsAndBeats = tempoSequence.timeToBarsBeats(te::TimePosition::fromSeconds(value));
-
-			return fumeUI::beatToString(barsAndBeats, false);
-		}
+		juce::String getTextFromValue(double value) override;
 
 	private:
 		fumeUI::UIContext& uiContext;
 		te::TimecodeSnapType snapType{ te::TimecodeType::barsBeats, 9 };
 
-		double calculateStep(double currentValue, double offset)
-		{
-			auto& tempoSequence = uiContext.extendedEdit.getTempoSequence();
-
-			if (offset > 0)
-			{
-				auto nextValue = snapType.roundTimeUp(te::TimePosition::fromSeconds(currentValue + offset), tempoSequence);
-				return nextValue.inSeconds();
-			}
-			else
-			{
-				auto prevValue = snapType.roundTimeDown(te::TimePosition::fromSeconds(currentValue + offset), tempoSequence);
-				return prevValue.inSeconds();
-			}
-		}
+		double calculateStep(double currentValue, double offset);
 
 		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimePositionSlider)
+	};
+
+	class OptionsSlider : public KeyboardSlider
+	{
+	public:
+		OptionsSlider(juce::String undoMessage, juce::UndoManager* um, juce::StringArray options)
+			: KeyboardSlider(undoMessage, um), optionsArray(std::move(options))
+		{
+		}
+
+		~OptionsSlider() override = default;
+
+		juce::String getTextFromValue(double value) override
+		{
+			int intValue = static_cast<int>(value);
+
+			if (intValue < 0 || intValue >= optionsArray.size())
+			{
+				return "";
+			}
+			return optionsArray[intValue];
+		}
+
+	private:
+		juce::StringArray optionsArray;
+
+		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OptionsSlider)
 	};
 
 	class ADSRComponent : public juce::Component
