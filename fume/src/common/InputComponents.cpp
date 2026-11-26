@@ -133,6 +133,11 @@ namespace fumeUI
 
     bool KeyboardSlider::keyPressed(const juce::KeyPress& key)
     {
+        if (key.getModifiers().isAnyModifierKeyDown())
+        {
+            return false;
+        }
+
         // Only intercept if this slider actually has focus
         if (hasKeyboardFocus(true))
         {
@@ -149,7 +154,37 @@ namespace fumeUI
             startTimer(undoWindowMs);
         }
 
-        return juce::Slider::keyPressed(key);
+		DBG("range " << getRange().getStart() << " " << getRange().getEnd() << " " << getValue());
+
+		auto range = getNormalisableRange();
+		if (range.interval == 0.0)
+		{
+            // Define step size as a percentage of the visual slider track (e.g., 1% per press, 10% with Shift)
+            //double proportionStep = key.getModifiers().isShiftDown() ? 0.1 : 0.01;
+			double proportionStep = 0.01; // 1% step size
+            
+            double currentProportion = valueToProportionOfLength(getValue());
+
+            if (key.isKeyCode(juce::KeyPress::upKey) || key.isKeyCode(juce::KeyPress::rightKey))
+            {
+                double nextProportion = juce::jlimit(0.0, 1.0, currentProportion + proportionStep);
+                setValue(proportionOfLengthToValue(nextProportion), juce::sendNotificationAsync);
+                return true;
+            }
+
+            if (key.isKeyCode(juce::KeyPress::downKey) || key.isKeyCode(juce::KeyPress::leftKey))
+            {
+                double nextProportion = juce::jlimit(0.0, 1.0, currentProportion - proportionStep);
+                setValue(proportionOfLengthToValue(nextProportion), juce::sendNotificationAsync);
+                return true;
+            }
+
+            return false;
+		}
+        else
+        {
+            return juce::Slider::keyPressed(key);
+        }
     }
 
     void KeyboardSlider::focusLost(FocusChangeType cause)
@@ -233,14 +268,15 @@ namespace fumeUI
     {
         if (key == juce::KeyPress::upKey || key == juce::KeyPress::rightKey)
         {
-            double nextVal = calculateStep(getValue(), 0.001);
+            double nextVal = calculateStep(getValue(), 0.01);
+			DBG("nextVal: " << nextVal);
             setValue(nextVal, juce::sendNotificationSync);
             return true; // Consume the keypress
         }
 
         if (key == juce::KeyPress::downKey || key == juce::KeyPress::leftKey)
         {
-            double prevVal = calculateStep(getValue(), -0.001);
+            double prevVal = calculateStep(getValue(), -0.01);
             setValue(prevVal, juce::sendNotificationSync);
             return true; // Consume the keypress
         }

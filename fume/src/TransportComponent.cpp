@@ -27,7 +27,7 @@ TransportComponent::TransportComponent(fumeUI::UIContext& c)
 		tempoSlider.setRange(20.0, 300.0, 0.1); 
 		tempoSlider.getValueObject().referTo(juce::Value(new fumeHelpers::BpmRemapValueSource(edit, *tempo)));
 	}
-
+	
 	loopPoint1Slider.setSliderStyle(juce::Slider::SliderStyle::LinearBarVertical);
 	addAndMakeVisible(loopPoint1Slider);
 	loopPoint1Slider.getValueObject().referTo(transport.state.getPropertyAsValue(te::IDs::loopPoint1, nullptr));
@@ -38,6 +38,10 @@ TransportComponent::TransportComponent(fumeUI::UIContext& c)
 	loopPoint2Slider.getValueObject().referTo(transport.state.getPropertyAsValue(te::IDs::loopPoint2, nullptr));
 	loopPoint2Slider.setRange(0.0, edit.maximumLength, 0.01);
 
+	loopToggleButton.addListener(this);
+	loopToggleButton.setHasFocusOutline(true);
+	loopToggleButton.setToggleState(transport.looping, juce::dontSendNotification);
+	addAndMakeVisible(loopToggleButton);
 }
 
 TransportComponent::~TransportComponent()
@@ -51,11 +55,18 @@ void TransportComponent::paint(juce::Graphics& g)
 void TransportComponent::resized()
 {
 	auto bounds = getLocalBounds();
-	recordButton.setBounds(bounds.removeFromLeft(100));
-	playButton.setBounds(bounds.removeFromLeft(100));
-	tempoSlider.setBounds(bounds.removeFromLeft(100));
-	loopPoint1Slider.setBounds(bounds.removeFromLeft(100));
-	loopPoint2Slider.setBounds(bounds.removeFromLeft(100));
+
+	juce::FlexBox flexBox;
+	flexBox.flexDirection = juce::FlexBox::Direction::row;
+
+	flexBox.items.add(juce::FlexItem(recordButton).withFlex(1.0f).withMargin(1.0f));
+	flexBox.items.add(juce::FlexItem(playButton).withFlex(1.0f).withMargin(1.0f));
+	flexBox.items.add(juce::FlexItem(tempoSlider).withFlex(1.0f).withMargin(1.0f));
+	flexBox.items.add(juce::FlexItem(loopToggleButton).withFlex(1.0f).withMargin(1.0f));
+	flexBox.items.add(juce::FlexItem(loopPoint1Slider).withFlex(1.0f).withMargin(1.0f));
+	flexBox.items.add(juce::FlexItem(loopPoint2Slider).withFlex(1.0f).withMargin(1.0f));
+
+	flexBox.performLayout(bounds);
 }
 
 void TransportComponent::focusGained(FocusChangeType cause)
@@ -81,7 +92,11 @@ bool TransportComponent::keyPressed(const juce::KeyPress& key)
 	auto& inputManager = uiContext.inputManager;
 	if (inputManager.validate(keyCode, modifiers, InputAction::Write))
 	{
-		playButton.triggerClick();
+		auto* currentlyFocusedComponent = dynamic_cast<juce::Button*>(focusTraverser.getCurrentComponent());
+		if (currentlyFocusedComponent != nullptr && currentlyFocusedComponent->isEnabled())
+		{
+			currentlyFocusedComponent->triggerClick();
+		}
 		return true;
 	}
 	if (focusTraverser.keyPressed(key))
@@ -96,6 +111,12 @@ void TransportComponent::buttonClicked(juce::Button* button)
 	if (button == &playButton)
 	{
 		togglePlay();
+	}
+
+	if (button == &loopToggleButton)
+	{
+		auto& transport = uiContext.extendedEdit.getEdit().getTransport();
+		transport.looping = loopToggleButton.getToggleState();
 	}
 }
 

@@ -31,6 +31,7 @@ private:
 	fumeUI::KeyboardSlider tempoSlider{ "Change Tempo", &uiContext.extendedEdit.getUndoManager() };
     fumeUI::TimePositionSlider loopPoint1Slider{ uiContext, "Change LoopStart", nullptr };
     fumeUI::TimePositionSlider loopPoint2Slider{ uiContext, "Change LoopEnd", nullptr };
+	juce::ToggleButton loopToggleButton{ "Loop" };
 
     fumeUI::CardinalFocusTraverser focusTraverser;
     

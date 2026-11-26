@@ -60,6 +60,16 @@ bool PluginChainComponent::keyPressed(const juce::KeyPress& key)
 	auto modifiers = key.getModifiers();
 	auto& inputManager = uiContext.inputManager;
 
+	if (inputManager.validate(keyCode, modifiers, InputAction::Write))
+	{
+		auto* currentlyFocusedComponent = dynamic_cast<juce::Button*>(focusTraverser.getCurrentComponent());
+		if (currentlyFocusedComponent != nullptr && currentlyFocusedComponent->isEnabled())
+		{
+			currentlyFocusedComponent->triggerClick();
+		}
+		return true;
+	}
+
 	if (focusTraverser.keyPressed(key))
 	{
 		return true;
