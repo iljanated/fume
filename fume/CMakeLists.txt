@@ -95,6 +95,7 @@ target_sources(Fume PRIVATE
     src/pluginchain/LevelMeterPluginComponent.h
     src/pluginchain/PluginChainComponent.cpp
     src/pluginchain/PluginChainComponent.h
+    src/pluginchain/PluginWrapperComponent.h
     src/pluginchain/VolumeAndPanPluginComponent.h
     src/selectables/SelectableClipClass.cpp
     src/selectables/SelectableClipClass.h

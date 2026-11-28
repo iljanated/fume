@@ -26,7 +26,13 @@ namespace fumeUI
     
     void makeComponentVisibleInViewport(juce::Viewport& viewport, juce::Component& component, int padding)
     {
-		auto targetRect = component.getBounds().expanded(padding);
+		auto* viewed = viewport.getViewedComponent();
+
+        if (viewed == nullptr)
+        {
+            return;
+        }
+        auto targetRect = viewed->getLocalArea(&component, component.getLocalBounds().expanded(padding));
 
         int viewX = viewport.getViewPositionX();
         int viewY = viewport.getViewPositionY();
@@ -59,7 +65,7 @@ namespace fumeUI
         // Apply the new position if it changed
         if (newX != viewX || newY != viewY)
         {
-            viewport.setViewPosition(newX, newY);
+			viewport.setViewPosition(newX, newY);
         }
     }
 

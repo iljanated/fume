@@ -5,12 +5,13 @@
 
 namespace te = tracktion;
 
-class VolumeAndPanPluginComponent : public juce::Component
+class VolumeAndPanPluginComponent : public TypedPluginComponent<te::VolumeAndPanPlugin>
 {
 public:
-	VolumeAndPanPluginComponent(fumeUI::UIContext& context, te::VolumeAndPanPlugin* plugin)
-		: uiContext(context), plugin(plugin)
+	VolumeAndPanPluginComponent(te::VolumeAndPanPlugin* plugin, fumeUI::UIContext& context)
+		: TypedPluginComponent(plugin, context, 100)
 	{
+		setSize(100, 300);
 	}
 	~VolumeAndPanPluginComponent() override {}
 	void paint(juce::Graphics& g) override
@@ -22,7 +23,5 @@ public:
 	}
 	void resized() override {}
 private:
-	fumeUI::UIContext& uiContext;
-	te::VolumeAndPanPlugin* plugin;
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VolumeAndPanPluginComponent)
 };

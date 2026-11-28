@@ -55,6 +55,13 @@ namespace fumeUI
 
 	juce::String beatToString(te::core::tempo::BarsAndBeats barsAndBeats, bool useTriplets);
 
+	class FlexibleComponent : public juce::Component {
+	public:
+		virtual ~FlexibleComponent() = default;
+		virtual int getMinimumWidth() const = 0;
+		virtual int getMinimumHeight() const = 0;
+	};
+
 	class WrappingFocusTraverser : public juce::KeyboardFocusTraverser
 	{
 	public:

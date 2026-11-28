@@ -7,6 +7,9 @@ PluginChainComponent::PluginChainComponent(fumeUI::UIContext& uiContext)
 	: uiContext{ uiContext }, focusTraverser{ uiContext, this }
 {
 	uiContext.selectionManager.addChangeListener(this);
+	addAndMakeVisible(viewport);
+	viewport.setViewedComponent(&containerComponent, false);
+	juce::Desktop::getInstance().addFocusChangeListener(this);
 }
 
 PluginChainComponent::~PluginChainComponent()
@@ -17,27 +20,28 @@ PluginChainComponent::~PluginChainComponent()
 
 void PluginChainComponent::paint(juce::Graphics& g)
 {
-	g.fillAll(juce::Colours::darkgrey);
-	g.setColour(juce::Colours::white);
-	g.drawText("PluginChain", getLocalBounds(), juce::Justification::centred);
+	g.fillAll(juce::Colours::black);
 }
 
 void PluginChainComponent::resized()
 {
 	auto localBounds = getLocalBounds();
-	auto height = localBounds.getHeight();
 
-	int x = 0;
-	
+	viewport.setBounds(localBounds);
+
+	auto height = localBounds.getHeight() - viewport.getScrollBarThickness();
+	int width = 0;
 	for (auto& comp : pluginComponents)
 	{
 		if (comp != nullptr)
 		{
-			auto width = comp->getWidth();
-			comp->setBounds(juce::Rectangle(x, 0, width, height));
-			x += width;
+			auto compWidth = comp->getMinimumWidth();
+			comp->setBounds(width, 0, compWidth, height);
+			width += compWidth;
 		}
 	}
+
+	containerComponent.setBounds(0, 0, width, height);
 }
 
 void PluginChainComponent::focusGained(FocusChangeType cause)
@@ -87,6 +91,53 @@ void PluginChainComponent::valueTreeParentChanged(juce::ValueTree& treeWhosePare
 	}
 }
 
+void PluginChainComponent::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded)
+{
+	if (parentTree == currentTrackState)
+	{
+		auto* track = uiContext.extendedEdit.getEdit().getTrackList().getTrackFor(currentTrackState);
+
+		if (track != nullptr)
+		{
+			populatePluginComponentsForTrack(track);
+			resized();
+			if(isShowing())
+			{
+			juce::MessageManager::callAsync([safeThis = juce::Component::SafePointer<PluginChainComponent>(this)]
+				{
+					if (safeThis == nullptr)
+						return;
+
+					safeThis->grabKeyboardFocus();
+				});
+			}
+		}
+	}
+}
+
+void PluginChainComponent::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved)
+{
+	if (parentTree == currentTrackState)
+	{
+		auto* track = uiContext.extendedEdit.getEdit().getTrackList().getTrackFor(currentTrackState);
+		if (track != nullptr)
+		{
+			populatePluginComponentsForTrack(track);
+			resized();
+			if (isShowing())
+			{
+			juce::MessageManager::callAsync([safeThis = juce::Component::SafePointer<PluginChainComponent>(this)]
+				{
+					if (safeThis == nullptr)
+						return;
+
+					safeThis->grabKeyboardFocus();
+				});
+			}
+		}
+	}
+}
+
 void PluginChainComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
 	auto& selectionManager = uiContext.selectionManager;
@@ -100,7 +151,7 @@ void PluginChainComponent::changeListenerCallback(juce::ChangeBroadcaster* sourc
 				auto* track = clip->getTrack();
 				currentTrackState = track->state;
 				currentTrackState.addListener(this);
-				populatePluginComponentsForTrack(*track);
+				populatePluginComponentsForTrack(track);
 				resized();
 				return;
 			}
@@ -112,11 +163,11 @@ void PluginChainComponent::clearPluginComponents()
 {
 }
 
-void PluginChainComponent::populatePluginComponentsForTrack(te::Track& track)
+void PluginChainComponent::populatePluginComponentsForTrack(te::Track* track)
 {
 	pluginComponents.clear();
 
-	auto plugins = track.getAllPlugins();
+	auto plugins = track->getAllPlugins();
 
 	for (auto plugin : plugins)
 	{
@@ -125,28 +176,52 @@ void PluginChainComponent::populatePluginComponentsForTrack(te::Track& track)
 
 		if (pluginName == "4OSC")
 		{
+			addPlusComponent(track);
+
 			auto fourOscPlugin = dynamic_cast<te::FourOscPlugin*>(plugin);
-			auto component = std::make_unique<FourOscPluginComponent>(uiContext, fourOscPlugin);
-			addAndMakeVisible(*component);
-			pluginComponents.push_back(std::move(component));
+			auto component = std::make_unique<FourOscPluginComponent>(fourOscPlugin, uiContext);
+			auto wrapper = std::make_unique<PluginWrapperComponent>(std::move(component));
+			containerComponent.addAndMakeVisible(*wrapper);
+			pluginComponents.push_back(std::move(wrapper));
 		}
 		else if (pluginName == "Volume & Pan Plugin")
 		{
+			addPlusComponent(track);
+
 			auto volumeAndPanPlugin = dynamic_cast<te::VolumeAndPanPlugin*>(plugin);
-			auto component = std::make_unique<VolumeAndPanPluginComponent>(uiContext, volumeAndPanPlugin);
-			addAndMakeVisible(*component);
-			pluginComponents.push_back(std::move(component));
+			auto component = std::make_unique<VolumeAndPanPluginComponent>(volumeAndPanPlugin, uiContext);
+			auto wrapper = std::make_unique<PluginWrapperComponent>(std::move(component));
+			containerComponent.addAndMakeVisible(*wrapper);
+			pluginComponents.push_back(std::move(wrapper));
 		}
 		else if (pluginName == "Level Meter")
 		{	auto levelMeterPlugin = dynamic_cast<te::LevelMeterPlugin*>(plugin);
-			auto component = std::make_unique<LevelMeterPluginComponent>(uiContext, levelMeterPlugin);
-			addAndMakeVisible(*component);
-			pluginComponents.push_back(std::move(component));
+			auto component = std::make_unique<LevelMeterPluginComponent>(levelMeterPlugin, uiContext);
+			auto wrapper = std::make_unique<PluginWrapperComponent>(std::move(component));
+			containerComponent.addAndMakeVisible(*wrapper);
+			pluginComponents.push_back(std::move(wrapper));
 		}
 		else
 		{
 			DBG("Unknown plugin: " << pluginName);
 			continue;
 		}
+	}
+}
+
+void PluginChainComponent::addPlusComponent(te::Track* track)
+{
+	auto plusComponent = std::make_unique<PlusComponent>(uiContext, track);
+	containerComponent.addAndMakeVisible(*plusComponent);
+	pluginComponents.push_back(std::move(plusComponent));
+}
+
+void PluginChainComponent::globalFocusChanged(juce::Component* focusedComponent)
+{
+	if (focusedComponent != nullptr && isParentOf(focusedComponent))
+	{
+		juce::MessageManager::callAsync([this, focusedComponent]() {
+			fumeUI::makeComponentVisibleInViewport(viewport, *focusedComponent, fumeUI::scrollPadding);
+			});
 	}
 }

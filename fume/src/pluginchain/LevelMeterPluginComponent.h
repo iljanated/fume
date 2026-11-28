@@ -2,16 +2,19 @@
 
 #include <JuceHeader.h>
 #include "UIContext.h"
+#include "PluginWrapperComponent.h"
 
 namespace te = tracktion;
 
-class LevelMeterComponent : public juce::Component, private juce::Timer
+class LevelMeterComponent : public Component, private juce::Timer
 {
 public:
 	LevelMeterComponent(te::LevelMeasurer& measurer)
 		: measurer(measurer)
 	{
 		measurer.addClient(client);
+
+		setSize(100, 300);
 		startTimerHz(30);
 	}
 
@@ -73,11 +76,11 @@ private:
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LevelMeterComponent)
 };
 
-class LevelMeterPluginComponent : public juce::Component
+class LevelMeterPluginComponent : public TypedPluginComponent<te::LevelMeterPlugin>
 {
 public:
-	LevelMeterPluginComponent(fumeUI::UIContext& context, te::LevelMeterPlugin* plugin)
-		: uiContext(context), plugin(plugin), levelMeterComponent(plugin->measurer)
+	LevelMeterPluginComponent(te::LevelMeterPlugin* plugin, fumeUI::UIContext& context)
+		: TypedPluginComponent(plugin, context, 100), levelMeterComponent(plugin->measurer)
 	{
 		addAndMakeVisible(levelMeterComponent);
 	}
@@ -99,8 +102,6 @@ public:
 		levelMeterComponent.setBounds(juce::Rectangle<int>(20, 20, 30, 100));
 	}
 private:
-	fumeUI::UIContext& uiContext;
-	te::LevelMeterPlugin* plugin;
 	LevelMeterComponent levelMeterComponent;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LevelMeterPluginComponent)

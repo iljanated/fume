@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "UIContext.h"
 #include "InputComponents.h"
+#include "PluginWrapperComponent.h"
 
 namespace te = tracktion;
 
@@ -117,11 +118,11 @@ private:
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OscComponent)
 };
 
-class FourOscPluginComponent : public juce::Component, public juce::Button::Listener
+class FourOscPluginComponent : public TypedPluginComponent<te::FourOscPlugin>, public juce::Button::Listener
 {
 public:
-	FourOscPluginComponent(fumeUI::UIContext& context, te::FourOscPlugin* plugin)
-		: uiContext(context), plugin(plugin)
+	FourOscPluginComponent(te::FourOscPlugin* plugin, fumeUI::UIContext& context)
+		: TypedPluginComponent(plugin, context, 500)
 	{
 		// filter 
 
@@ -246,17 +247,10 @@ public:
 		reverbMixSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
 		reverbMixSlider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
 		addAndMakeVisible(reverbMixLabel);
-
-		setSize(900, 300);
 	}
 
 	~FourOscPluginComponent() override
 	{
-	}
-
-	void paint(juce::Graphics& g) override
-	{
-		g.fillAll(juce::Colours::black);
 	}
 
 	void resized() override
@@ -342,6 +336,8 @@ public:
 
 	void buttonClicked(juce::Button* button) override
 	{
+		auto plugin = static_cast<te::FourOscPlugin*>(getPlugin());
+
 		if (button == &distortionToggleButton)
 		{
 			plugin->distortionOnValue = distortionToggleButton.getToggleState();
@@ -361,27 +357,24 @@ public:
 	}
 
 private:
-	fumeUI::UIContext& uiContext;
-	te::FourOscPlugin* plugin;
-
 	// osc controls
 	
-	OscComponent osc1Component{ uiContext, plugin->oscParams[0]};
-	OscComponent osc2Component{ uiContext, plugin->oscParams[1]};
-	OscComponent osc3Component{ uiContext, plugin->oscParams[2]};
-	OscComponent osc4Component{ uiContext, plugin->oscParams[3]};
+	OscComponent osc1Component{ getUIContext(), static_cast<te::FourOscPlugin*>(getPlugin())->oscParams[0]};
+	OscComponent osc2Component{ getUIContext(), static_cast<te::FourOscPlugin*>(getPlugin())->oscParams[1]};
+	OscComponent osc3Component{ getUIContext(), static_cast<te::FourOscPlugin*>(getPlugin())->oscParams[2]};
+	OscComponent osc4Component{ getUIContext(), static_cast<te::FourOscPlugin*>(getPlugin())->oscParams[3]};
 
 	// filter controls
 
-	fumeUI::OptionsSlider filterTypeSlider{ "Filter Type", &uiContext.extendedEdit.getUndoManager(), { "None", "Low Pass", "High Pass", "Band Pass", "Notch" } };
-	fumeUI::KeyboardSlider filterCutOffSlider{ "Filter Cutoff", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider filterResonanceSlider{ "Filter Resonance", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider filterEnvAmountSlider{ "Filter Env Amount", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider filterKeyTrackSlider{ "Filter Key Track", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider filterVelocityAmountSlider{ "Filter Velocity Amount", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::OptionsSlider filterSlopeSlider{ "Filter Slope", &uiContext.extendedEdit.getUndoManager(),{"12db", "24db"}};
+	fumeUI::OptionsSlider filterTypeSlider{ "Filter Type", &getUIContext().extendedEdit.getUndoManager(), { "None", "Low Pass", "High Pass", "Band Pass", "Notch" } };
+	fumeUI::KeyboardSlider filterCutOffSlider{ "Filter Cutoff", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider filterResonanceSlider{ "Filter Resonance", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider filterEnvAmountSlider{ "Filter Env Amount", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider filterKeyTrackSlider{ "Filter Key Track", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider filterVelocityAmountSlider{ "Filter Velocity Amount", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::OptionsSlider filterSlopeSlider{ "Filter Slope", &getUIContext().extendedEdit.getUndoManager(),{"12db", "24db"}};
 	
-	fumeUI::ADSRComponent filterADSRComponent{ uiContext };
+	fumeUI::ADSRComponent filterADSRComponent{ getUIContext() };
 
 	// filter containers
 
@@ -395,97 +388,97 @@ private:
 
 	// filter attachments
 
-	fumeUI::ParameterSliderAttachment filterCutoffSliderAttachment{ plugin->filterFreq, filterCutOffSlider };
-	fumeUI::ParameterSliderAttachment filterResonanceSliderAttachment{ plugin->filterResonance, filterResonanceSlider };
-	fumeUI::ParameterSliderAttachment filterEnvAmountSliderAttachment{ plugin->filterAmount, filterEnvAmountSlider };
-	fumeUI::ParameterSliderAttachment filterKeyTrackSliderAttachment{ plugin->filterKey, filterKeyTrackSlider };
-	fumeUI::ParameterSliderAttachment filterVelocityAmountSliderAttachment{ plugin->filterVelocity, filterVelocityAmountSlider };
+	fumeUI::ParameterSliderAttachment filterCutoffSliderAttachment{ getPlugin()->filterFreq, filterCutOffSlider };
+	fumeUI::ParameterSliderAttachment filterResonanceSliderAttachment{ getPlugin()->filterResonance, filterResonanceSlider };
+	fumeUI::ParameterSliderAttachment filterEnvAmountSliderAttachment{ getPlugin()->filterAmount, filterEnvAmountSlider };
+	fumeUI::ParameterSliderAttachment filterKeyTrackSliderAttachment{ getPlugin()->filterKey, filterKeyTrackSlider };
+	fumeUI::ParameterSliderAttachment filterVelocityAmountSliderAttachment{ getPlugin()->filterVelocity, filterVelocityAmountSlider };
 
-	fumeUI::ParameterSliderAttachment filterASliderAttachment{ plugin->filterAttack, filterADSRComponent.getAttackSlider() };
-	fumeUI::ParameterSliderAttachment filterDSliderAttachment{ plugin->filterDecay, filterADSRComponent.getDecaySlider() };
-	fumeUI::ParameterSliderAttachment filterSSliderAttachment{ plugin->filterSustain, filterADSRComponent.getSustainSlider() };
-	fumeUI::ParameterSliderAttachment filterRSliderAttachment{ plugin->filterRelease, filterADSRComponent.getReleaseSlider() };
+	fumeUI::ParameterSliderAttachment filterASliderAttachment{ getPlugin()->filterAttack, filterADSRComponent.getAttackSlider() };
+	fumeUI::ParameterSliderAttachment filterDSliderAttachment{ getPlugin()->filterDecay, filterADSRComponent.getDecaySlider() };
+	fumeUI::ParameterSliderAttachment filterSSliderAttachment{ getPlugin()->filterSustain, filterADSRComponent.getSustainSlider() };
+	fumeUI::ParameterSliderAttachment filterRSliderAttachment{ getPlugin()->filterRelease, filterADSRComponent.getReleaseSlider() };
 
 
 	// distortion controls
 	juce::ToggleButton distortionToggleButton{ "Distortion" };
-	fumeUI::KeyboardSlider distortionDriveSlider{ "Distortion Drive", &uiContext.extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider distortionDriveSlider{ "Distortion Drive", &getUIContext().extendedEdit.getUndoManager() };
 	fumeUI::LabeledSliderContainer distortionDriveLabel{ distortionDriveSlider, "Drive" };
-	fumeUI::ParameterSliderAttachment distortionDriveSliderAttachment{ plugin->distortion, distortionDriveSlider };
+	fumeUI::ParameterSliderAttachment distortionDriveSliderAttachment{ getPlugin()->distortion, distortionDriveSlider };
 
 	// chorus controls
 	juce::ToggleButton chorusToggleButton{ "Chorus" };
-	fumeUI::KeyboardSlider chorusSpeedSlider{ "Chorus Speed", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider chorusDepthSlider{ "Chorus Depth", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider chorusWidthSlider{ "Chorus Width", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider chorusMixSlider{ "Chorus Mix", &uiContext.extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider chorusSpeedSlider{ "Chorus Speed", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider chorusDepthSlider{ "Chorus Depth", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider chorusWidthSlider{ "Chorus Width", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider chorusMixSlider{ "Chorus Mix", &getUIContext().extendedEdit.getUndoManager() };
 
 	fumeUI::LabeledSliderContainer chorusSpeedLabel{ chorusSpeedSlider, "Speed" };
 	fumeUI::LabeledSliderContainer chorusDepthLabel{ chorusDepthSlider, "Depth" };
 	fumeUI::LabeledSliderContainer chorusWidthLabel{ chorusWidthSlider, "Width" };
 	fumeUI::LabeledSliderContainer chorusMixLabel{ chorusMixSlider, "Mix" };
 
-	fumeUI::ParameterSliderAttachment chorusSpeedSliderAttachment{ plugin->chorusSpeed, chorusSpeedSlider };
-	fumeUI::ParameterSliderAttachment chorusDepthSliderAttachment{ plugin->chorusDepth, chorusDepthSlider };
-	fumeUI::ParameterSliderAttachment chorusWidthSliderAttachment{ plugin->chorusWidth, chorusWidthSlider };
-	fumeUI::ParameterSliderAttachment chorusMixSliderAttachment{ plugin->chorusMix, chorusMixSlider };
+	fumeUI::ParameterSliderAttachment chorusSpeedSliderAttachment{ getPlugin()->chorusSpeed, chorusSpeedSlider };
+	fumeUI::ParameterSliderAttachment chorusDepthSliderAttachment{ getPlugin()->chorusDepth, chorusDepthSlider };
+	fumeUI::ParameterSliderAttachment chorusWidthSliderAttachment{ getPlugin()->chorusWidth, chorusWidthSlider };
+	fumeUI::ParameterSliderAttachment chorusMixSliderAttachment{ getPlugin()->chorusMix, chorusMixSlider };
 
 	// delay controls
 	juce::ToggleButton delayToggleButton{ "Delay" };
-	fumeUI::KeyboardSlider delayTimeSlider{ "Delay Time", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider delayFeedbackSlider{ "Delay Feedback", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider delayCrossfeedSlider{ "Delay Crossfeed Pass", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider delayMixSlider{ "Delay Mix", &uiContext.extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider delayTimeSlider{ "Delay Time", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider delayFeedbackSlider{ "Delay Feedback", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider delayCrossfeedSlider{ "Delay Crossfeed Pass", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider delayMixSlider{ "Delay Mix", &getUIContext().extendedEdit.getUndoManager() };
 
 	fumeUI::LabeledSliderContainer delayTimeLabel{ delayTimeSlider, "Time" };
 	fumeUI::LabeledSliderContainer delayFeedbackLabel{ delayFeedbackSlider, "Feedback" };
 	fumeUI::LabeledSliderContainer delayCrossfeedLabel{ delayCrossfeedSlider, "Crossfeed" };
 	fumeUI::LabeledSliderContainer delayMixLabel{ delayMixSlider, "Mix" };
 
-	fumeUI::ParameterSliderAttachment delayFeedbackSliderAttachment{ plugin->delayFeedback, delayFeedbackSlider };
-	fumeUI::ParameterSliderAttachment delayCrossfeedSliderAttachment{ plugin->delayCrossfeed, delayCrossfeedSlider };
-	fumeUI::ParameterSliderAttachment delayMixSliderAttachment{ plugin->delayMix, delayMixSlider };
+	fumeUI::ParameterSliderAttachment delayFeedbackSliderAttachment{ getPlugin()->delayFeedback, delayFeedbackSlider };
+	fumeUI::ParameterSliderAttachment delayCrossfeedSliderAttachment{ getPlugin()->delayCrossfeed, delayCrossfeedSlider };
+	fumeUI::ParameterSliderAttachment delayMixSliderAttachment{ getPlugin()->delayMix, delayMixSlider };
 
 	// reverb controls
 	juce::ToggleButton reverbToggleButton{ "Reverb" };
-	fumeUI::KeyboardSlider reverbSizeSlider{ "Reverb Size", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider reverbDampingSlider{ "Reverb Damping", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider reverbWidthSlider{ "Reverb Width", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider reverbMixSlider{ "Reverb Mix", &uiContext.extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider reverbSizeSlider{ "Reverb Size", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider reverbDampingSlider{ "Reverb Damping", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider reverbWidthSlider{ "Reverb Width", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider reverbMixSlider{ "Reverb Mix", &getUIContext().extendedEdit.getUndoManager() };
 
 	fumeUI::LabeledSliderContainer reverbSizeLabel{ reverbSizeSlider, "Size" };
 	fumeUI::LabeledSliderContainer reverbDampingLabel{ reverbDampingSlider, "Damping" };
 	fumeUI::LabeledSliderContainer reverbWidthLabel{ reverbWidthSlider, "Width" };
 	fumeUI::LabeledSliderContainer reverbMixLabel{ reverbMixSlider, "Mix" };
 
-	fumeUI::ParameterSliderAttachment reverbSizeSliderAttachment{ plugin->reverbSize, reverbSizeSlider };
-	fumeUI::ParameterSliderAttachment reverbDampingSliderAttachment{ plugin->reverbDamping, reverbDampingSlider };
-	fumeUI::ParameterSliderAttachment reverbWidthSliderAttachment{ plugin->reverbWidth, reverbWidthSlider };
-	fumeUI::ParameterSliderAttachment reverbMixSliderAttachment{ plugin->reverbMix, reverbMixSlider };
+	fumeUI::ParameterSliderAttachment reverbSizeSliderAttachment{ getPlugin()->reverbSize, reverbSizeSlider };
+	fumeUI::ParameterSliderAttachment reverbDampingSliderAttachment{ getPlugin()->reverbDamping, reverbDampingSlider };
+	fumeUI::ParameterSliderAttachment reverbWidthSliderAttachment{ getPlugin()->reverbWidth, reverbWidthSlider };
+	fumeUI::ParameterSliderAttachment reverbMixSliderAttachment{ getPlugin()->reverbMix, reverbMixSlider };
 
 	// modulation controls
 
-	fumeUI::ADSRComponent env1Component{ uiContext };
-	fumeUI::ADSRComponent env2Component{ uiContext };
+	fumeUI::ADSRComponent env1Component{ getUIContext() };
+	fumeUI::ADSRComponent env2Component{ getUIContext() };
 
-	fumeUI::OptionsSlider lfo1WaveSlider{ "LFO1 Wave", &uiContext.extendedEdit.getUndoManager(),{ "Sine", "Square", "Triangle", "Saw" } };
-	fumeUI::KeyboardSlider lfo1RateSlider{ "LFO1 Rate", &uiContext.extendedEdit.getUndoManager() };
+	fumeUI::OptionsSlider lfo1WaveSlider{ "LFO1 Wave", &getUIContext().extendedEdit.getUndoManager(),{ "Sine", "Square", "Triangle", "Saw" } };
+	fumeUI::KeyboardSlider lfo1RateSlider{ "LFO1 Rate", &getUIContext().extendedEdit.getUndoManager() };
 	juce::ToggleButton lfo1SyncToggleButton{ "LFO1 Sync" };
-	fumeUI::KeyboardSlider lfo1DepthSlider{ "LFO1 Depth", &uiContext.extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider lfo1DepthSlider{ "LFO1 Depth", &getUIContext().extendedEdit.getUndoManager() };
 
-	fumeUI::OptionsSlider lfo2WaveSlider{ "LFO2 Wave", &uiContext.extendedEdit.getUndoManager(),{ "Sine", "Square", "Triangle", "Saw" } };
-	fumeUI::KeyboardSlider lfo2RateSlider{ "LFO2 Rate", &uiContext.extendedEdit.getUndoManager() };
+	fumeUI::OptionsSlider lfo2WaveSlider{ "LFO2 Wave", &getUIContext().extendedEdit.getUndoManager(),{ "Sine", "Square", "Triangle", "Saw" } };
+	fumeUI::KeyboardSlider lfo2RateSlider{ "LFO2 Rate", &getUIContext().extendedEdit.getUndoManager() };
 	juce::ToggleButton lfo2SyncToggleButton{ "LFO2 Sync" };
-	fumeUI::KeyboardSlider lfo2DepthSlider{ "LFO2 Depth", &uiContext.extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider lfo2DepthSlider{ "LFO2 Depth", &getUIContext().extendedEdit.getUndoManager() };
 
 	// global controls
 
-	fumeUI::OptionsSlider modeSlider{ "Mode", &uiContext.extendedEdit.getUndoManager(),{ "Mono", "Legato", "Poly" } };
-	fumeUI::KeyboardSlider levelSlider{ "Level", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider legatoSlider{ "Legato", &uiContext.extendedEdit.getUndoManager() };
-	fumeUI::KeyboardSlider voicesSlider{ "Voices", &uiContext.extendedEdit.getUndoManager() };
+	fumeUI::OptionsSlider modeSlider{ "Mode", &getUIContext().extendedEdit.getUndoManager(),{ "Mono", "Legato", "Poly" } };
+	fumeUI::KeyboardSlider levelSlider{ "Level", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider legatoSlider{ "Legato", &getUIContext().extendedEdit.getUndoManager() };
+	fumeUI::KeyboardSlider voicesSlider{ "Voices", &getUIContext().extendedEdit.getUndoManager() };
 
-	fumeUI::ADSRComponent ampADSRComponent{ uiContext };
+	fumeUI::ADSRComponent ampADSRComponent{ getUIContext() };
 	juce::ToggleButton analogAmpEnvToggleButton{ "Analog Amp Env" };
 
 
@@ -493,22 +486,22 @@ private:
 	
 	// modulation attachments
 
-	fumeUI::ParameterSliderAttachment env1ASliderAttachment{ plugin->modEnvParams[0]->modAttack, env1Component.getAttackSlider() };
-	fumeUI::ParameterSliderAttachment env1DSliderAttachment{ plugin->modEnvParams[0]->modDecay, env1Component.getDecaySlider() };
-	fumeUI::ParameterSliderAttachment env1SSliderAttachment{ plugin->modEnvParams[0]->modSustain, env1Component.getSustainSlider() };
-	fumeUI::ParameterSliderAttachment env1RSliderAttachment{ plugin->modEnvParams[0]->modRelease, env1Component.getReleaseSlider() };
+	fumeUI::ParameterSliderAttachment env1ASliderAttachment{ getPlugin()->modEnvParams[0]->modAttack, env1Component.getAttackSlider() };
+	fumeUI::ParameterSliderAttachment env1DSliderAttachment{ getPlugin()->modEnvParams[0]->modDecay, env1Component.getDecaySlider() };
+	fumeUI::ParameterSliderAttachment env1SSliderAttachment{ getPlugin()->modEnvParams[0]->modSustain, env1Component.getSustainSlider() };
+	fumeUI::ParameterSliderAttachment env1RSliderAttachment{ getPlugin()->modEnvParams[0]->modRelease, env1Component.getReleaseSlider() };
 
-	fumeUI::ParameterSliderAttachment env2ASliderAttachment{ plugin->modEnvParams[1]->modAttack, env2Component.getAttackSlider() };
-	fumeUI::ParameterSliderAttachment env2DSliderAttachment{ plugin->modEnvParams[1]->modDecay, env2Component.getDecaySlider() };
-	fumeUI::ParameterSliderAttachment env2SSliderAttachment{ plugin->modEnvParams[1]->modSustain, env2Component.getSustainSlider() };
-	fumeUI::ParameterSliderAttachment env2RSliderAttachment{ plugin->modEnvParams[1]->modRelease, env2Component.getReleaseSlider() };
+	fumeUI::ParameterSliderAttachment env2ASliderAttachment{ getPlugin()->modEnvParams[1]->modAttack, env2Component.getAttackSlider() };
+	fumeUI::ParameterSliderAttachment env2DSliderAttachment{ getPlugin()->modEnvParams[1]->modDecay, env2Component.getDecaySlider() };
+	fumeUI::ParameterSliderAttachment env2SSliderAttachment{ getPlugin()->modEnvParams[1]->modSustain, env2Component.getSustainSlider() };
+	fumeUI::ParameterSliderAttachment env2RSliderAttachment{ getPlugin()->modEnvParams[1]->modRelease, env2Component.getReleaseSlider() };
 
 	// global attachments
 
-	fumeUI::ParameterSliderAttachment ampASliderAttachment{ plugin->ampAttack, ampADSRComponent.getAttackSlider() };
-	fumeUI::ParameterSliderAttachment ampDSliderAttachment{ plugin->ampDecay, ampADSRComponent.getDecaySlider() };
-	fumeUI::ParameterSliderAttachment ampSSliderAttachment{ plugin->ampSustain, ampADSRComponent.getSustainSlider() };
-	fumeUI::ParameterSliderAttachment ampRSliderAttachment{ plugin->ampRelease, ampADSRComponent.getReleaseSlider() };
+	fumeUI::ParameterSliderAttachment ampASliderAttachment{ getPlugin()->ampAttack, ampADSRComponent.getAttackSlider() };
+	fumeUI::ParameterSliderAttachment ampDSliderAttachment{ getPlugin()->ampDecay, ampADSRComponent.getDecaySlider() };
+	fumeUI::ParameterSliderAttachment ampSSliderAttachment{ getPlugin()->ampSustain, ampADSRComponent.getSustainSlider() };
+	fumeUI::ParameterSliderAttachment ampRSliderAttachment{ getPlugin()->ampRelease, ampADSRComponent.getReleaseSlider() };
 
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FourOscPluginComponent)
